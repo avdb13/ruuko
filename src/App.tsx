@@ -22,7 +22,7 @@ const App = () => {
   const { client, setClient } = useContext(ClientContext)!;
   const session = localStorage.getItem("session");
 
-  const [messages, setMessages] = useState<string[]>([]);
+  // const [messages, setMessages] = useState<string[]>([]);
 
   // useEffect(() => {
   //   if (session && !client) {
@@ -53,9 +53,12 @@ const App = () => {
 
   // return <div className="flex">{session ? <Home messages={messages} /> : <Login />}</div>;
 
+  let messages = ["test", "hello", "mister"];
+  messages = messages.concat(messages).concat(messages).concat(messages);
+
   return (
-    <div className="flex">
-      <div className="flex basis-48 bg-slate-400 justify-center">
+    <div className="flex max-h-96">
+      <div className="flex basis-48 bg-slate-400 justify-center" id="sidebar">
         <div className="flex flex-col h-screen ">
           <div className="">
             <p>people</p>
@@ -71,12 +74,28 @@ const App = () => {
           </div>
         </div>
       </div>
-      <div className="flex flex-col grow">
-        <div className="basis-12 bg-slate-600">
+      <div
+        className="flex flex-col basis-full flex-grow flex-nowrap"
+        id="right-panel"
+      >
+        <div className="basis-12 bg-slate-600" id="header">
+          <p className="flex justify-center">Room 1</p>
         </div>
-        <div className="bg-slate-300 grow">
-          <ul>
-          </ul>
+        <div className="overflow-y-auto bg-green-100 ">
+          <div className="flex flex-col basis-4/5 bg-slate-300" id="message-panel">
+            <div className="bg-slate-400">
+              <ul className="flex flex-col border-4">
+                {messages.map((message) => (
+                  <div className="p-2 my-1 border-2 border-black">
+                    <li>{message}</li>
+                  </div>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div className="sticky basis-24 h-[100vh] bg-slate-500" id="input-panel">
+          <input />
         </div>
       </div>
     </div>
