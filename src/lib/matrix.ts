@@ -2,6 +2,7 @@
 import * as sdk from "matrix-js-sdk";
 import parseUrl from "parse-url";
 
+
 const login = async (baseUrl: string, username: string, password: string) => {
   // TODO: support all login types
   const parsed = parseUrl(baseUrl, true);

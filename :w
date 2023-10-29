@@ -67,16 +67,12 @@ const App = () => {
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
 
-  const startResizing = React.useCallback((mouseMoveEvent: MouseEvent) => { setIsResizing(true) }, []);
-  const stopResizing = React.useCallback((mouseMoveEvent: MouseEvent) => { setIsResizing(false) }, []);
-
   const resize = React.useCallback(
     (mouseMoveEvent: MouseEvent) => {
       if (isResizing) {
         setSidebarWidth(
           mouseMoveEvent.clientX -
-            // dunno why 20 works but it does the job.
-            (sidebarRef.current! as HTMLDivElement).getBoundingClientRect().left + 20,
+            (sidebarRef.current! as HTMLDivElement).getBoundingClientRect().left,
         );
       }
     },
@@ -85,12 +81,12 @@ const App = () => {
 
   React.useEffect(() => {
     window.addEventListener("mousemove", resize);
-    window.addEventListener("mouseup", stopResizing);
+    window.addEventListener("mousedown", () => setIsResizing(false));
     return () => {
       window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
+      window.removeEventListener("mousedown", () => setIsResizing(false));
     }
-  }, [resize, stopResizing])
+  }, [resize])
 
   return (
     <div className="flex max-h-96">
@@ -119,7 +115,7 @@ const App = () => {
           </div>
         </div>
       </div>
-      <div className="p-1 cursor-col-resize resize-x hover:bg-slate-400" onMouseDown={startResizing}></div>
+      <div className="p-1 cursor-col-resize resize-x hover:bg-slate-400" onMouseDown={() => setIsResizing(true)}></div>
       <div
         className="flex flex-col basis-full flex-grow flex-nowrap"
         id="right-panel"
