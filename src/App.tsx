@@ -75,8 +75,8 @@ const App = () => {
       if (isResizing) {
         setSidebarWidth(
           mouseMoveEvent.clientX -
-            // dunno why 20 works but it does the job.
-            (sidebarRef.current! as HTMLDivElement).getBoundingClientRect().left + 20,
+            // dunno why 30 works but it does the job.
+            (sidebarRef.current! as HTMLDivElement).getBoundingClientRect().left + 30,
         );
       }
     },
@@ -127,15 +127,15 @@ const App = () => {
         <div className="basis-12 bg-slate-600" id="header">
           <p className="flex justify-center">Room 1</p>
         </div>
-        <div className="overflow-y-auto bg-green-100 ">
+    <div className="overflow-y-auto bg-green-100 scrollbar">
           <div
             className="flex flex-col basis-4/5 bg-slate-300"
             id="message-panel"
           >
             <div className="bg-slate-400">
-              <ul className="flex flex-col border-4">
+              <ul className="flex flex-col">
                 {messages.map((message) => (
-                  <div className="p-2 my-1 border-2 border-black">
+                  <div className="p-2 border-x-2 border-b-2 border-black">
                     <li className="flex content-center gap-2">
                       <img
                         src="../public/avatar.jpg"
