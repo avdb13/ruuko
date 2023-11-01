@@ -1,4 +1,3 @@
-// import axios from "axios";
 import * as sdk from "matrix-js-sdk";
 import parseUrl from "parse-url";
 
@@ -24,11 +23,7 @@ const login = async (baseUrl: string, username: string, password: string) => {
     accessToken: resp.access_token,
   };
 
-  console.log(session);
-
-  localStorage.setItem("session", JSON.stringify(session));
-
-  return client;
+  return session
 };
 
 // const healthCheck = async (baseUrl: string) => {

@@ -1,21 +1,46 @@
-import { MatrixClient } from "matrix-js-sdk";
-import React, { PropsWithChildren, createContext, useState } from "react";
+import { MatrixClient, createClient } from "matrix-js-sdk";
+import {
+  createContext,
+  useEffect,
+  useState,
+} from "react";
+import Spinner from "../components/Spinner";
+import Login from "../components/Login";
+import { useCookies } from "react-cookie";
+import App from "../App";
 
-interface Context {
-  client: MatrixClient | null;
-  setClient: (value: MatrixClient) => void;
-}
+const temporaryClient = () => {
+  return createClient({ baseUrl: "https://matrix.org" });
+};
 
-export const ClientContext = createContext<Context | null>(null);
+export const ClientContext = createContext<MatrixClient>(temporaryClient());
 
-const ClientProvider = ({ children }: PropsWithChildren) => {
+const ClientProvider = () => {
   const [client, setClient] = useState<MatrixClient | null>(null);
+  const [cookies] = useCookies(["session"]);
 
-  return (
-    <ClientContext.Provider
-      value={{client, setClient}}
-    >{children}</ClientContext.Provider>
-  );
+  useEffect(() => {
+    if (cookies["session"]) {
+      const { accessToken, baseUrl, user }: Session = cookies["session"];
+      const client = createClient({ accessToken, baseUrl, userId: user });
+
+      setClient(client);
+
+      client.startClient({ initialSyncLimit: 10 });
+    }
+  }, [cookies]);
+
+  if (!cookies["session"] && !client) {
+    return <Login />;
+  } else if (!client) {
+    return <Spinner />;
+  } else {
+    // not sure whether this is good practice.
+    return (
+      <ClientContext.Provider value={client}><App /></ClientContext.Provider>
+    );
+  }
+
 };
 
 export default ClientProvider;
