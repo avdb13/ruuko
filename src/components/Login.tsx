@@ -1,9 +1,9 @@
-import { SyntheticEvent, useEffect, useRef } from "react";
+import { SyntheticEvent, useRef } from "react";
 import matrix from "../lib/matrix";
 import { useCookies } from "react-cookie";
 
 const Login = () => {
-  const [_, setCookie] = useCookies(["session"]);
+  const [_cookies, setCookie] = useCookies(["session"]);
 
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);

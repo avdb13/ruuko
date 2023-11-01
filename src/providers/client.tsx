@@ -1,5 +1,6 @@
 import { MatrixClient, createClient } from "matrix-js-sdk";
 import {
+  PropsWithChildren,
   createContext,
   useEffect,
   useState,
@@ -15,7 +16,7 @@ const temporaryClient = () => {
 
 export const ClientContext = createContext<MatrixClient>(temporaryClient());
 
-const ClientProvider = () => {
+const ClientProvider = (props: PropsWithChildren) => {
   const [client, setClient] = useState<MatrixClient | null>(null);
   const [cookies] = useCookies(["session"]);
 
@@ -37,7 +38,7 @@ const ClientProvider = () => {
   } else {
     // not sure whether this is good practice.
     return (
-      <ClientContext.Provider value={client}><App /></ClientContext.Provider>
+      <ClientContext.Provider value={client}>{props.children}</ClientContext.Provider>
     );
   }
 
