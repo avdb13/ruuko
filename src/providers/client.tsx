@@ -1,4 +1,4 @@
-import { MatrixClient, createClient } from "matrix-js-sdk";
+import { IndexedDBStore, MatrixClient, createClient } from "matrix-js-sdk";
 import {
   PropsWithChildren,
   createContext,
@@ -8,7 +8,6 @@ import {
 import Spinner from "../components/Spinner";
 import Login from "../components/Login";
 import { useCookies } from "react-cookie";
-import App from "../App";
 
 const temporaryClient = () => {
   return createClient({ baseUrl: "https://matrix.org" });
@@ -16,18 +15,27 @@ const temporaryClient = () => {
 
 export const ClientContext = createContext<MatrixClient>(temporaryClient());
 
+const initClient = (session: Session): MatrixClient => {
+  const store = new IndexedDBStore({
+    indexedDB: globalThis.indexedDB,
+    localStorage: globalThis.localStorage,
+    dbName: "ruuko",
+  });
+
+  const { accessToken, baseUrl, user } = session;
+  return createClient({ accessToken, baseUrl, userId: user, store });
+};
+
 const ClientProvider = (props: PropsWithChildren) => {
   const [client, setClient] = useState<MatrixClient | null>(null);
   const [cookies] = useCookies(["session"]);
 
   useEffect(() => {
     if (cookies["session"]) {
-      const { accessToken, baseUrl, user }: Session = cookies["session"];
-      const client = createClient({ accessToken, baseUrl, userId: user });
-
+      const client = initClient(cookies["session"] as Session);
       setClient(client);
 
-      client.startClient({ initialSyncLimit: 10 });
+      client.startClient({ lazyLoadMembers: true });
     }
   }, [cookies]);
 
