@@ -8,9 +8,10 @@
 import { createRef, useContext, useRef, useState } from "react";
 import { ClientContext } from "./providers/client";
 import ArrowDown from "./components/icons/ArrowDown";
-import { EventType, Room, RoomType } from "matrix-js-sdk";
+import { ClientEvent, EventEmitterEvents, EventType, MatrixEvent, MatrixEventEvent, Room, RoomType } from "matrix-js-sdk";
 import Sidebar from "./components/Sidebar";
 import Message from "./components/Message";
+import Spinner from "./components/Spinner";
 
 
 const sortRooms = (prev: Room, next: Room) => {
@@ -33,10 +34,16 @@ const sortRooms = (prev: Room, next: Room) => {
 
 const App = () => {
   const client = useContext(ClientContext);
+  const [rooms, setRooms] = useState<Room[] | null>(null);
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
 
-  const unsortedRooms = client.getRooms();
-  const sortedRooms = unsortedRooms.sort((a, b) => sortRooms(a, b));
+  client.on(ClientEvent.Room, () => setRooms(client.getRooms()))
+
+  if (!rooms) {
+    return <Spinner />
+  }
+
+  const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
 
   return (
     <div className="flex">
@@ -55,10 +62,6 @@ const App = () => {
               .map((event) => <Message message={event} />)}
           </ul>
         </div>
-        <input
-          className="sticky basis-12 p-4 h-[100vh] bg-slate-500"
-          id="input-panel"
-        />
       </div>
       ) : (
         <div>welcome</div>

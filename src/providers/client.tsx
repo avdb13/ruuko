@@ -15,12 +15,14 @@ const temporaryClient = () => {
 
 export const ClientContext = createContext<MatrixClient>(temporaryClient());
 
-const initClient = (session: Session): MatrixClient => {
+const initClient = (session: Session) => {
   const store = new IndexedDBStore({
     indexedDB: globalThis.indexedDB,
     localStorage: globalThis.localStorage,
     dbName: "ruuko",
   });
+
+  store.startup();
 
   const { accessToken, baseUrl, user } = session;
   return createClient({ accessToken, baseUrl, userId: user, store });
@@ -29,15 +31,16 @@ const initClient = (session: Session): MatrixClient => {
 const ClientProvider = (props: PropsWithChildren) => {
   const [client, setClient] = useState<MatrixClient | null>(null);
   const [cookies] = useCookies(["session"]);
+  const session = cookies["session"] as Session;
 
   useEffect(() => {
     if (cookies["session"]) {
-      const client = initClient(cookies["session"] as Session);
+      const client = initClient(session);
       setClient(client);
 
       client.startClient({ lazyLoadMembers: true });
     }
-  }, [cookies]);
+  }, [cookies, session]);
 
   if (!cookies["session"] && !client) {
     return <Login />;
