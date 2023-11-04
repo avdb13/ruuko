@@ -40,6 +40,7 @@ const RoomList = ({
             <button
               onClick={() => setCurrentRoom(room)}
               className="flex items-center gap-2 py-1"
+              key={room.name}
             >
               <img
                 className="h-8 w-8 rounded-full"

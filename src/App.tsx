@@ -12,6 +12,7 @@ import { ClientEvent, EventEmitterEvents, EventType, MatrixEvent, MatrixEventEve
 import Sidebar from "./components/Sidebar";
 import Message from "./components/Message";
 import Spinner from "./components/Spinner";
+import MessageWindow from "./components/MessageWindow";
 
 
 const sortRooms = (prev: Room, next: Room) => {
@@ -49,20 +50,7 @@ const App = () => {
     <div className="flex">
       <Sidebar rooms={sortedRooms} setCurrentRoom={setCurrentRoom} />
       {currentRoom ? (
-      <div className="flex flex-col basis-full flex-grow flex-nowrap max-h-screen">
-        <div className="basis-12 bg-slate-600" id="header">
-          <p className="flex justify-center">{currentRoom!.name}</p>
-        </div>
-        <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar grow justify-end">
-          <ul className="flex flex-col bg-slate-400">
-            {currentRoom
-              ?.getLiveTimeline()
-              .getEvents()
-              .filter((event) => event.getType() === EventType.RoomMessage)
-              .map((event) => <Message message={event} />)}
-          </ul>
-        </div>
-      </div>
+        <MessageWindow room={currentRoom} />
       ) : (
         <div>welcome</div>
       )}
