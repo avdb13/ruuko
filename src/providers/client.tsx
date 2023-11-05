@@ -1,4 +1,4 @@
-import { IndexedDBStore, MatrixClient, createClient } from "matrix-js-sdk";
+import { EventEmitterEvents, IndexedDBStore, MatrixClient, MatrixEvent, MatrixEventEvent, SyncState, createClient } from "matrix-js-sdk";
 import {
   PropsWithChildren,
   createContext,
@@ -46,12 +46,12 @@ const ClientProvider = (props: PropsWithChildren) => {
     return <Login />;
   } else if (!client) {
     return <Spinner />;
-  } else {
-    // not sure whether this is good practice.
-    return (
-      <ClientContext.Provider value={client}>{props.children}</ClientContext.Provider>
-    );
   }
+
+
+  return (
+    <ClientContext.Provider value={client}>{props.children}</ClientContext.Provider>
+  );
 
 };
 

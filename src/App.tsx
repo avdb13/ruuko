@@ -13,6 +13,7 @@ import Sidebar from "./components/Sidebar";
 import Message from "./components/Message";
 import Spinner from "./components/Spinner";
 import MessageWindow from "./components/MessageWindow";
+import InputBar from "./components/InputBar";
 
 
 const sortRooms = (prev: Room, next: Room) => {
@@ -50,7 +51,9 @@ const App = () => {
     <div className="flex">
       <Sidebar rooms={sortedRooms} setCurrentRoom={setCurrentRoom} />
       {currentRoom ? (
-        <MessageWindow room={currentRoom} />
+        <div>
+          <MessageWindow currentRoom={currentRoom} />
+        </div>
       ) : (
         <div>welcome</div>
       )}

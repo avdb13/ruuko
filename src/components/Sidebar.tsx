@@ -21,8 +21,8 @@ const RoomList = ({
   setCurrentRoom: (_: Room) => void;
 }) => {
   return (
-    <div>
-      {sidebarWidth < 150 ? (
+    <>
+      {sidebarWidth < 120 ? (
         <div>
           {rooms.map((room) => (
             <button onClick={() => setCurrentRoom(room)}>
@@ -39,7 +39,7 @@ const RoomList = ({
           {rooms.map((room) => (
             <button
               onClick={() => setCurrentRoom(room)}
-              className="flex items-center gap-2 py-1"
+              className="flex shrink items-center gap-2 py-1"
               key={room.name}
             >
               <img
@@ -47,12 +47,12 @@ const RoomList = ({
                 src={roomToAvatarUrl(room)!}
                 title={room.name}
               />
-              <p className="whitespace-nowrap">{room.name}</p>
+              <p className="flex text-ellipsis">{room.name}</p>
             </button>
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -64,9 +64,11 @@ const Togglable = (props: PropsWithChildren<{ title: string }>) => {
     <div>
       <div className="flex justify-between">
         <p>{props.title}</p>
-        <button className={degrees} onClick={() => setToggled(!toggled)}><Arrow /></button>
+        <button className={degrees} onClick={() => setToggled(!toggled)}>
+          <Arrow />
+        </button>
       </div>
-      {toggled ? <div>{props.children}</div> : null }
+      {toggled ? <div>{props.children}</div> : null}
     </div>
   );
 };
@@ -92,9 +94,9 @@ const Sidebar = ({
   const resize = useCallback(
     (mouseMoveEvent: MouseEvent) => {
       if (isResizing) {
-        setSidebarWidth(mouseMoveEvent.clientX + 30);
-        if (mouseMoveEvent.clientX < 120) {
-          setSidebarWidth(80);
+        setSidebarWidth(mouseMoveEvent.clientX);
+        if (mouseMoveEvent.clientX < 150) {
+          setSidebarWidth(75);
         }
       }
     },
@@ -110,39 +112,42 @@ const Sidebar = ({
     };
   }, [resize, stopResizing]);
 
+  console.log(isResizing, sidebarWidth);
+
   return (
-    <>
-      <div style={{ flexBasis: sidebarWidth }} ref={sidebarRef}>
-        <div
-          className="flex bg-green-100 rounded-md h-screen"
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          <div className="flex flex-col p-4">
-            <div>
-              <Togglable title="people">
-                <RoomList
-                  rooms={rooms.filter((r) => r.getMembers().length === 2)}
-                  setCurrentRoom={setCurrentRoom}
-                  sidebarWidth={sidebarWidth}
-                />
-              </Togglable>
-            </div>
-            <div>
-              <p>public rooms</p>
+    <div>
+      <div
+        className="flex bg-green-100 rounded-md h-screen"
+        style={{ flexBasis: sidebarWidth }}
+        onMouseDown={(e) => e.preventDefault()}
+        ref={sidebarRef}
+      >
+        <div className="flex flex-col p-4 grow-0">
+          <div>
+            <Togglable title="people">
+              <RoomList
+                rooms={rooms.filter((r) => r.getMembers().length === 2)}
+                setCurrentRoom={setCurrentRoom}
+                sidebarWidth={sidebarWidth}
+              />
+            </Togglable>
+          </div>
+          <div>
+            <Togglable title="public rooms">
               <RoomList
                 rooms={rooms.filter((r) => r.getMembers().length !== 2)}
                 setCurrentRoom={setCurrentRoom}
                 sidebarWidth={sidebarWidth}
               />
-            </div>
+            </Togglable>
           </div>
         </div>
       </div>
       <div
-        className="p-1 cursor-col-resize resize-x"
+        className="p-1 grow-0 shrink-0 cursor-col-resize resize-x"
         onMouseDown={startResizing}
       ></div>
-    </>
+    </div>
   );
 };
 
