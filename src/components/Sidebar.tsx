@@ -9,7 +9,7 @@ import {
 import Arrow from "./icons/Arrow";
 
 const roomToAvatarUrl = (room: Room) =>
-  room.getAvatarUrl("https://matrix.org", 80, 80, "scale", true);
+  room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
 
 const RoomList = ({
   sidebarWidth,
@@ -23,11 +23,11 @@ const RoomList = ({
   return (
     <>
       {sidebarWidth < 120 ? (
-        <div>
+        <div className="flex flex-col gap-[10px] items-center">
           {rooms.map((room) => (
             <button onClick={() => setCurrentRoom(room)}>
               <img
-                className="h-12 w-12 rounded-full"
+                className="h-[50px] w-[50px] rounded-full border-slate-400 border-2"
                 src={roomToAvatarUrl(room)!}
                 title={room.name}
               />
@@ -43,7 +43,7 @@ const RoomList = ({
               key={room.name}
             >
               <img
-                className="h-8 w-8 rounded-full"
+                className="h-[50px] w-[50px] rounded-full"
                 src={roomToAvatarUrl(room)!}
                 title={room.name}
               />
@@ -95,8 +95,8 @@ const Sidebar = ({
     (mouseMoveEvent: MouseEvent) => {
       if (isResizing) {
         setSidebarWidth(mouseMoveEvent.clientX);
-        if (mouseMoveEvent.clientX < 150) {
-          setSidebarWidth(75);
+        if (mouseMoveEvent.clientX < 120) {
+          setSidebarWidth(60);
         }
       }
     },
@@ -115,9 +115,9 @@ const Sidebar = ({
   console.log(isResizing, sidebarWidth);
 
   return (
-    <div>
+    <div className="flex grow">
       <div
-        className="flex bg-green-100 rounded-md h-screen"
+        className="bg-green-100 rounded-md h-screen"
         style={{ flexBasis: sidebarWidth }}
         onMouseDown={(e) => e.preventDefault()}
         ref={sidebarRef}
@@ -144,7 +144,7 @@ const Sidebar = ({
         </div>
       </div>
       <div
-        className="p-1 grow-0 shrink-0 cursor-col-resize resize-x"
+        className="p-1 cursor-col-resize resize-x bg-green-50"
         onMouseDown={startResizing}
       ></div>
     </div>

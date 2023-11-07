@@ -24,7 +24,7 @@ const Message = ({ message }: { message: MatrixEvent }) => {
         <div className="flex flex-col">
           <div className="flex gap-4">
             <p className="text-purple-200">{message.getSender()}</p>
-            <p>{message.getTs()}</p>
+            <p>{new Date(message.getTs()).toLocaleString("en-US")}</p>
           </div>
           <p>{message.getContent().body}</p>
         </div>
