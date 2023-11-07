@@ -38,11 +38,11 @@ const MessageWindow = ({ currentRoom }: {  currentRoom: Room }) => {
   });
 
   return (
-    <div className="flex flex-col basis-full flex-nowrap max-h-screen">
-      <div className="basis-12 bg-slate-600" id="header">
+    <div className="flex flex-1 flex-col max-h-screen shrink basis-1/2">
+      <div className="bg-slate-600" id="header">
         <p className="flex justify-center">{currentRoom.name}</p>
       </div>
-      <div  className="flex flex-col overflow-y-auto bg-green-100 scrollbar grow justify-end">
+      <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar justify-end">
         <ul>
           {events
             .filter((event) => event.getType() === EventType.RoomMessage)
@@ -57,7 +57,7 @@ const MessageWindow = ({ currentRoom }: {  currentRoom: Room }) => {
             })}
         </ul>
       </div>
-    <InputBar roomId={currentRoom.roomId} />
+      <InputBar roomId={currentRoom.roomId} />
     </div>
   );
 };

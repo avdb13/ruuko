@@ -115,39 +115,37 @@ const Sidebar = ({
   console.log(isResizing, sidebarWidth);
 
   return (
-    <div className="flex grow">
+    <>
       <div
-        className="bg-green-100 rounded-md h-screen"
-        style={{ flexBasis: sidebarWidth }}
+        className="flex flex-col basis-1/2 bg-green-100 h-screen p-4"
         onMouseDown={(e) => e.preventDefault()}
+        style={{ flexBasis: sidebarWidth }}
         ref={sidebarRef}
       >
-        <div className="flex flex-col p-4 grow-0">
-          <div>
-            <Togglable title="people">
-              <RoomList
-                rooms={rooms.filter((r) => r.getMembers().length === 2)}
-                setCurrentRoom={setCurrentRoom}
-                sidebarWidth={sidebarWidth}
-              />
-            </Togglable>
-          </div>
-          <div>
-            <Togglable title="public rooms">
-              <RoomList
-                rooms={rooms.filter((r) => r.getMembers().length !== 2)}
-                setCurrentRoom={setCurrentRoom}
-                sidebarWidth={sidebarWidth}
-              />
-            </Togglable>
-          </div>
+        <div>
+          <Togglable title="people">
+            <RoomList
+              rooms={rooms.filter((r) => r.getMembers().length === 2)}
+              setCurrentRoom={setCurrentRoom}
+              sidebarWidth={sidebarWidth}
+            />
+          </Togglable>
+        </div>
+        <div>
+          <Togglable title="public rooms">
+            <RoomList
+              rooms={rooms.filter((r) => r.getMembers().length !== 2)}
+              setCurrentRoom={setCurrentRoom}
+              sidebarWidth={sidebarWidth}
+            />
+          </Togglable>
         </div>
       </div>
       <div
         className="p-1 cursor-col-resize resize-x bg-green-50"
         onMouseDown={startResizing}
       ></div>
-    </div>
+    </>
   );
 };
 

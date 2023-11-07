@@ -51,11 +51,9 @@ const App = () => {
     <div className="flex">
       <Sidebar rooms={sortedRooms} setCurrentRoom={setCurrentRoom} />
       {currentRoom ? (
-        <div>
-          <MessageWindow currentRoom={currentRoom} />
-        </div>
+        <MessageWindow currentRoom={currentRoom} />
       ) : (
-        <div>welcome</div>
+        <p>welcome</p>
       )}
     </div>
   );

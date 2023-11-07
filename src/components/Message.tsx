@@ -19,7 +19,7 @@ const Message = ({ message }: { message: MatrixEvent }) => {
               true,
             ) || "/public/anonymous.jpg"
           }
-          className="object-cover h-16 w-16 rounded-full basis-4 self-center border-2"
+          className="object-cover h-16 w-16 rounded-full self-center border-2"
         />
         <div className="flex flex-col">
           <div className="flex gap-4">

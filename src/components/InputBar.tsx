@@ -14,11 +14,11 @@ const InputBar = ({ roomId }: {roomId: string }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="sticky basis-8 shrink-0 p-4 h-[100vh] bg-slate-500"
+      className="sticky p-4 bg-slate-500"
     >
       <input
         id="input-panel"
-        className="flex bg-slate-300 basis-8 w-[100vh]"
+        className="flex bg-slate-300"
         onChange={(e) => setMessage(e.target.value)}
         value={message}
       />
