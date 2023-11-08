@@ -6,10 +6,54 @@ import {
   useEffect,
   PropsWithChildren,
 } from "react";
-import Arrow from "./icons/Arrow";
 
 const roomToAvatarUrl = (room: Room) =>
   room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
+
+const RoomIconWidget = ({
+  room,
+  setCurrentRoom,
+}: {
+  room: Room;
+  setCurrentRoom: (_: Room) => void;
+}) => (
+  <button onClick={() => setCurrentRoom(room)}>
+    <img
+      className="h-[50px] w-[50px] rounded-full border-slate-400"
+      src={roomToAvatarUrl(room)!}
+      title={room.name}
+    />
+  </button>
+);
+
+const RoomWidget = ({
+  room,
+  setCurrentRoom,
+}: {
+  room: Room;
+  setCurrentRoom: (_: Room) => void;
+}) => {
+  const events = room.getLiveTimeline().getEvents();
+  const latestEvent = events[events.length-1];
+
+  return (
+    <button
+      onClick={() => setCurrentRoom(room)}
+    className="flex shrink gap-2 p-2 py-1 w-full border-2 rounded-md hover:bg-green-200"
+      key={room.name}
+    >
+      <img
+        className="h-[50px] w-[50px] rounded-full"
+        src={roomToAvatarUrl(room)!}
+        title={room.name}
+      />
+      <div className="whitespace-nowrap overflow-hidden">
+        <p className="text-ellipsis overflow-hidden">{room.name}</p>
+        {latestEvent ? <p className="text-ellipsis overflow-hidden">{latestEvent.getContent().body}</p> : null}
+      </div>
+    </button>
+  )
+};
 
 const RoomList = ({
   sidebarWidth,
@@ -25,30 +69,13 @@ const RoomList = ({
       {sidebarWidth < 120 ? (
         <div className="flex flex-col gap-[10px] items-center">
           {rooms.map((room) => (
-            <button onClick={() => setCurrentRoom(room)}>
-              <img
-                className="h-[50px] w-[50px] rounded-full border-slate-400 border-2"
-                src={roomToAvatarUrl(room)!}
-                title={room.name}
-              />
-            </button>
+            <RoomIconWidget room={room} setCurrentRoom={setCurrentRoom} />
           ))}
         </div>
       ) : (
         <div>
           {rooms.map((room) => (
-            <button
-              onClick={() => setCurrentRoom(room)}
-              className="flex shrink items-center gap-2 py-1"
-              key={room.name}
-            >
-              <img
-                className="h-[50px] w-[50px] rounded-full"
-                src={roomToAvatarUrl(room)!}
-                title={room.name}
-              />
-              <p className="flex text-ellipsis">{room.name}</p>
-            </button>
+            <RoomWidget room={room} setCurrentRoom={setCurrentRoom} />
           ))}
         </div>
       )}
@@ -58,17 +85,24 @@ const RoomList = ({
 
 const Togglable = (props: PropsWithChildren<{ title: string }>) => {
   const [toggled, setToggled] = useState(true);
-  const degrees = toggled ? "rotate-90" : "rotate-180";
+  const degrees = toggled ? "rotate-90" : "rotate-270";
 
   return (
     <div>
       <div className="flex justify-between">
-        <p>{props.title}</p>
+        <div className="flex gap-2">
+          <button className={degrees} onClick={() => setToggled(!toggled)}>
+            {">"}
+          </button>
+          <p>{props.title}</p>
+        </div>
         <button className={degrees} onClick={() => setToggled(!toggled)}>
-          <Arrow />
+          {"+"}
         </button>
       </div>
-      {toggled ? <div>{props.children}</div> : null}
+      {toggled ? (
+        <>{props.children}</>
+      ) : null}
     </div>
   );
 };
@@ -112,34 +146,28 @@ const Sidebar = ({
     };
   }, [resize, stopResizing]);
 
-  console.log(isResizing, sidebarWidth);
-
   return (
     <>
       <div
-        className="flex flex-col basis-1/2 bg-green-100 h-screen p-4"
+        className="flex flex-col shrink-0 grow-0 basis-1/2 bg-green-100 h-screen overflow-hidden"
         onMouseDown={(e) => e.preventDefault()}
         style={{ flexBasis: sidebarWidth }}
         ref={sidebarRef}
       >
-        <div>
-          <Togglable title="people">
+          <Togglable title={sidebarWidth < 120 ? "" : "people"}>
             <RoomList
               rooms={rooms.filter((r) => r.getMembers().length === 2)}
               setCurrentRoom={setCurrentRoom}
               sidebarWidth={sidebarWidth}
             />
           </Togglable>
-        </div>
-        <div>
-          <Togglable title="public rooms">
+          <Togglable title={sidebarWidth < 120 ? "" : "public rooms"}>
             <RoomList
               rooms={rooms.filter((r) => r.getMembers().length !== 2)}
               setCurrentRoom={setCurrentRoom}
               sidebarWidth={sidebarWidth}
             />
           </Togglable>
-        </div>
       </div>
       <div
         className="p-1 cursor-col-resize resize-x bg-green-50"

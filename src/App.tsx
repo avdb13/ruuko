@@ -48,7 +48,7 @@ const App = () => {
   const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
 
   return (
-    <div className="flex">
+    <div className="flex select-none">
       <Sidebar rooms={sortedRooms} setCurrentRoom={setCurrentRoom} />
       {currentRoom ? (
         <MessageWindow currentRoom={currentRoom} />
