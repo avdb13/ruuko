@@ -39,17 +39,17 @@ const RoomWidget = ({
   return (
     <button
       onClick={() => setCurrentRoom(room)}
-    className="flex shrink gap-2 p-2 py-1 w-full border-2 rounded-md hover:bg-green-200"
+      className="flex items-center shrink gap-2 p-4 w-full border-2 rounded-md hover:bg-green-300"
       key={room.name}
     >
       <img
-        className="h-[50px] w-[50px] rounded-full"
+        className="h-[60px] w-[60px] rounded-full border-2 border-black"
         src={roomToAvatarUrl(room)!}
         title={room.name}
       />
-      <div className="whitespace-nowrap overflow-hidden">
-        <p className="text-ellipsis overflow-hidden">{room.name}</p>
-        {latestEvent ? <p className="text-ellipsis overflow-hidden">{latestEvent.getContent().body}</p> : null}
+      <div className="flex flex-col items-start bg-green-200 min-w-0">
+        <p className="truncate">{room.name}</p>
+        {latestEvent ? <p className="truncate max-w-full">{latestEvent.getSender() + ": " + latestEvent.getContent().body}</p> : null}
       </div>
     </button>
   )
