@@ -6,6 +6,7 @@ import {
   useEffect,
   PropsWithChildren,
 } from "react";
+import Modal from "./Modal";
 
 const roomToAvatarUrl = (room: Room) =>
   room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
@@ -83,9 +84,16 @@ const RoomList = ({
   );
 };
 
+const FriendModal = () => {
+  return (
+    <Modal></Modal>
+  )
+}
+
 const Togglable = (props: PropsWithChildren<{ title: string }>) => {
   const [toggled, setToggled] = useState(true);
   const degrees = toggled ? "rotate-90" : "rotate-270";
+
 
   return (
     <div>
@@ -96,7 +104,7 @@ const Togglable = (props: PropsWithChildren<{ title: string }>) => {
           </button>
           <p>{props.title}</p>
         </div>
-        <button className={degrees} onClick={() => setToggled(!toggled)}>
+        <button className={degrees} onClick={() => {}}>
           {"+"}
         </button>
       </div>
