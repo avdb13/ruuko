@@ -18,6 +18,7 @@ const Modal = forwardRef<ModalProps, PropsWithChildren>((props, ref) => {
 
     if (modal) {
       if (visible) {
+        modal.close();
         modal.showModal();
       } else {
         modal.close();
@@ -40,7 +41,8 @@ const Modal = forwardRef<ModalProps, PropsWithChildren>((props, ref) => {
 
   return (
     // ugly hack
-    <dialog ref={modalRef} id="modal" onKeyDown={handleKeyDown}>
+    <dialog ref={modalRef} id="modal" onKeyDown={handleKeyDown} className="flex flex-col w-[600px] h-[400px] content-center">
+      <button className="self-end m-4">{"x"}</button>
       {props.children}
     </dialog>
   );

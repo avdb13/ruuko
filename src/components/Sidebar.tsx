@@ -6,8 +6,10 @@ import {
   useEffect,
   PropsWithChildren,
   Ref,
+  useContext,
 } from "react";
 import Modal from "./Modal";
+import { ClientContext } from "../providers/client";
 
 const roomToAvatarUrl = (room: Room) =>
   room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
@@ -36,7 +38,7 @@ const RoomWidget = ({
   setCurrentRoom: (_: Room) => void;
 }) => {
   const events = room.getLiveTimeline().getEvents();
-  const latestEvent = events[events.length-1];
+  const latestEvent = events[events.length - 1];
 
   return (
     <button
@@ -51,10 +53,14 @@ const RoomWidget = ({
       />
       <div className="flex flex-col items-start bg-green-200 min-w-0">
         <p className="truncate">{room.name}</p>
-        {latestEvent ? <p className="truncate max-w-full">{latestEvent.getSender() + ": " + latestEvent.getContent().body}</p> : null}
+        {latestEvent ? (
+          <p className="truncate max-w-full">
+            {latestEvent.getSender() + ": " + latestEvent.getContent().body}
+          </p>
+        ) : null}
       </div>
     </button>
-  )
+  );
 };
 
 const RoomList = ({
@@ -86,12 +92,41 @@ const RoomList = ({
 };
 
 const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
+  const client = useContext(ClientContext);
+  const members = client
+    .getRooms()
+    .map((room) =>
+      room.getMembers().map((member) => [member.name, member.userId]),
+    )
+    .flat();
+  const [input, setInput] = useState("");
+  client.searchUserDirectory
+
   return (
     <Modal ref={modalRef}>
-      these are your friends
+      <p>Direct Messages</p>
+      <input
+        className="flex-auto p-2 mx-4 max-h-[40px]"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+      />
+      {input.length > 0 ? (
+        <ul className="flex flex-col items-center">
+          {members
+            .filter(
+              ([name, userId]) =>
+                name?.startsWith(input) || userId?.startsWith(input, 1),
+            )
+            .map(([name, userId]) => (
+              <li>
+                {name} {userId}
+              </li>
+            ))}
+        </ul>
+      ) : null}
     </Modal>
-  )
-}
+  );
+};
 
 const Togglable = (props: PropsWithChildren<{ title: string }>) => {
   const [toggled, setToggled] = useState(true);
@@ -108,13 +143,14 @@ const Togglable = (props: PropsWithChildren<{ title: string }>) => {
           </button>
           <p>{props.title}</p>
         </div>
-        <button className={degrees} onClick={() => friendModalRef.current?.toggleVisibility()}>
+        <button
+          className={degrees}
+          onClick={() => friendModalRef.current?.toggleVisibility()}
+        >
           {"+"}
         </button>
       </div>
-      {toggled ? (
-        <>{props.children}</>
-      ) : null}
+      {toggled ? <>{props.children}</> : null}
     </div>
   );
 };
@@ -166,20 +202,20 @@ const Sidebar = ({
         style={{ flexBasis: sidebarWidth }}
         ref={sidebarRef}
       >
-          <Togglable title={sidebarWidth < 120 ? "" : "people"}>
-            <RoomList
-              rooms={rooms.filter((r) => r.getMembers().length === 2)}
-              setCurrentRoom={setCurrentRoom}
-              sidebarWidth={sidebarWidth}
-            />
-          </Togglable>
-          <Togglable title={sidebarWidth < 120 ? "" : "public rooms"}>
-            <RoomList
-              rooms={rooms.filter((r) => r.getMembers().length !== 2)}
-              setCurrentRoom={setCurrentRoom}
-              sidebarWidth={sidebarWidth}
-            />
-          </Togglable>
+        <Togglable title={sidebarWidth < 120 ? "" : "people"}>
+          <RoomList
+            rooms={rooms.filter((r) => r.getMembers().length === 2)}
+            setCurrentRoom={setCurrentRoom}
+            sidebarWidth={sidebarWidth}
+          />
+        </Togglable>
+        <Togglable title={sidebarWidth < 120 ? "" : "public rooms"}>
+          <RoomList
+            rooms={rooms.filter((r) => r.getMembers().length !== 2)}
+            setCurrentRoom={setCurrentRoom}
+            sidebarWidth={sidebarWidth}
+          />
+        </Togglable>
       </div>
       <div
         className="p-1 cursor-col-resize resize-x bg-green-50"
