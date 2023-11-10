@@ -6,7 +6,6 @@ import {
   useEffect,
   PropsWithChildren,
   Ref,
-  MutableRefObject,
 } from "react";
 import Modal from "./Modal";
 
@@ -86,11 +85,9 @@ const RoomList = ({
   );
 };
 
-const FriendModal = ({ ref }: { ref: MutableRefObject<ModalProps | null> }) => {
-  console.log(ref);
-
+const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   return (
-    <Modal ref={ref && undefined}>
+    <Modal ref={modalRef}>
       these are your friends
     </Modal>
   )
@@ -99,13 +96,11 @@ const FriendModal = ({ ref }: { ref: MutableRefObject<ModalProps | null> }) => {
 const Togglable = (props: PropsWithChildren<{ title: string }>) => {
   const [toggled, setToggled] = useState(true);
   const degrees = toggled ? "rotate-90" : "rotate-270";
-  const friendModalRef = useRef<ModalProps | null>(null);
-
-  console.log(friendModalRef);
+  const friendModalRef = useRef<ModalProps>(null);
 
   return (
     <div>
-      <FriendModal ref={friendModalRef} />
+      <FriendModal modalRef={friendModalRef} />
       <div className="flex justify-between">
         <div className="flex gap-2">
           <button className={degrees} onClick={() => setToggled(!toggled)}>
@@ -113,7 +108,7 @@ const Togglable = (props: PropsWithChildren<{ title: string }>) => {
           </button>
           <p>{props.title}</p>
         </div>
-      <button className={degrees} onClick={() =>  friendModalRef.current?.toggleVisibility()}>
+        <button className={degrees} onClick={() => friendModalRef.current?.toggleVisibility()}>
           {"+"}
         </button>
       </div>

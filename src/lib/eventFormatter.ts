@@ -1,8 +1,10 @@
-import { IContent } from "matrix-js-sdk";
+import { MatrixEvent } from "matrix-js-sdk";
 
 
-const eventFormatter = <T extends IContent>(content: T) => {
+const eventFormatter = (event: MatrixEvent) => {
+  const content = event.getContent();
+
   if (content.membership === "join") {
-    return `${}`
+    return `${event.sender?.name} joined`
   }
 }
