@@ -60,4 +60,10 @@
       opacity: 0;
     }
   }
+
+  #modal::backdrop {
+    background: hsl(0 0% 0% 0% / 50%);
+    filter: blur(1px);
+    -webkit-filter: blur(1px);
+  }
 }

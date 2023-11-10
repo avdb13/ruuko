@@ -5,6 +5,8 @@ import {
   useCallback,
   useEffect,
   PropsWithChildren,
+  Ref,
+  MutableRefObject,
 } from "react";
 import Modal from "./Modal";
 
@@ -84,19 +86,26 @@ const RoomList = ({
   );
 };
 
-const FriendModal = () => {
+const FriendModal = ({ ref }: { ref: MutableRefObject<ModalProps | null> }) => {
+  console.log(ref);
+
   return (
-    <Modal></Modal>
+    <Modal ref={ref && undefined}>
+      these are your friends
+    </Modal>
   )
 }
 
 const Togglable = (props: PropsWithChildren<{ title: string }>) => {
   const [toggled, setToggled] = useState(true);
   const degrees = toggled ? "rotate-90" : "rotate-270";
+  const friendModalRef = useRef<ModalProps | null>(null);
 
+  console.log(friendModalRef);
 
   return (
     <div>
+      <FriendModal ref={friendModalRef} />
       <div className="flex justify-between">
         <div className="flex gap-2">
           <button className={degrees} onClick={() => setToggled(!toggled)}>
@@ -104,7 +113,7 @@ const Togglable = (props: PropsWithChildren<{ title: string }>) => {
           </button>
           <p>{props.title}</p>
         </div>
-        <button className={degrees} onClick={() => {}}>
+      <button className={degrees} onClick={() =>  friendModalRef.current?.toggleVisibility()}>
           {"+"}
         </button>
       </div>

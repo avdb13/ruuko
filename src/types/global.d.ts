@@ -7,4 +7,9 @@ declare global {
     user: string,
     baseUrl: string,
   }
+
+
+  interface ModalProps {
+    toggleVisibility: () => void;
+  }
 }
