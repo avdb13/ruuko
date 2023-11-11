@@ -31,19 +31,20 @@ const Modal = forwardRef<ModalProps, PropsWithChildren>((props, ref) => {
   };
 
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
-    if (event.key === "Escape") {
-      setVisible(false);
-    }
-  };
+  // const handleKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
+  //   if (event.key === "Escape") {
+  //     setVisible(false);
+  //   }
+  // };
 
   useImperativeHandle(ref, () => ({ toggleVisibility }));
 
   return (
-    // ugly hack
-    <dialog ref={modalRef} id="modal" onKeyDown={handleKeyDown} className="flex flex-col w-[600px] h-[400px] content-center">
-      <button className="self-end m-4">{"x"}</button>
-      {props.children}
+    <dialog ref={modalRef} id="modal">
+      <div className="flex flex-col w-[600px] h-[400px] content-center">
+        <button className="self-end m-4">{"x"}</button>
+        {props.children}
+      </div>
     </dialog>
   );
 });

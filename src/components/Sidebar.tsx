@@ -100,13 +100,20 @@ const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
     )
     .flat();
   const [input, setInput] = useState("");
-  client.searchUserDirectory
+  // client.searchUserDirectory
 
   return (
     <Modal ref={modalRef}>
       <p>Direct Messages</p>
       <input
         className="flex-auto p-2 mx-4 max-h-[40px]"
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+      />
+      <input
+        className="flex-auto p-2 mx-4 max-h-[40px]"
+        type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
       />
@@ -144,7 +151,6 @@ const Togglable = (props: PropsWithChildren<{ title: string }>) => {
           <p>{props.title}</p>
         </div>
         <button
-          className={degrees}
           onClick={() => friendModalRef.current?.toggleVisibility()}
         >
           {"+"}
