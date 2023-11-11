@@ -21,7 +21,7 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
     return <div></div>;
   }
 
-  console.log(events[events.length - 1].event.content.body);
+  console.log(events[events.length - 1]?.getContent().membership);
 
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
     // weird bug that gets triggered the message twice
@@ -30,7 +30,7 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
     }
 
     if (room?.roomId === currentRoom.roomId) {
-      console.log("event: ", event.event.content.body);
+      console.log("event: ", event.getContent().membership);
       setEvents([...events, event]);
       console.log(events);
     }
@@ -58,9 +58,6 @@ export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
         new Date(event.getTs()),
         new Date(events[i - 1].getTs()),
       ];
-      console.log(i-1);
-
-      console.log(event.sender?.userId, events[i-1]?.sender?.userId)
 
       return prevMessageTs.getDate() === messageTs.getDate() ? (
         <Message message={event} key={i} />
