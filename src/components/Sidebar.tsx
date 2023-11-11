@@ -11,8 +11,11 @@ import {
 import Modal from "./Modal";
 import { ClientContext } from "../providers/client";
 
-const roomToAvatarUrl = (room: Room) =>
-  room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
+const roomToAvatarUrl = (room: Room, userId: string) => room.getMembers().length >= 2 ? (
+    room.getMembers().find(member => member.userId !== userId)?.getAvatarUrl("https://matrix.org", 120, 120, "scale", true, true)
+  ) : (
+    room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true)
+  )
 
 const RoomIconWidget = ({
   room,
@@ -20,15 +23,19 @@ const RoomIconWidget = ({
 }: {
   room: Room;
   setCurrentRoom: (_: Room) => void;
-}) => (
+}) => {
+  const client = useContext(ClientContext);
+
+  return (
   <button onClick={() => setCurrentRoom(room)}>
     <img
       className="h-[50px] w-[50px] rounded-full border-slate-400"
-      src={roomToAvatarUrl(room)!}
+      src={roomToAvatarUrl(room, client.getUserId()!)!}
       title={room.name}
     />
   </button>
-);
+  )
+};
 
 
 const RoomWidget = ({
@@ -40,7 +47,8 @@ const RoomWidget = ({
 }) => {
   const events = room.getLiveTimeline().getEvents();
   const latestEvent = events[events.length - 1];
-  console.log(room.name, latestEvent?.getContent());
+
+  const client = useContext(ClientContext);
 
   return (
     <button
@@ -50,7 +58,7 @@ const RoomWidget = ({
     >
       <img
         className="h-[60px] w-[60px] rounded-full border-2 border-black"
-        src={roomToAvatarUrl(room)!}
+        src={roomToAvatarUrl(room, client.getUserId()!)!}
         title={room.name}
       />
       <div className="flex flex-col items-start bg-green-200 min-w-0">
