@@ -50,9 +50,7 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
 };
 
 export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
-  const roomMessages = events.filter((event) => event.getType() === EventType.RoomMessage);
-
-  return roomMessages.map((event, i) => {
+  return events.map((event, i) => {
     if (i === 0) {
       return <Message message={event} key={i} />
     } else {
@@ -60,6 +58,9 @@ export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
         new Date(event.getTs()),
         new Date(events[i - 1].getTs()),
       ];
+      console.log(i-1);
+
+      console.log(event.sender?.userId, events[i-1]?.sender?.userId)
 
       return prevMessageTs.getDate() === messageTs.getDate() ? (
         <Message message={event} key={i} />
