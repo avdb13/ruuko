@@ -1,32 +1,31 @@
 import { EventType, MatrixEvent, Room, RoomEvent } from "matrix-js-sdk";
-import Message from "./Message";
+import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useState } from "react";
 import { ClientContext } from "../providers/client";
 
-const SECONDS_IN_DAY = 86400;
-
-const MessageWindow = ({ currentRoom }: {  currentRoom: Room }) => {
+const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
   const client = useContext(ClientContext);
   const [events, setEvents] = useState<MatrixEvent[] | null>(null);
 
   useEffect(() => {
     console.log("useEffect");
-    client.scrollback(currentRoom, Number.MAX_SAFE_INTEGER).then(scrollback => {
-      setEvents(scrollback.getLiveTimeline().getEvents());
-    });
+    client
+      .scrollback(currentRoom, Number.MAX_SAFE_INTEGER)
+      .then((scrollback) => {
+        setEvents(scrollback.getLiveTimeline().getEvents());
+      });
   }, [currentRoom]);
 
   if (!events) {
-    return <div></div>
+    return <div></div>;
   }
 
-  console.log(events[events.length-1].event.content.body);
+  console.log(events[events.length - 1].event.content.body);
 
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
-    console.log("Timeline");
     // weird bug that gets triggered the message twice
-    if (startOfTimeline || events[events.length-1] === event) {
+    if (startOfTimeline || events[events.length - 1] === event) {
       return;
     }
 
@@ -35,7 +34,6 @@ const MessageWindow = ({ currentRoom }: {  currentRoom: Room }) => {
       setEvents([...events, event]);
       console.log(events);
     }
-
   });
 
   return (
@@ -44,23 +42,35 @@ const MessageWindow = ({ currentRoom }: {  currentRoom: Room }) => {
         <p className="flex justify-center">{currentRoom.name}</p>
       </div>
       <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
-        <ul className="just">
-          {events
-            .filter((event) => event.getType() === EventType.RoomMessage)
-            .map((event, i) => {
-              return events[i-1]?.getTs() % SECONDS_IN_DAY !== events[i].getTs() % SECONDS_IN_DAY ?
-                <Message message={event} key={i} /> : (
-                  <>
-                    <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
-                    <Message message={event} key={i} />
-                  </>
-                )
-            })}
-        </ul>
-        <InputBar roomId={currentRoom.roomId} />
+        <MessagesWithDayBreak events={events} />
       </div>
+      <InputBar roomId={currentRoom.roomId} />
     </div>
   );
+};
+
+export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
+  const roomMessages = events.filter((event) => event.getType() === EventType.RoomMessage);
+
+  return roomMessages.map((event, i) => {
+    if (i === 0) {
+      return <Message message={event} key={i} />
+    } else {
+      const [messageTs, prevMessageTs] = [
+        new Date(event.getTs()),
+        new Date(events[i - 1].getTs()),
+      ];
+
+      return prevMessageTs.getDate() === messageTs.getDate() ? (
+        <Message message={event} key={i} />
+      ) : (
+        <>
+          <DateMessage date={messageTs} />
+          <Message message={event} key={i} />
+        </>
+      );
+    }
+  })
 };
 
 export default MessageWindow;

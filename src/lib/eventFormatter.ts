@@ -8,3 +8,7 @@ const eventFormatter = (event: MatrixEvent) => {
     return `${event.sender?.name} joined`
   }
 }
+
+const toReply = () => {
+
+}
