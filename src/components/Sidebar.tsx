@@ -1,4 +1,4 @@
-import { Room, RoomMember, getHttpUriForMxc } from "matrix-js-sdk";
+import { MatrixClient, Room, RoomMember } from "matrix-js-sdk";
 import {
   useState,
   useRef,
@@ -10,6 +10,7 @@ import {
 } from "react";
 import Modal from "./Modal";
 import { ClientContext } from "../providers/client";
+import parseUrl from "parse-url";
 
 const roomToAvatarUrl = (room: Room) =>
   room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
@@ -119,7 +120,7 @@ const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
       {term.length > 0 ? (
         <ul className="flex flex-col w-[80%] border-2">
           {result ? (
-            result.map((member) => <UserChip member={member} />)
+            result.map((member) => <UserChip member={member} closeModal={() => modalRef.current?.toggleVisibility()} />)
           ) : (
             null
           )}
@@ -129,15 +130,27 @@ const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   );
 };
 
-const UserChip = ({ member } : { member: DisplayedMember}) => {
+// make this only trigger if no image can be loaded for the user's homeserver
+const fallbackMxcUrlToHttp = (client: MatrixClient, url?: string) => {
+  const originalUrl = url ? client.mxcUrlToHttp(url, 80, 80, "scale", true) || "" : "";
+  return originalUrl.replace("matrix.envs.net", "matrix.org");
+}
+
+const UserChip = ({ member, closeModal } : { member: DisplayedMember, closeModal: () => void }) => {
   const client = useContext(ClientContext);
+  const src = fallbackMxcUrlToHttp(client, member.avatar_url);
+
+  const createRoom = () => {
+    closeModal();
+    client.createRoom({ is_direct: true, invite: [member.user_id] });
+  }
 
   return (
-    <div className="border-2" key={member.user_id}>
-    <img src={member.avatar_url ? getHttpUriForMxc(member.avatar_url) || "" : ""} alt={member.user_id} />
-      <p>{member.display_name}</p>
-      <p>{member.user_id}</p>
-    </div>
+    <button className="flex border-2 p-2 items-center" key={member.user_id} onClick={createRoom}>
+      <img src={src} alt={member.user_id} className="rounded-full w-8 h-8" />
+      <p className="px-1">{member.display_name}</p>
+      <p className="text-zinc-500">{member.user_id}</p>
+    </button>
   )
 }
 
@@ -214,14 +227,14 @@ const Sidebar = ({
       >
         <Togglable title={sidebarWidth < 120 ? "" : "people"}>
           <RoomList
-            rooms={rooms.filter((r) => r.getMembers().length === 2)}
+            rooms={rooms.filter((r) => r.getMembers().length <= 2)}
             setCurrentRoom={setCurrentRoom}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
         <Togglable title={sidebarWidth < 120 ? "" : "public rooms"}>
           <RoomList
-            rooms={rooms.filter((r) => r.getMembers().length !== 2)}
+            rooms={rooms.filter((r) => r.getMembers().length > 2)}
             setCurrentRoom={setCurrentRoom}
             sidebarWidth={sidebarWidth}
           />
