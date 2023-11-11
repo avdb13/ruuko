@@ -1,12 +1,13 @@
 import { EventType, MatrixEvent, Room, RoomEvent } from "matrix-js-sdk";
 import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 
 const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
   const client = useContext(ClientContext);
   const [events, setEvents] = useState<MatrixEvent[] | null>(null);
+  const bottomDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     console.log("useEffect");
@@ -17,11 +18,18 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
       });
   }, [currentRoom]);
 
+  useEffect(() => {
+    if (events) {
+      bottomDivRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end"
+      })
+    }
+  }, [events]);
+
   if (!events) {
     return <div></div>;
   }
-
-  console.log(events[events.length - 1]?.getContent().membership);
 
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
     // weird bug that gets triggered the message twice
@@ -43,6 +51,7 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
       </div>
       <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
         <MessagesWithDayBreak events={events} />
+        <div id="autoscroll-bottom" ref={bottomDivRef}></div>
       </div>
       <InputBar roomId={currentRoom.roomId} />
     </div>
