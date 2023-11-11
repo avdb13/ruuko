@@ -40,7 +40,6 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
     if (room?.roomId === currentRoom.roomId) {
       console.log("event: ", event.getContent().membership);
       setEvents([...events, event]);
-      console.log(events);
     }
   });
 
