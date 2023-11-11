@@ -1,7 +1,5 @@
 import {
-  KeyboardEvent,
   PropsWithChildren,
-  Ref,
   forwardRef,
   useEffect,
   useImperativeHandle,
@@ -9,7 +7,7 @@ import {
   useState,
 } from "react";
 
-const Modal = forwardRef<ModalProps, PropsWithChildren>((props, ref) => {
+const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string}>>((props, ref) => {
   const modalRef = useRef<HTMLDialogElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -30,20 +28,18 @@ const Modal = forwardRef<ModalProps, PropsWithChildren>((props, ref) => {
     setVisible(!visible);
   };
 
-
-  // const handleKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
-  //   if (event.key === "Escape") {
-  //     setVisible(false);
-  //   }
-  // };
-
   useImperativeHandle(ref, () => ({ toggleVisibility }));
 
   return (
-    <dialog ref={modalRef} id="modal">
-      <div className="flex flex-col w-[600px] h-[400px] content-center">
-        <button className="self-end m-4">{"x"}</button>
-        {props.children}
+    <dialog ref={modalRef} id="modal" className="w-[600px] h-[400px]">
+      <div className="flex flex-col">
+        <div className="flex justify-between m-4 items-center">
+          <h1 className="bg-zinc-100 rounded-md py-1 font-bold text-xl">{props.title}</h1>
+          <button className="m-4 border-2 border-black w-8 h-8" onClick={toggleVisibility}>{"x"}</button>
+        </div>
+        <div className="flex flex-col items-center gap-4">
+          {props.children}
+        </div>
       </div>
     </dialog>
   );

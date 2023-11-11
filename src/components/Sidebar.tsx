@@ -1,4 +1,4 @@
-import { Room } from "matrix-js-sdk";
+import { Room, RoomMember, getHttpUriForMxc } from "matrix-js-sdk";
 import {
   useState,
   useRef,
@@ -29,6 +29,7 @@ const RoomIconWidget = ({
     />
   </button>
 );
+
 
 const RoomWidget = ({
   room,
@@ -91,49 +92,54 @@ const RoomList = ({
   );
 };
 
+interface DisplayedMember {
+  user_id: string;
+  avatar_url?: string;
+  display_name?: string;
+}
+
 const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   const client = useContext(ClientContext);
-  const members = client
-    .getRooms()
-    .map((room) =>
-      room.getMembers().map((member) => [member.name, member.userId]),
-    )
-    .flat();
-  const [input, setInput] = useState("");
-  // client.searchUserDirectory
+  const [term, setTerm] = useState("");
+  const [result, setResult] = useState<DisplayedMember[] | null>(null);
+  client.searchUserDirectory({ term }).then((resp) => setResult(resp.results));
 
   return (
-    <Modal ref={modalRef}>
-      <p>Direct Messages</p>
-      <input
-        className="flex-auto p-2 mx-4 max-h-[40px]"
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-      <input
-        className="flex-auto p-2 mx-4 max-h-[40px]"
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-      {input.length > 0 ? (
-        <ul className="flex flex-col items-center">
-          {members
-            .filter(
-              ([name, userId]) =>
-                name?.startsWith(input) || userId?.startsWith(input, 1),
-            )
-            .map(([name, userId]) => (
-              <li>
-                {name} {userId}
-              </li>
-            ))}
+    <Modal ref={modalRef} title="Direct Messages">
+      <div className="flex items-center m-4 w-[80%]">
+        <input
+          className="basis-full mx-4 max-h-[40px] flex-1"
+          type="text"
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          autoFocus
+        />
+        <button className="rounded-md bg-zinc-100 p-[10px]">🔍</button>
+      </div>
+      {term.length > 0 ? (
+        <ul className="flex flex-col w-[80%] border-2">
+          {result ? (
+            result.map((member) => <UserChip member={member} />)
+          ) : (
+            null
+          )}
         </ul>
       ) : null}
     </Modal>
   );
 };
+
+const UserChip = ({ member } : { member: DisplayedMember}) => {
+  const client = useContext(ClientContext);
+
+  return (
+    <div className="border-2" key={member.user_id}>
+    <img src={member.avatar_url ? getHttpUriForMxc(member.avatar_url) || "" : ""} alt={member.user_id} />
+      <p>{member.display_name}</p>
+      <p>{member.user_id}</p>
+    </div>
+  )
+}
 
 const Togglable = (props: PropsWithChildren<{ title: string }>) => {
   const [toggled, setToggled] = useState(true);
@@ -150,9 +156,7 @@ const Togglable = (props: PropsWithChildren<{ title: string }>) => {
           </button>
           <p>{props.title}</p>
         </div>
-        <button
-          onClick={() => friendModalRef.current?.toggleVisibility()}
-        >
+        <button onClick={() => friendModalRef.current?.toggleVisibility()}>
           {"+"}
         </button>
       </div>

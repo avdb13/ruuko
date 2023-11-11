@@ -63,8 +63,5 @@
 
   #modal::backdrop {
     background: hsl(0 0% 0% / 0.5);
-    filter: blur(50px);
-    -webkit-filter: blur(50px);
-    -moz-filter: blur(8px);
   }
 }
