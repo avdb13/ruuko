@@ -49,11 +49,13 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
       <div className="bg-slate-600" id="header">
         <p className="flex justify-center">{currentRoom.name}</p>
       </div>
-      <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
-        <MessagesWithDayBreak events={events} />
+      <div className="overflow-y-auto">
+        <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
+          <MessagesWithDayBreak events={events} />
+        </div>
+        <InputBar roomId={currentRoom.roomId} />
         <div id="autoscroll-bottom" ref={bottomDivRef}></div>
       </div>
-      <InputBar roomId={currentRoom.roomId} />
     </div>
   );
 };

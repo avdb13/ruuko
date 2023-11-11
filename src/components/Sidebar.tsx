@@ -10,7 +10,6 @@ import {
 } from "react";
 import Modal from "./Modal";
 import { ClientContext } from "../providers/client";
-import parseUrl from "parse-url";
 
 const roomToAvatarUrl = (room: Room) =>
   room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
@@ -41,6 +40,7 @@ const RoomWidget = ({
 }) => {
   const events = room.getLiveTimeline().getEvents();
   const latestEvent = events[events.length - 1];
+  console.log(room.name, latestEvent?.getContent());
 
   return (
     <button
@@ -55,11 +55,14 @@ const RoomWidget = ({
       />
       <div className="flex flex-col items-start bg-green-200 min-w-0">
         <p className="truncate">{room.name}</p>
-        {latestEvent ? (
+        {latestEvent?.getContent().body ? (
           <p className="truncate max-w-full">
             {latestEvent.getSender() + ": " + latestEvent.getContent().body}
           </p>
-        ) : null}
+        ) : (
+          // maybe something else in the future?
+          null
+        )}
       </div>
     </button>
   );
