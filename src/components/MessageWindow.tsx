@@ -33,17 +33,18 @@ const MessageWindow = ({ currentRoom }: {  currentRoom: Room }) => {
     if (room?.roomId === currentRoom.roomId) {
       console.log("event: ", event.event.content.body);
       setEvents([...events, event]);
+      console.log(events);
     }
 
   });
 
   return (
-    <div className="flex flex-1 flex-col max-h-screen shrink basis-1/2">
+    <div className="flex flex-1 flex-col max-h-screen shrink basis-1/2 min-h-full justify-between">
       <div className="bg-slate-600" id="header">
         <p className="flex justify-center">{currentRoom.name}</p>
       </div>
-      <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar justify-end">
-        <ul>
+      <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
+        <ul className="just">
           {events
             .filter((event) => event.getType() === EventType.RoomMessage)
             .map((event, i) => {
@@ -56,8 +57,8 @@ const MessageWindow = ({ currentRoom }: {  currentRoom: Room }) => {
                 )
             })}
         </ul>
+        <InputBar roomId={currentRoom.roomId} />
       </div>
-      <InputBar roomId={currentRoom.roomId} />
     </div>
   );
 };
