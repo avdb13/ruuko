@@ -11,7 +11,7 @@ import {
 import Modal from "./Modal";
 import { ClientContext } from "../providers/client";
 
-const roomToAvatarUrl = (room: Room, userId: string) => room.getMembers().length >= 2 ? (
+const roomToAvatarUrl = (room: Room, userId: string) => room.getMembers().length <= 2 ? (
     room.getMembers().find(member => member.userId !== userId)?.getAvatarUrl("https://matrix.org", 120, 120, "scale", true, true)
   ) : (
     room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true)
@@ -141,6 +141,37 @@ const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   );
 };
 
+const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
+  const client = useContext(ClientContext);
+  const [term, setTerm] = useState("");
+  const [result, setResult] = useState<DisplayedMember[] | null>(null);
+  client.publicRooms();
+
+  return (
+    <Modal ref={modalRef} title="Public Rooms">
+      <div className="flex items-center m-4 w-[80%]">
+        <input
+          className="basis-full mx-4 max-h-[40px] flex-1"
+          type="text"
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          autoFocus
+        />
+        <button className="rounded-md bg-zinc-100 p-[10px]">🔍</button>
+      </div>
+      {term.length > 0 ? (
+        <ul className="flex flex-col w-[80%] border-2">
+          {result ? (
+            result.map((member) => <UserChip member={member} closeModal={() => modalRef.current?.toggleVisibility()} />)
+          ) : (
+            null
+          )}
+        </ul>
+      ) : null}
+    </Modal>
+  );
+};
+
 // make this only trigger if no image can be loaded for the user's homeserver
 const fallbackMxcUrlToHttp = (client: MatrixClient, url?: string) => {
   const originalUrl = url ? client.mxcUrlToHttp(url, 80, 80, "scale", true) || "" : "";
@@ -165,14 +196,16 @@ const UserChip = ({ member, closeModal } : { member: DisplayedMember, closeModal
   )
 }
 
-const Togglable = (props: PropsWithChildren<{ title: string }>) => {
+type ModalType = "friendModal" | "publicRoomModal"
+
+const Togglable = (props: PropsWithChildren<{ title: string, modalType: ModalType }>) => {
   const [toggled, setToggled] = useState(true);
   const degrees = toggled ? "rotate-90" : "rotate-270";
-  const friendModalRef = useRef<ModalProps>(null);
+  const modalRef = useRef<ModalProps>(null);
 
   return (
     <div>
-      <FriendModal modalRef={friendModalRef} />
+      {props.modalType === "friendModal" ? <FriendModal modalRef={modalRef} /> : <PublicRoomModal modalRef={modalRef} />}
       <div className="flex justify-between">
         <div className="flex gap-2">
           <button className={degrees} onClick={() => setToggled(!toggled)}>
@@ -199,6 +232,8 @@ const Sidebar = ({
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const friendModalRef = useRef<ModalProps>(null);
+  const publicRoomModalRef = useRef<ModalProps>(null);
 
   const startResizing = useCallback(() => {
     setIsResizing(true);
@@ -236,14 +271,14 @@ const Sidebar = ({
         style={{ flexBasis: sidebarWidth }}
         ref={sidebarRef}
       >
-        <Togglable title={sidebarWidth < 120 ? "" : "people"}>
+        <Togglable title={sidebarWidth < 120 ? "" : "people"} modalType="friendModal">
           <RoomList
             rooms={rooms.filter((r) => r.getMembers().length <= 2)}
             setCurrentRoom={setCurrentRoom}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
-        <Togglable title={sidebarWidth < 120 ? "" : "public rooms"}>
+        <Togglable title={sidebarWidth < 120 ? "" : "public rooms"} modalType="publicRoomModal">
           <RoomList
             rooms={rooms.filter((r) => r.getMembers().length > 2)}
             setCurrentRoom={setCurrentRoom}
