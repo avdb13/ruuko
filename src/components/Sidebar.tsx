@@ -55,6 +55,11 @@ const RoomWidget = ({
 
   const events = room.getLiveTimeline().getEvents();
   const latestEvent = events[events.length - 1];
+  const latestMessage = latestEvent?.getContent().body ? (room.getMembers().length <= 2 ? (
+    latestEvent?.getContent().body
+  ) : (
+    latestEvent?.getSender() + ": " + latestEvent.getContent().body
+  )) : null;
 
   return (
     <button
@@ -68,13 +73,8 @@ const RoomWidget = ({
         title={room.name}
       />
       <div className="flex flex-col items-start bg-green-200 min-w-0">
-        <p className="truncate">{room.name}</p>
-        {latestEvent?.getContent().body ? (
-          <p className="truncate max-w-full">
-            {latestEvent.getSender() + ": " + latestEvent.getContent().body}
-          </p>
-        ) : // maybe something else in the future?
-        null}
+        <p className="max-w-full truncate">{room.name}</p>
+        <p className="max-w-full truncate">{latestMessage}</p>
       </div>
     </button>
   );
@@ -252,7 +252,7 @@ const Sidebar = ({
       window.removeEventListener("mouseup", stopResizing);
     };
   }, [resize, stopResizing]);
-
+  
   return (
     <>
       <div
