@@ -1,21 +1,10 @@
-// const formatMessageEvent = (event: MatrixEvent) => {
-//   const sender = event.sender ? event.sender.name : event.getSender();
-//   if (event.getType() === EventType.RoomMessage) {
-//     return `${sender}: ${event.event.content!.body}`;
-//   }
-// };
-
-import { createRef, useContext, useRef, useState } from "react";
+import { useContext, useState } from "react";
 import { ClientContext } from "./providers/client";
-import ArrowDown from "./components/icons/ArrowDown";
-import { ClientEvent, EventEmitterEvents, EventType, MatrixEvent, MatrixEventEvent, Room, RoomType } from "matrix-js-sdk";
+import { ClientEvent, Room } from "matrix-js-sdk";
 import Sidebar from "./components/Sidebar";
-import Message from "./components/Message";
 import Spinner from "./components/Spinner";
 import MessageWindow from "./components/MessageWindow";
-import InputBar from "./components/InputBar";
 import { RoomContext } from "./providers/room";
-
 
 const sortRooms = (prev: Room, next: Room) => {
   const prevEvents = prev.getLiveTimeline().getEvents();
@@ -37,20 +26,20 @@ const sortRooms = (prev: Room, next: Room) => {
 
 const App = () => {
   const client = useContext(ClientContext);
-  const { currentRoom, setCurrentRoom } = useContext(RoomContext)!;
+  const { currentRoom } = useContext(RoomContext)!;
   const [rooms, setRooms] = useState<Room[] | null>(null);
 
-  client.on(ClientEvent.Room, () => setRooms(client.getRooms()))
+  client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
 
   if (!rooms) {
-    return <Spinner />
+    return <Spinner />;
   }
 
   const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
 
   return (
     <div className="flex">
-      <Sidebar rooms={sortedRooms} setCurrentRoom={setCurrentRoom} />
+      <Sidebar rooms={sortedRooms} />
       {currentRoom ? (
         <MessageWindow currentRoom={currentRoom} />
       ) : (

@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { DisplayedMember, fallbackMxcUrlToHttp } from ".";
 import { ClientContext } from "../../providers/client";
+import { RoomContext } from "../../providers/room";
 
 const UserChip = ({
   member,
@@ -11,10 +12,12 @@ const UserChip = ({
 }) => {
   const client = useContext(ClientContext);
   const src = fallbackMxcUrlToHttp(client, member.avatar_url);
+  const { setCurrentRoom } = useContext(RoomContext)!;
 
   const createRoom = () => {
     closeModal();
-    client.createRoom({ is_direct: true, invite: [member.user_id] });
+    client.createRoom({ is_direct: true, invite: [member.user_id] })
+      .then(({ room_id }) => setCurrentRoom(client.getRooms().find(room => room.roomId === room_id)!));
   };
 
   return (

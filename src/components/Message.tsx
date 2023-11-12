@@ -59,6 +59,12 @@ export const DateMessage = ({ date }: { date: Date }) => {
 export const JoinMessage = ({ message }: { message: MatrixEvent }) => {
   const client = useContext(ClientContext);
 
+  const content = message.getPrevContent().displayname ? (
+    `${message.getPrevContent().displayname} changed their display name to ${message.getContent().displayname}`
+  ) : (
+    `${message.getContent().displayname} joined the room`
+  );
+
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
       <li className="flex content-center gap-2">
@@ -76,7 +82,7 @@ export const JoinMessage = ({ message }: { message: MatrixEvent }) => {
           className="object-cover h-16 w-16 rounded-full self-center border-2"
         />
         <div className="flex flex-col justify-center">
-          <p>{`${message.getPrevContent().displayname} changed their display name to ${message.getContent().displayname}`}</p>
+          <p>{content}</p>
         </div>
       </li>
     </div>

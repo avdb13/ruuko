@@ -2,6 +2,7 @@ import { IPublicRoomsChunkRoom } from "matrix-js-sdk";
 import { useContext } from "react";
 import { ClientContext } from "../../providers/client";
 import { fallbackMxcUrlToHttp } from ".";
+import { RoomContext } from "../../providers/room";
 
 const RoomChip = ({
   room,
@@ -11,11 +12,13 @@ const RoomChip = ({
   closeModal: () => void;
 }) => {
   const client = useContext(ClientContext);
+  const { setCurrentRoom } = useContext(RoomContext)!;
+
   const src = fallbackMxcUrlToHttp(client, room.avatar_url);
 
   const joinRoom = () => {
     closeModal();
-    client.joinRoom(room.room_id);
+    client.joinRoom(room.room_id).then(room => setCurrentRoom(room));
   };
 
   return (

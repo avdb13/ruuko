@@ -1,4 +1,4 @@
-import { EventType, MatrixEvent, Room, RoomEvent } from "matrix-js-sdk";
+import { MatrixEvent, Room, RoomEvent } from "matrix-js-sdk";
 import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useRef, useState } from "react";

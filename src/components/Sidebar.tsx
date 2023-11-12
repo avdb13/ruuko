@@ -1,8 +1,6 @@
 import {
   IPublicRoomsChunkRoom,
-  MatrixClient,
   Room,
-  RoomMember,
 } from "matrix-js-sdk";
 import {
   useState,
@@ -18,6 +16,7 @@ import { ClientContext } from "../providers/client";
 import { DisplayedMember } from "./chips";
 import UserChip from "./chips/User";
 import RoomChip from "./chips/Room";
+import { RoomContext } from "../providers/room";
 
 const roomToAvatarUrl = (room: Room, userId: string) =>
   room.getMembers().length <= 2
@@ -29,12 +28,11 @@ const roomToAvatarUrl = (room: Room, userId: string) =>
 
 const RoomIconWidget = ({
   room,
-  setCurrentRoom,
 }: {
   room: Room;
-  setCurrentRoom: (_: Room) => void;
 }) => {
   const client = useContext(ClientContext);
+  const { setCurrentRoom } = useContext(RoomContext)!;
 
   return (
     <button onClick={() => setCurrentRoom(room)}>
@@ -49,15 +47,14 @@ const RoomIconWidget = ({
 
 const RoomWidget = ({
   room,
-  setCurrentRoom,
 }: {
   room: Room;
-  setCurrentRoom: (_: Room) => void;
 }) => {
+  const client = useContext(ClientContext);
+  const { setCurrentRoom } = useContext(RoomContext)!;
+
   const events = room.getLiveTimeline().getEvents();
   const latestEvent = events[events.length - 1];
-
-  const client = useContext(ClientContext);
 
   return (
     <button
@@ -86,24 +83,22 @@ const RoomWidget = ({
 const RoomList = ({
   sidebarWidth,
   rooms,
-  setCurrentRoom,
 }: {
   sidebarWidth: number;
   rooms: Room[];
-  setCurrentRoom: (_: Room) => void;
 }) => {
   return (
     <>
       {sidebarWidth < 120 ? (
         <div className="flex flex-col gap-[10px] items-center">
           {rooms.map((room) => (
-            <RoomIconWidget room={room} setCurrentRoom={setCurrentRoom} />
+            <RoomIconWidget room={room} />
           ))}
         </div>
       ) : (
         <div>
           {rooms.map((room) => (
-            <RoomWidget room={room} setCurrentRoom={setCurrentRoom} />
+            <RoomWidget room={room} />
           ))}
         </div>
       )}
@@ -114,8 +109,9 @@ const RoomList = ({
 // temporary solution
 type ModalType = "friendModal" | "publicRoomModal";
 
-const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps>, setCurrentRoom: () => void }) => {
+const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   const client = useContext(ClientContext);
+
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<DisplayedMember[] | null>(null);
   client.searchUserDirectory({ term }).then((resp) => setResult(resp.results));
@@ -148,10 +144,12 @@ const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps>, setCurrentRoom: 
   );
 };
 
-const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps>, setCurrentRoom: () => void }) => {
+const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   const client = useContext(ClientContext);
+
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<IPublicRoomsChunkRoom[] | null>(null);
+
   client
     .publicRooms({
       // server: "https://matrix.org",
@@ -189,7 +187,7 @@ const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps>, setCurrentRo
 };
 
 const Togglable = (
-  props: PropsWithChildren<{ title: string; modalType: ModalType, setCurrentRoom: () => void }>,
+  props: PropsWithChildren<{ title: string; modalType: ModalType }>,
 ) => {
   const [toggled, setToggled] = useState(true);
   const degrees = toggled ? "rotate-90" : "rotate-270";
@@ -198,9 +196,9 @@ const Togglable = (
   return (
     <div>
       {props.modalType === "friendModal" ? (
-        <FriendModal modalRef={modalRef} setCurrentRoom={setCurrentRoom} />
+        <FriendModal modalRef={modalRef} />
       ) : (
-        <PublicRoomModal modalRef={modalRef} setCurrentRoom={setCurrentRoom} />
+        <PublicRoomModal modalRef={modalRef} />
       )}
       <div className="flex justify-between">
         <div className="flex gap-2">
@@ -220,10 +218,8 @@ const Togglable = (
 
 const Sidebar = ({
   rooms,
-  setCurrentRoom,
 }: {
   rooms: Room[];
-  setCurrentRoom: (_: Room) => void;
 }) => {
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [isResizing, setIsResizing] = useState(false);
@@ -268,22 +264,18 @@ const Sidebar = ({
         <Togglable
           title={sidebarWidth < 120 ? "" : "people"}
           modalType="friendModal"
-          setCurrentRoom={setCurrentRoom}
         >
           <RoomList
             rooms={rooms.filter((r) => r.getMembers().length <= 2)}
-            setCurrentRoom={setCurrentRoom}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
         <Togglable
           title={sidebarWidth < 120 ? "" : "public rooms"}
           modalType="publicRoomModal"
-          setCurrentRoom={setCurrentRoom}
         >
           <RoomList
             rooms={rooms.filter((r) => r.getMembers().length > 2)}
-            setCurrentRoom={setCurrentRoom}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>

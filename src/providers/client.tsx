@@ -1,4 +1,4 @@
-import { EventEmitterEvents, IndexedDBStore, MatrixClient, MatrixEvent, MatrixEventEvent, SyncState, createClient } from "matrix-js-sdk";
+import { IndexedDBStore, MatrixClient, createClient } from "matrix-js-sdk";
 import {
   PropsWithChildren,
   createContext,
