@@ -14,6 +14,7 @@ import Message from "./components/Message";
 import Spinner from "./components/Spinner";
 import MessageWindow from "./components/MessageWindow";
 import InputBar from "./components/InputBar";
+import { RoomContext } from "./providers/room";
 
 
 const sortRooms = (prev: Room, next: Room) => {
@@ -36,8 +37,8 @@ const sortRooms = (prev: Room, next: Room) => {
 
 const App = () => {
   const client = useContext(ClientContext);
+  const { currentRoom, setCurrentRoom } = useContext(RoomContext)!;
   const [rooms, setRooms] = useState<Room[] | null>(null);
-  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
 
   client.on(ClientEvent.Room, () => setRooms(client.getRooms()))
 

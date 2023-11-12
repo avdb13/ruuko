@@ -114,7 +114,7 @@ const RoomList = ({
 // temporary solution
 type ModalType = "friendModal" | "publicRoomModal";
 
-const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
+const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps>, setCurrentRoom: () => void }) => {
   const client = useContext(ClientContext);
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<DisplayedMember[] | null>(null);
@@ -148,7 +148,7 @@ const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   );
 };
 
-const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
+const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps>, setCurrentRoom: () => void }) => {
   const client = useContext(ClientContext);
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<IPublicRoomsChunkRoom[] | null>(null);
@@ -189,7 +189,7 @@ const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
 };
 
 const Togglable = (
-  props: PropsWithChildren<{ title: string; modalType: ModalType }>,
+  props: PropsWithChildren<{ title: string; modalType: ModalType, setCurrentRoom: () => void }>,
 ) => {
   const [toggled, setToggled] = useState(true);
   const degrees = toggled ? "rotate-90" : "rotate-270";
@@ -198,9 +198,9 @@ const Togglable = (
   return (
     <div>
       {props.modalType === "friendModal" ? (
-        <FriendModal modalRef={modalRef} />
+        <FriendModal modalRef={modalRef} setCurrentRoom={setCurrentRoom} />
       ) : (
-        <PublicRoomModal modalRef={modalRef} />
+        <PublicRoomModal modalRef={modalRef} setCurrentRoom={setCurrentRoom} />
       )}
       <div className="flex justify-between">
         <div className="flex gap-2">
@@ -268,6 +268,7 @@ const Sidebar = ({
         <Togglable
           title={sidebarWidth < 120 ? "" : "people"}
           modalType="friendModal"
+          setCurrentRoom={setCurrentRoom}
         >
           <RoomList
             rooms={rooms.filter((r) => r.getMembers().length <= 2)}
@@ -278,6 +279,7 @@ const Sidebar = ({
         <Togglable
           title={sidebarWidth < 120 ? "" : "public rooms"}
           modalType="publicRoomModal"
+          setCurrentRoom={setCurrentRoom}
         >
           <RoomList
             rooms={rooms.filter((r) => r.getMembers().length > 2)}

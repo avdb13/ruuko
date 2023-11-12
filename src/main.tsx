@@ -4,11 +4,14 @@ import "./index.css";
 import ClientProvider from "./providers/client.tsx";
 import { CookiesProvider } from "react-cookie";
 import App from "./App.tsx";
+import RoomProvider from "./providers/room.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <CookiesProvider>
     <ClientProvider>
-      <App />
+      <RoomProvider>
+        <App />
+      </RoomProvider>
     </ClientProvider>
   </CookiesProvider>,
 );
