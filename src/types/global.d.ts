@@ -1,3 +1,5 @@
+import { MatrixEvent } from "matrix-js-sdk";
+
 export {}
 
 declare global {
@@ -11,5 +13,9 @@ declare global {
 
   interface ModalProps {
     toggleVisibility: () => void;
+  }
+
+  interface ExtendedEvent extends MatrixEvent {
+    annotations?: MatrixEvent[];
   }
 }
