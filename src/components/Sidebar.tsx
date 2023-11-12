@@ -15,6 +15,9 @@ import {
 } from "react";
 import Modal from "./Modal";
 import { ClientContext } from "../providers/client";
+import { DisplayedMember } from "./chips";
+import UserChip from "./chips/User";
+import RoomChip from "./chips/Room";
 
 const roomToAvatarUrl = (room: Room, userId: string) =>
   room.getMembers().length <= 2
@@ -108,11 +111,8 @@ const RoomList = ({
   );
 };
 
-interface DisplayedMember {
-  user_id: string;
-  avatar_url?: string;
-  display_name?: string;
-}
+// temporary solution
+type ModalType = "friendModal" | "publicRoomModal";
 
 const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   const client = useContext(ClientContext);
@@ -187,73 +187,6 @@ const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
     </Modal>
   );
 };
-
-// make this only trigger if no image can be loaded for the user's homeserver
-const fallbackMxcUrlToHttp = (client: MatrixClient, url?: string) => {
-  const originalUrl = url
-    ? client.mxcUrlToHttp(url, 80, 80, "scale", true) || ""
-    : "";
-  return originalUrl.replace("matrix.envs.net", "matrix.org");
-};
-
-const UserChip = ({
-  member,
-  closeModal,
-}: {
-  member: DisplayedMember;
-  closeModal: () => void;
-}) => {
-  const client = useContext(ClientContext);
-  const src = fallbackMxcUrlToHttp(client, member.avatar_url);
-
-  const createRoom = () => {
-    closeModal();
-    client.createRoom({ is_direct: true, invite: [member.user_id] });
-  };
-
-  return (
-    <button
-      className="flex border-2 p-2 items-center"
-      key={member.user_id}
-      onClick={createRoom}
-    >
-      <img src={src} alt={member.user_id} className="rounded-full w-8 h-8" />
-      <p className="px-1">{member.display_name}</p>
-      <p className="text-zinc-500">{member.user_id}</p>
-    </button>
-  );
-};
-
-const RoomChip = ({
-  room,
-  closeModal,
-}: {
-  room: IPublicRoomsChunkRoom;
-  closeModal: () => void;
-}) => {
-  const client = useContext(ClientContext);
-  const src = fallbackMxcUrlToHttp(client, room.avatar_url);
-
-  const joinRoom = () => {
-    closeModal();
-    client.joinRoom(room.room_id);
-  };
-
-  return (
-    <button
-      className="flex border-2 p-2 items-center"
-      key={room.room_id}
-      onClick={joinRoom}
-    >
-      <img src={src} alt={room.name} className="rounded-full w-8 h-8" />
-      <p className="px-1">{room.name}</p>
-      <p className="text-zinc-500 truncate">{room.topic}</p>
-    </button>
-  );
-};
-
-// temporary solution
-type ModalType = "friendModal" | "publicRoomModal";
 
 const Togglable = (
   props: PropsWithChildren<{ title: string; modalType: ModalType }>,
