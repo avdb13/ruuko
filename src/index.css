@@ -4,7 +4,7 @@
 
 @layer utilities {
   .scrollbar::-webkit-scrollbar {
-    background-color: black;
+    background-color: white;
     width: 10px;
   }
 
@@ -18,7 +18,7 @@
     border-radius: 100vh;
   }
   .scrollbar::-webkit-scrollbar-thumb:hover {
-    background: purple;
+    background: #d4d4d8;
     border-radius: 100vh;
   }
 
