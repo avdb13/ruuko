@@ -17,6 +17,7 @@ import { DisplayedMember } from "./chips";
 import UserChip from "./chips/User";
 import RoomChip from "./chips/Room";
 import { RoomContext } from "../providers/room";
+import formatEvent from "../lib/eventFormatter";
 
 const roomToAvatarUrl = (room: Room, userId: string) =>
   room.getMembers().length <= 2
@@ -55,11 +56,6 @@ const RoomWidget = ({
 
   const events = room.getLiveTimeline().getEvents();
   const latestEvent = events[events.length - 1];
-  const latestMessage = latestEvent?.getContent().body ? (room.getMembers().length <= 2 ? (
-    latestEvent?.getContent().body
-  ) : (
-    latestEvent?.getSender() + ": " + latestEvent.getContent().body
-  )) : null;
 
   return (
     <button
@@ -74,7 +70,7 @@ const RoomWidget = ({
       />
       <div className="flex flex-col items-start bg-green-200 min-w-0">
         <p className="max-w-full truncate">{room.name}</p>
-        <p className="max-w-full truncate">{latestMessage}</p>
+        <p className="max-w-full truncate">{latestEvent ? formatEvent(latestEvent, room) : null}</p>
       </div>
     </button>
   );
