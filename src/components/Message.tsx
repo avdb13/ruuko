@@ -1,10 +1,10 @@
 import { EventType, MatrixEvent, MsgType } from "matrix-js-sdk";
+import { extractStyles } from "../lib/helpers";
 import { useContext } from "react";
 import { ClientContext } from "../providers/client";
 import formatEvent, { findEventType } from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
-import { fallbackMxcUrlToHttp } from "./chips";
 
 const Message = ({ event, annotations }: { event: MatrixEvent, annotations: MatrixEvent[] }) => {
   const eventType = findEventType(event);
@@ -57,6 +57,12 @@ const StateMessage = ({ event }: { event: MatrixEvent }) => {
 const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: MatrixEvent[] }) => {
   const client = useContext(ClientContext);
 
+  const isReply = !!event.getContent()["m.relates_to"]?.["m.in_reply_to"];
+  if (isReply) {
+    extractStyles(event.getContent().formatted_body);
+  }
+  const inReplyTo = <p className="border-l-2 border-slate-400 px-1">hello</p>;
+
   const src =
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
     "/public/anonymous.jpg";
@@ -78,6 +84,7 @@ const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: 
           <div className="flex gap-4">
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
           </div>
+          {inReplyTo}
           {content}
           <div className="flex gap-2">
             {annotations ? annotations.map(annotation => annotation ? <Annotation annotation={annotation} /> : null) : null}
