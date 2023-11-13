@@ -30,12 +30,11 @@ const addAnnotation = (
 
 const eventsToMap = (events: MatrixEvent[]): Map<string, ExtendedEvent> => {
   return new Map(
-    events.map((e) => [e.getId()!, { inner: e } as ExtendedEvent]),
+    events.map((e) => [e.getId()!, e as ExtendedEvent]),
   );
 };
 
-const mapToEvents = (map: Map<string, ExtendedEvent>) =>
-  Object.values(map) as ExtendedEvent[];
+const mapToEvents = (map: Map<string, ExtendedEvent>) => Array.from(map.values());
 
 const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
   const client = useContext(ClientContext);
@@ -65,7 +64,7 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
   }
 
   client.on(RoomEvent.Timeline, (originalEvent, room, startOfTimeline) => {
-    const event = { inner: originalEvent } as ExtendedEvent;
+    const event = originalEvent as ExtendedEvent;
 
     const eventArr = mapToEvents(events);
     // weird bug that gets triggered the message twice
@@ -74,12 +73,12 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
     }
 
     if (room?.roomId === currentRoom.roomId) {
-      console.log("event: ", event.inner.getContent().membership);
+      console.log("event: ", event.getContent().membership);
 
-      if (isAnnotation(event.inner)) {
+      if (isAnnotation(event)) {
         addAnnotation(event, events, setEvents);
       } else {
-        setEvents({ ...events, [event.inner.getId()!]: event });
+        setEvents({ ...events, [event.getId()!]: event });
       }
     }
   });
@@ -104,14 +103,13 @@ export const MessagesWithDayBreak = ({
   events,
 }: {
   events: ExtendedEvent[];
-}) => {
-  return events.map((event, i) => {
+}) => events.map((event, i) => {
     if (i === 0) {
       return <Message event={event} key={i} />;
     } else {
       const [messageTs, prevMessageTs] = [
-        new Date(event.inner.getTs()),
-        new Date(events[i - 1]!.inner.getTs()),
+        new Date(event.getTs()),
+        new Date(events[i - 1]!.getTs()),
       ];
 
       return prevMessageTs.getDate() === messageTs.getDate() ? (
@@ -124,6 +122,5 @@ export const MessagesWithDayBreak = ({
       );
     }
   });
-};
 
 export default MessageWindow;

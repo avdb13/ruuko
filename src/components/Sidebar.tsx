@@ -88,7 +88,7 @@ const RoomList = ({
       {sidebarWidth < 120 ? (
         <div className="flex flex-col gap-[10px] items-center">
           {rooms.map((room) => (
-            <RoomIconWidget room={room} />
+            <RoomIconWidget room={room} key={room.roomId} />
           ))}
         </div>
       ) : (

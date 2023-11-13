@@ -5,7 +5,8 @@ import formatEvent, { findEventType } from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
 
-const Message = ({ event }: { event: MatrixEvent }) => {
+const Message = ({ event }: { event: ExtendedEvent }) => {
+  console.log(event);
   const eventType = findEventType(event);
 
   switch (eventType) {
@@ -25,7 +26,7 @@ const Message = ({ event }: { event: MatrixEvent }) => {
   }
 };
 
-const StateMessage = ({ event }: { event: MatrixEvent }) => {
+const StateMessage = ({ event }: { event: ExtendedEvent }) => {
   const client = useContext(ClientContext);
   const { currentRoom } = useContext(RoomContext)!;
 
@@ -53,8 +54,10 @@ const StateMessage = ({ event }: { event: MatrixEvent }) => {
   );
 };
 
-const TextMessage = ({ event }: { event: MatrixEvent }) => {
+const TextMessage = ({ event }: { event: ExtendedEvent }) => {
   const client = useContext(ClientContext);
+
+  console.log(event);
 
   const src =
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
