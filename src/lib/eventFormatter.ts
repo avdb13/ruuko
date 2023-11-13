@@ -61,7 +61,6 @@ const formatEvent = (event: MatrixEvent, members: number) => {
 }
 
 export const findEventType = (event: MatrixEvent): eventType => {
-
   switch (true) {
     case isText(event):
       return "text"

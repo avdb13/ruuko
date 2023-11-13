@@ -1,9 +1,10 @@
-import { MatrixEvent } from "matrix-js-sdk";
+import { EventType, MatrixEvent, MsgType } from "matrix-js-sdk";
 import { useContext } from "react";
 import { ClientContext } from "../providers/client";
 import formatEvent, { findEventType } from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
+import { fallbackMxcUrlToHttp } from "./chips";
 
 const Message = ({ event, annotations }: { event: MatrixEvent, annotations: MatrixEvent[] }) => {
   const eventType = findEventType(event);
@@ -60,6 +61,12 @@ const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: 
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
     "/public/anonymous.jpg";
 
+  const content = event.getContent().msgtype === MsgType.Image ? (
+    <img src={client.mxcUrlToHttp(event.getContent().url)!} alt={event.getContent().body} />
+  ) : (
+    <p className="whitespace-normal break-all">{event.getContent().body}</p>
+  );
+
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
       <li className="flex content-center gap-2">
@@ -70,9 +77,8 @@ const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: 
         <div className="flex flex-col">
           <div className="flex gap-4">
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
-            <p>{event.getId()}</p>
           </div>
-          <p className="whitespace-normal break-all">{event.getContent().body}</p>
+          {content}
           <div className="flex gap-2">
             {annotations ? annotations.map(annotation => annotation ? <Annotation annotation={annotation} /> : null) : null}
           </div>
@@ -118,7 +124,7 @@ export const JoinMessage = ({ event }: { event: MatrixEvent }) => {
           className="object-cover h-16 w-16 rounded-full self-center border-2"
         />
         <div className="flex flex-col justify-center">
-          <p>{content}</p>
+          {content}
         </div>
       </li>
     </div>
