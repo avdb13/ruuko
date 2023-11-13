@@ -252,7 +252,7 @@ const Sidebar = ({
   return (
     <>
       <div
-        className="flex flex-col shrink-0 grow-0 basis-1/2 bg-green-100 h-screen overflow-y-auto scrollbar px-2"
+        className="flex flex-col shrink-0 grow-0 basis-1/2 bg-green-100 h-screen overflow-y-auto scrollbar px-2 w-min-0"
         onMouseDown={(e) => e.preventDefault()}
         style={{ flexBasis: sidebarWidth }}
         ref={sidebarRef}

@@ -6,7 +6,6 @@ import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
 
 const Message = ({ event }: { event: ExtendedEvent }) => {
-  console.log(event);
   const eventType = findEventType(event);
 
   switch (eventType) {
@@ -46,7 +45,7 @@ const StateMessage = ({ event }: { event: ExtendedEvent }) => {
           }
           className="object-cover h-8 w-8 rounded-full self-center border-2"
         />
-        <p className="italic">
+        <p className="italic break-all">
           {formatEvent(event, currentRoom!.getMembers().length)}
         </p>
       </li>
@@ -57,13 +56,11 @@ const StateMessage = ({ event }: { event: ExtendedEvent }) => {
 const TextMessage = ({ event }: { event: ExtendedEvent }) => {
   const client = useContext(ClientContext);
 
-  console.log(event);
-
   const src =
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
     "/public/anonymous.jpg";
 
-  const annotations = ["hello", "world"];
+  const annotations = event.annotations?.map(a => a.getContent()["m.relates_to"]?.key);
 
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
@@ -77,9 +74,9 @@ const TextMessage = ({ event }: { event: ExtendedEvent }) => {
             <p>{event.getSender()}</p>
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
           </div>
-          <p>{event.getContent().body}</p>
+          <p className="whitespace-normal break-all">{event.getContent().body}</p>
           <div className="flex gap-2">
-            {annotations.map(annotation => <Annotation annotation={annotation} />)}
+            {annotations ? annotations.map(annotation => annotation ? <Annotation annotation={annotation} /> : null) : null}
           </div>
         </div>
       </li>

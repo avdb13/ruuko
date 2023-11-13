@@ -76,6 +76,8 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
       console.log("event: ", event.getContent().membership);
 
       if (isAnnotation(event)) {
+        console.log(event.getContent()["m.relates_to"]?.key, event.getContent()["m.relates_to"]?.event_id);
+
         addAnnotation(event, events, setEvents);
       } else {
         setEvents({ ...events, [event.getId()!]: event });
@@ -84,7 +86,7 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
   });
 
   return (
-    <div className="flex flex-1 flex-col max-h-screen shrink basis-1/2 min-h-full justify-between">
+    <div className="flex flex-col max-h-screen basis-1/2 justify-between grow">
       <div className="bg-slate-600" id="header">
         <p className="flex justify-center">{currentRoom.name}</p>
       </div>
