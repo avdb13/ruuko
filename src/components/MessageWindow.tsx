@@ -5,40 +5,17 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 import { isAnnotation } from "../lib/eventFormatter";
 
-const addAnnotation = (
-  event: ExtendedEvent,
-  events: Map<string, ExtendedEvent>,
-  setEvents: (_: Map<string, ExtendedEvent>) => void,
-) => {
-  const id = event.getContent()["m.relates_to"]?.event_id;
-  const relatedEvent = events.get(id!)!;
-
-  const newEvent: ExtendedEvent = {
-    ...relatedEvent,
-    annotations: [
-      ...(relatedEvent.annotations || []),
-      event as MatrixEvent,
-    ],
-  };
-
-  const newEvents: Map<string, ExtendedEvent> = {
-    ...events,
-    [relatedEvent.getId()!]: newEvent,
-  };
-  setEvents(newEvents);
+const arrToMap = (events: MatrixEvent[]): Map<string, MatrixEvent> => {
+  return new Map(events.map((e) => [e.getId()!, e as MatrixEvent]));
 };
 
-const eventsToMap = (events: MatrixEvent[]): Map<string, ExtendedEvent> => {
-  return new Map(
-    events.map((e) => [e.getId()!, e as ExtendedEvent]),
-  );
-};
-
-const mapToEvents = (map: Map<string, ExtendedEvent>) => Array.from(map.values());
+const mapToArr = (map: Map<string, MatrixEvent>) =>
+  Array.from(map.values());
 
 const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
   const client = useContext(ClientContext);
-  const [events, setEvents] = useState<Map<string, ExtendedEvent>>(new Map());
+  const [events, setEvents] = useState<Map<string, MatrixEvent>>(new Map());
+  const [annotations, setAnnotations] = useState<Map<string, MatrixEvent[]>>(new Map());
   const bottomDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,7 +23,20 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
     client
       .scrollback(currentRoom, Number.MAX_SAFE_INTEGER)
       .then((scrollback) => {
-        setEvents(eventsToMap(scrollback.getLiveTimeline().getEvents()));
+        const timeline = scrollback.getLiveTimeline().getEvents();
+        const events = timeline.filter(e => !isAnnotation(e))
+        const annotationsArr = timeline.filter(isAnnotation);
+
+        const eventMap = arrToMap(events);
+        setEvents(eventMap);
+
+        annotationsArr.forEach((annotation) => {
+          const key = annotation.getContent()["m.relates_to"]?.event_id;
+          console.log(annotations.get(key!)!);
+          const newAnnotations: MatrixEvent[] = [...(annotations.get(key!) || []), annotation];
+
+          setAnnotations(annotations.set(key!, newAnnotations))
+        });
       });
   }, [currentRoom]);
 
@@ -64,9 +54,9 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
   }
 
   client.on(RoomEvent.Timeline, (originalEvent, room, startOfTimeline) => {
-    const event = originalEvent as ExtendedEvent;
+    const event = originalEvent as MatrixEvent;
 
-    const eventArr = mapToEvents(events);
+    const eventArr = mapToArr(events);
     // weird bug that gets triggered the message twice
     if (startOfTimeline || eventArr[eventArr.length - 1] === event) {
       return;
@@ -74,14 +64,6 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
 
     if (room?.roomId === currentRoom.roomId) {
       console.log("event: ", event.getContent().membership);
-
-      if (isAnnotation(event)) {
-        console.log(event.getContent()["m.relates_to"]?.key, event.getContent()["m.relates_to"]?.event_id);
-
-        addAnnotation(event, events, setEvents);
-      } else {
-        setEvents({ ...events, [event.getId()!]: event });
-      }
     }
   });
 
@@ -92,7 +74,7 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
       </div>
       <div className="overflow-y-auto">
         <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
-          <MessagesWithDayBreak events={mapToEvents(events)} />
+          <MessagesWithDayBreak events={mapToArr(events)} annotations={annotations} />
         </div>
         <InputBar roomId={currentRoom.roomId} />
         <div id="autoscroll-bottom" ref={bottomDivRef}></div>
@@ -101,13 +83,10 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
   );
 };
 
-export const MessagesWithDayBreak = ({
-  events,
-}: {
-  events: ExtendedEvent[];
-}) => events.map((event, i) => {
+export const MessagesWithDayBreak = ({ events, annotations }: { events: MatrixEvent[], annotations: Map<string, MatrixEvent[]> }) => {
+  return events.map((event, i) => {
     if (i === 0) {
-      return <Message event={event} key={i} />;
+      return <Message event={event} key={i} annotations={annotations.get(event.getId()!)} />;
     } else {
       const [messageTs, prevMessageTs] = [
         new Date(event.getTs()),
@@ -115,14 +94,15 @@ export const MessagesWithDayBreak = ({
       ];
 
       return prevMessageTs.getDate() === messageTs.getDate() ? (
-        <Message event={event} key={i} />
+        <Message event={event} key={i} annotations={annotations.get(event.getId()!)} />
       ) : (
         <>
           <DateMessage date={messageTs} />
-          <Message event={event} key={i} />
+          <Message event={event} key={i} annotations={annotations.get(event.getId()!)} />
         </>
       );
     }
   });
+}
 
 export default MessageWindow;

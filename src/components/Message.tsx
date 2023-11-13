@@ -5,12 +5,12 @@ import formatEvent, { findEventType } from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
 
-const Message = ({ event }: { event: ExtendedEvent }) => {
+const Message = ({ event, annotations }: { event: MatrixEvent, annotations: MatrixEvent[] }) => {
   const eventType = findEventType(event);
 
   switch (eventType) {
     case "text":
-      return <TextMessage event={event} />;
+      return <TextMessage event={event} annotations={annotations} />;
     case "annotation":
     case "join":
     case "leave":
@@ -25,7 +25,7 @@ const Message = ({ event }: { event: ExtendedEvent }) => {
   }
 };
 
-const StateMessage = ({ event }: { event: ExtendedEvent }) => {
+const StateMessage = ({ event }: { event: MatrixEvent }) => {
   const client = useContext(ClientContext);
   const { currentRoom } = useContext(RoomContext)!;
 
@@ -53,14 +53,12 @@ const StateMessage = ({ event }: { event: ExtendedEvent }) => {
   );
 };
 
-const TextMessage = ({ event }: { event: ExtendedEvent }) => {
+const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: MatrixEvent[] }) => {
   const client = useContext(ClientContext);
 
   const src =
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
     "/public/anonymous.jpg";
-
-  const annotations = event.annotations?.map(a => a.getContent()["m.relates_to"]?.key);
 
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
@@ -71,8 +69,8 @@ const TextMessage = ({ event }: { event: ExtendedEvent }) => {
         />
         <div className="flex flex-col">
           <div className="flex gap-4">
-            <p>{event.getSender()}</p>
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
+            <p>{event.getId()}</p>
           </div>
           <p className="whitespace-normal break-all">{event.getContent().body}</p>
           <div className="flex gap-2">

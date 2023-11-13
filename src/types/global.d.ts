@@ -14,8 +14,4 @@ declare global {
   interface ModalProps {
     toggleVisibility: () => void;
   }
-
-  interface ExtendedEvent extends MatrixEvent {
-    annotations?: MatrixEvent[];
-  }
 }
