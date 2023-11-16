@@ -67,10 +67,18 @@ const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: 
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
     "/public/anonymous.jpg";
 
+  console.log(event.getContent());
+
   const content = event.getContent().msgtype === MsgType.Image ? (
+    // normal image
     <img src={client.mxcUrlToHttp(event.getContent().url)!} alt={event.getContent().body} />
   ) : (
-    <p className="whitespace-normal break-all">{event.getContent().body}</p>
+    event.getContent().url ? (
+      // custom sticker
+      <img src={client.mxcUrlToHttp(event.getContent().url)!} alt={event.getContent().body} className="h-16 w-16" />
+    ) : (
+      <p className="whitespace-normal break-all">{event.getContent().body}</p>
+    )
   );
 
   return (
