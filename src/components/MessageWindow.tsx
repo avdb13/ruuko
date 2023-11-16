@@ -20,6 +20,7 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
 
   useEffect(() => {
     console.log("useEffect");
+
     client
       .scrollback(currentRoom, Number.MAX_SAFE_INTEGER)
       .then((scrollback) => {
@@ -28,11 +29,11 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
         const annotationsArr = timeline.filter(isAnnotation);
 
         const eventMap = arrToMap(events);
+        setAnnotations(new Map());
         setEvents(eventMap);
 
         annotationsArr.forEach((annotation) => {
           const key = annotation.getContent()["m.relates_to"]?.event_id;
-          console.log(annotations.get(key!)!);
           const newAnnotations: MatrixEvent[] = [...(annotations.get(key!) || []), annotation];
 
           setAnnotations(annotations.set(key!, newAnnotations))

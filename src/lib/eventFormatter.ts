@@ -1,4 +1,6 @@
-import { MatrixEvent, RelationType } from "matrix-js-sdk";
+import { IContent, MatrixEvent, MsgType, RelationType } from "matrix-js-sdk";
+import { useContext } from "react";
+import { ClientContext } from "../providers/client";
 
 type eventType = "text" | "annotation" | "join" | "leave" | "invite" | "displayNameChange" | "avatarChange" | "reply" | "edit" | "redaction" | "unimplemented"
 
@@ -76,6 +78,24 @@ export const findEventType = (event: MatrixEvent): eventType => {
       return "avatarChange"
     default:
       return "unimplemented"
+  }
+}
+
+export const findContentType = (content: IContent) => {
+  const client = useContext(ClientContext);
+
+  switch (content.msgtype) {
+    case MsgType.Text:
+      return content.url ? <p className="whitespace-normal break-all">{content.body}</p> : 
+        <img src={client.mxcUrlToHttp(content.url)!} alt={content.body} className="h-16 w-16" />
+    case MsgType.Image:
+      return <img src={client.mxcUrlToHttp(content.url)!} alt={content.body} />
+    default:
+      return content.format === "org.matrix.custom.html" ? (
+        <div dangerouslySetInnerHTML={{__html: content.body }} />
+      ) : (
+        <p>`unsupported: ${content}`</p>
+      )
   }
 }
 

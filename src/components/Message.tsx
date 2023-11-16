@@ -57,6 +57,8 @@ const StateMessage = ({ event }: { event: MatrixEvent }) => {
 const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: MatrixEvent[] }) => {
   const client = useContext(ClientContext);
 
+  console.log(annotations);
+
   const isReply = !!event.getContent()["m.relates_to"]?.["m.in_reply_to"];
   if (isReply) {
     extractStyles(event.getContent().formatted_body);
@@ -77,7 +79,11 @@ const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: 
       // custom sticker
       <img src={client.mxcUrlToHttp(event.getContent().url)!} alt={event.getContent().body} className="h-16 w-16" />
     ) : (
-      <p className="whitespace-normal break-all">{event.getContent().body}</p>
+      event.getContent().format === "org.matrix.custom.html" ? (
+        event.getContent().body
+      ) : (
+        <p className="whitespace-normal break-all">{event.getContent().body}</p>
+      )
     )
   );
 
