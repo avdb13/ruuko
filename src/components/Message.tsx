@@ -1,12 +1,18 @@
-import { EventType, MatrixEvent, MsgType } from "matrix-js-sdk";
-import { extractStyles } from "../lib/helpers";
+import { EventType, IContent, MatrixEvent, MsgType } from "matrix-js-sdk";
+import { extractAttributes, extractStyles } from "../lib/helpers";
 import { useContext } from "react";
 import { ClientContext } from "../providers/client";
 import formatEvent, { findEventType } from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
 
-const Message = ({ event, annotations }: { event: MatrixEvent, annotations: MatrixEvent[] }) => {
+const Message = ({
+  event,
+  annotations,
+}: {
+  event: MatrixEvent;
+  annotations: MatrixEvent[];
+}) => {
   const eventType = findEventType(event);
 
   switch (eventType) {
@@ -54,10 +60,14 @@ const StateMessage = ({ event }: { event: MatrixEvent }) => {
   );
 };
 
-const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: MatrixEvent[] }) => {
+const TextMessage = ({
+  event,
+  annotations,
+}: {
+  event: MatrixEvent;
+  annotations: MatrixEvent[];
+}) => {
   const client = useContext(ClientContext);
-
-  console.log(annotations);
 
   const isReply = !!event.getContent()["m.relates_to"]?.["m.in_reply_to"];
   if (isReply) {
@@ -68,24 +78,6 @@ const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: 
   const src =
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
     "/public/anonymous.jpg";
-
-  console.log(event.getContent());
-
-  const content = event.getContent().msgtype === MsgType.Image ? (
-    // normal image
-    <img src={client.mxcUrlToHttp(event.getContent().url)!} alt={event.getContent().body} />
-  ) : (
-    event.getContent().url ? (
-      // custom sticker
-      <img src={client.mxcUrlToHttp(event.getContent().url)!} alt={event.getContent().body} className="h-16 w-16" />
-    ) : (
-      event.getContent().format === "org.matrix.custom.html" ? (
-        event.getContent().body
-      ) : (
-        <p className="whitespace-normal break-all">{event.getContent().body}</p>
-      )
-    )
-  );
 
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
@@ -99,9 +91,13 @@ const TextMessage = ({ event, annotations }: { event: MatrixEvent, annotations: 
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
           </div>
           {inReplyTo}
-          {content}
+          <ContentFormatter content={event.getContent()} />
           <div className="flex gap-2">
-            {annotations ? annotations.map(annotation => annotation ? <Annotation annotation={annotation} /> : null) : null}
+            {annotations
+              ? annotations.map((annotation) =>
+                  annotation ? <Annotation annotation={annotation} /> : null,
+                )
+              : null}
           </div>
         </div>
       </li>
@@ -144,12 +140,48 @@ export const JoinMessage = ({ event }: { event: MatrixEvent }) => {
           }
           className="object-cover h-16 w-16 rounded-full self-center border-2"
         />
-        <div className="flex flex-col justify-center">
-          {content}
-        </div>
+        <div className="flex flex-col justify-center">{content}</div>
       </li>
     </div>
   );
+};
+
+        // <ContentFormatter
+        //   content={{
+        //     url: content.body.match(/src\s*=\s*"(.+?)"/)[1],
+        //     body: content.body.match(/alt\s*=\s*"(.+?)"/)[1],
+        //   }}
+        // />
+const ContentFormatter = ({ content }: { content: IContent }) => {
+  const client = useContext(ClientContext);
+  const extractedAttributes = content.body ? extractAttributes(content.body, ["src", "alt"]) : null;
+
+  console.log(content.body);
+
+  switch (content.msgtype) {
+    case MsgType.Text:
+      return content.format === "org.matrix.custom.html" ? (
+        extractedAttributes ? (
+          <ContentFormatter content={{url: extractedAttributes.get("src"), body: extractedAttributes.get("alt") }} />
+        ) : null
+      ) : (
+        <p className="whitespace-normal break-all">{content.body}</p>
+      );
+    case MsgType.Image:
+      return <img src={client.mxcUrlToHttp(content.url)!} alt={content.body} />;
+    default:
+      console.log(content, client.mxcUrlToHttp(content.url)!);
+
+      return content.url ? (
+        <img
+          src={client.mxcUrlToHttp(content.url)!}
+          alt={content.body}
+          className="h-16 w-16"
+        />
+      ) : (
+        <p>`unsupported: ${JSON.stringify(content)}`</p>
+      );
+  }
 };
 
 export default Message;
