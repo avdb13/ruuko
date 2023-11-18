@@ -1,5 +1,5 @@
 import { EventType, IContent, MatrixEvent, MsgType } from "matrix-js-sdk";
-import { extractAttributes, extractStyles } from "../lib/helpers";
+import { extractAttributes, extractStyles, extractTags } from "../lib/helpers";
 import { useContext } from "react";
 import { ClientContext } from "../providers/client";
 import formatEvent, { findEventType } from "../lib/eventFormatter";
@@ -71,8 +71,9 @@ const TextMessage = ({
 
   const isReply = !!event.getContent()["m.relates_to"]?.["m.in_reply_to"];
   if (isReply) {
-    extractStyles(event.getContent().formatted_body);
+    console.log("reply: ", extractTags(event.getContent().formatted_body));
   }
+
   const inReplyTo = <p className="border-l-2 border-slate-400 px-1">hello</p>;
 
   const src =
@@ -156,7 +157,7 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
   const client = useContext(ClientContext);
   const extractedAttributes = content.body ? extractAttributes(content.body, ["src", "alt"]) : null;
 
-  console.log(content.body);
+  // console.log(content);
 
   switch (content.msgtype) {
     case MsgType.Text:
@@ -170,8 +171,6 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
     case MsgType.Image:
       return <img src={client.mxcUrlToHttp(content.url)!} alt={content.body} />;
     default:
-      console.log(content, client.mxcUrlToHttp(content.url)!);
-
       return content.url ? (
         <img
           src={client.mxcUrlToHttp(content.url)!}

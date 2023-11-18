@@ -1,14 +1,3 @@
-export const extractStyles = (s: string) => {
-  const parser = new DOMParser();
-  const parsed = parser.parseFromString(s, "text/html");
-  console.log(parsed.children);
-
-  // "<a href="https://matrix.to/#/!HqBdAJXpRQsKVFnAqI:envs.net/$InkoQB22fj0_4_i-537OnOA6jowcsAQTFUCumKFXOKc?via=envs.net&via=linuxistcool.de">
-  // In reply to
-  // </a> <a href="https://matrix.to/#/@m:linuxistcool.de">@m:linuxistcool.de</a>
-  // <br>I studied and got a job as a student"
-};
-
 export const extractAttributes = (
   s: string,
   attributes: Array<string>,
@@ -16,8 +5,33 @@ export const extractAttributes = (
   const matches = attributes.map((a) => {
     const match = s.match(new RegExp(`${a}s*=s*"(.+?)"`));
 
-    return match ? (match.every(m => !!m) ? [a, match[1]!] : null) : null;
+    return match ? (match.every((m) => !!m) ? [a, match[1]!] : null) : null;
   });
 
-  return matches.every(m => !!m) ? new Map(matches) : null;
+  return matches.every((m) => !!m) ? new Map(matches) : null;
+};
+
+interface TagContents {
+  in_reply_to: string;
+  message: string;
+}
+
+// keeping it easy for now, will see about adding the formatted body later
+export const extractTags = (s: string): TagContents | null => {
+  const end = s.lastIndexOf(">");
+  const message = [...s].slice(end + 1).join("");
+  const quote = [...s]
+    .slice(0, end)
+    .join("")
+    .match(/<blockquote>(.*?)<\/blockquote>/);
+
+  if (!quote || !quote[1]) {
+    return null;
+  }
+
+  const in_reply_to = [...quote[1]]
+    .slice(quote[1].lastIndexOf(">") + 1)
+    .join("");
+
+  return quote ? { message, in_reply_to } : null;
 };
