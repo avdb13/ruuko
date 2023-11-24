@@ -1,4 +1,4 @@
-import { ClientEvent, MatrixEvent, Room } from "matrix-js-sdk";
+import { ClientEvent, MatrixEvent, Room, RoomEvent } from "matrix-js-sdk";
 import {
   PropsWithChildren,
   createContext,
@@ -38,19 +38,36 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   useEffect(() => {
     setRooms(client.getRooms());
-    rooms.map((r) =>
-      client
-        .scrollback(r, Number.MAX_SAFE_INTEGER)
-        .then((scrollback) =>
-          setRoomEvents({
-            ...roomEvents,
-            [r.roomId]: scrollback.getLiveTimeline().getEvents(),
-          }),
-        ),
-    );
-  }, []);
+    if (rooms.length > 0) {
+      rooms.map((r) =>
+        client
+          .scrollback(r, Number.MAX_SAFE_INTEGER)
+          .then((scrollback) =>
+            setRoomEvents(
+              roomEvents.set(
+                r.roomId,
+                scrollback.getLiveTimeline().getEvents(),
+              ),
+            ),
+          ),
+      );
+    }
+  }, [rooms.length]);
 
   client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
+
+  client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
+    // weird bug that gets triggered the message twice
+    if (room) {
+      const currentRoomEvents = roomEvents.get(room.roomId)!;
+      if (startOfTimeline || currentRoomEvents[currentRoomEvents.length - 1] === event) {
+        return;
+      }
+
+      // check behavior later
+      setRoomEvents(roomEvents.set(room.roomId, [...currentRoomEvents, event]));
+    }
+  });
 
   return (
     <RoomContext.Provider value={roomState}>

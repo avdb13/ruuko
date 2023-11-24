@@ -19,6 +19,24 @@ import RoomChip from "./chips/Room";
 import { RoomContext } from "../providers/room";
 import formatEvent from "../lib/eventFormatter";
 
+const sortRooms = (prev: Room, next: Room) => {
+  const prevEvents = prev.getLiveTimeline().getEvents();
+  const nextEvents = next.getLiveTimeline().getEvents();
+
+  const prevLastEvent = prevEvents[prevEvents.length - 1];
+  const nextLastEvent = nextEvents[nextEvents.length - 1];
+
+  return prevLastEvent
+    ? nextLastEvent
+      ? nextLastEvent.getTs() < prevLastEvent.getTs()
+        ? 1
+        : nextLastEvent.getTs() > prevLastEvent.getTs()
+        ? -1
+        : 0
+      : 1
+    : -1;
+};
+
 const roomToAvatarUrl = (room: Room, userId: string) =>
   room.getMembers().length <= 2
     ? room
@@ -212,14 +230,13 @@ const Togglable = (
   );
 };
 
-const Sidebar = ({
-  rooms,
-}: {
-  rooms: Room[];
-}) => {
+const Sidebar = () => {
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [isResizing, setIsResizing] = useState(false);
+  const { rooms } = useContext(RoomContext)!;
+  const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
   const sidebarRef = useRef<HTMLDivElement | null>(null);
+
 
   const startResizing = useCallback(() => {
     setIsResizing(true);
@@ -248,7 +265,7 @@ const Sidebar = ({
       window.removeEventListener("mouseup", stopResizing);
     };
   }, [resize, stopResizing]);
-  
+
   return (
     <>
       <div
@@ -262,7 +279,7 @@ const Sidebar = ({
           modalType="friendModal"
         >
           <RoomList
-            rooms={rooms.filter((r) => r.getMembers().length <= 2)}
+            rooms={sortedRooms.filter((r) => r.getMembers().length <= 2)}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
@@ -271,7 +288,7 @@ const Sidebar = ({
           modalType="publicRoomModal"
         >
           <RoomList
-            rooms={rooms.filter((r) => r.getMembers().length > 2)}
+            rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>

@@ -1,6 +1,5 @@
-import { useContext, useState } from "react";
-import { ClientContext } from "./providers/client";
-import { ClientEvent, Room } from "matrix-js-sdk";
+import { useContext } from "react";
+import { Room } from "matrix-js-sdk";
 import Sidebar from "./components/Sidebar";
 import Spinner from "./components/Spinner";
 import MessageWindow from "./components/MessageWindow";
@@ -25,23 +24,19 @@ const sortRooms = (prev: Room, next: Room) => {
 };
 
 const App = () => {
-  const client = useContext(ClientContext);
-  const { currentRoom } = useContext(RoomContext)!;
-  const [rooms, setRooms] = useState<Room[] | null>(null);
+  const roomState = useContext(RoomContext);
 
-  client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
-
-  if (!rooms) {
+  if (!roomState || roomState.rooms.length === 0) {
     return <Spinner />;
   }
 
-  const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
+  const sortedRooms = roomState.rooms.sort((a, b) => sortRooms(a, b));
 
   return (
     <div className="flex min-w-0">
-      <Sidebar rooms={sortedRooms} />
-      {currentRoom ? (
-        <MessageWindow currentRoom={currentRoom} />
+      <Sidebar />
+      {roomState.currentRoom ? (
+        <MessageWindow />
       ) : (
         <p>welcome</p>
       )}

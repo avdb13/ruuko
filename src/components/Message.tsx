@@ -1,7 +1,6 @@
-import { EventType, IContent, MatrixEvent, MsgType } from "matrix-js-sdk";
+import {  IContent, MatrixEvent, MsgType } from "matrix-js-sdk";
 import {
   extractAttributes,
-  extractStyles,
   extractTags,
   mxcUrlToHttp,
 } from "../lib/helpers";
@@ -13,16 +12,16 @@ import Annotation from "./chips/Annotation";
 
 const Message = ({
   event,
-  annotations,
+  // annotations,
 }: {
   event: MatrixEvent;
-  annotations: MatrixEvent[];
+  // annotations: MatrixEvent[];
 }) => {
   const eventType = findEventType(event);
 
   switch (eventType) {
     case "text":
-      return <TextMessage event={event} annotations={annotations} />;
+      return <TextMessage event={event} annotations={[]} />;
     case "annotation":
     case "join":
     case "leave":
