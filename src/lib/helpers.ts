@@ -43,5 +43,5 @@ export const mxcUrlToHttp = (client: MatrixClient, url: string) => {
   const original = client.mxcUrlToHttp(url, 80, 80, "scale", true);
 
   // return axios.get(original).then(_ => original).catch(_ => original!.replace(client.baseUrl, "matrix.org"))
-  return original!.replace(client.baseUrl, "matrix.org")
+  return original!.replace(client.baseUrl, "https://matrix.org")
 };

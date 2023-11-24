@@ -9,7 +9,6 @@ const MessageWindow = () => {
   const bottomDivRef = useRef<HTMLDivElement>(null);
   const { annotations } = useContext(RoomContext)!;
   const roomAnnotations = annotations[currentRoom!.roomId] || {};
-  console.log(roomAnnotations);
 
   const events = useMemo(
     () => roomEvents[currentRoom!.roomId] || [],

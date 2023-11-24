@@ -170,8 +170,6 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
   switch (content.msgtype) {
     case MsgType.Text: {
       if (content.format === "org.matrix.custom.html") {
-        // console.log(content);
-
         return extractedAttributes ? (
           <ContentFormatter
             content={{
