@@ -50,8 +50,6 @@ const RoomProvider = (props: PropsWithChildren) => {
     setRooms(client.getRooms());
   }, []);
 
-  useEffect(() => {}, []);
-
   useEffect(() => {
     if (rooms.length > 0) {
       rooms.forEach((r) =>
@@ -70,8 +68,12 @@ const RoomProvider = (props: PropsWithChildren) => {
       );
     }
 
+  }, [rooms.length]);
+
+  useEffect(() => {
     if (client.getRooms().length === rooms.length) {
       Object.entries(roomEvents).forEach(([roomId, events]) => {
+        console.log(events.filter(isAnnotation));
         events.filter(isAnnotation).forEach((annotation) => {
           const roomAnnotations = annotations[roomId];
           const key = annotation.getContent()["m.relates_to"]?.event_id;
@@ -102,7 +104,7 @@ const RoomProvider = (props: PropsWithChildren) => {
 
       setRoomEvents(roomEventsWithoutAnnotations);
     }
-  }, [rooms.length]);
+  }, [rooms.length, Object.entries(roomEvents).length])
 
   client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
 

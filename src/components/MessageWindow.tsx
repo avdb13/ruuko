@@ -1,23 +1,15 @@
 import { MatrixEvent } from "matrix-js-sdk";
 import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef } from "react";
 import { RoomContext } from "../providers/room";
-
-// const arrToMap = (events: MatrixEvent[]): Map<string, MatrixEvent> => {
-//   return new Map(events.map((e) => [e.getId()!, e as MatrixEvent]));
-// };
-
-// const mapToArr = (map: Map<string, MatrixEvent>) =>
-//   Array.from(map.values());
 
 const MessageWindow = () => {
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
   const bottomDivRef = useRef<HTMLDivElement>(null);
   const { annotations } = useContext(RoomContext)!;
-  console.log(annotations);
   const roomAnnotations = annotations[currentRoom!.roomId] || {};
-  currentRoom && currentRoom.roomId ? console.log(roomEvents[currentRoom.roomId]) : null;
+  console.log(roomAnnotations);
 
   const events = useMemo(
     () => roomEvents[currentRoom!.roomId] || [],
