@@ -8,6 +8,7 @@ import {
 } from "react";
 import { ClientContext } from "./client";
 import { isAnnotation } from "../lib/eventFormatter";
+import { addAnnotation } from "../lib/helpers";
 
 export const RoomContext = createContext<RoomState | null>(null);
 
@@ -70,26 +71,13 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   useEffect(() => {
     if (client.getRooms().length === rooms.length) {
-      Object.entries(roomEvents).forEach(([roomId, events]) => {
-        events.filter(isAnnotation).forEach((annotation) => {
-          const roomAnnotations = annotations[roomId];
-          const key = annotation.getContent()["m.relates_to"]?.event_id;
-
-          if (key) {
-            const newAnnotations = {
-              ...roomAnnotations,
-              [key]: roomAnnotations
-                ? [...(roomAnnotations[key] || []), annotation]
-                : [annotation],
-            };
-
-            setAnnotations((previousAnnotations) => ({
-              ...previousAnnotations,
-              [roomId]: newAnnotations,
-            }));
+      for (const events of Object.values(roomEvents)) {
+        for (const event of events) {
+          if (isAnnotation(event)) {
+            setAnnotations((previousAnnotations) => addAnnotation(previousAnnotations, event))
           }
-        });
-      });
+        }
+      }
 
       const roomEventsWithoutAnnotations = Object.entries(roomEvents).reduce(
         (obj, [roomId, events]) => ({
@@ -121,22 +109,16 @@ const RoomProvider = (props: PropsWithChildren) => {
         return;
       }
 
-      const relation = event.getRelation();
-      const roomId = event.getRoomId();
-      const relatesTo = event.getContent()["m.relates_to"]?.event_id;
-
-      if (relation && roomId && relatesTo && relation.rel_type === RelationType.Annotation) {
-        const roomAnnotations = annotations[roomId];
-        const previousAnnotations = roomAnnotations ? (roomAnnotations[relatesTo] ? roomAnnotations[relatesTo] || [] : []) : [];
-
-        setAnnotations({...annotations, [roomId]: {...annotations[roomId], [relatesTo]: [...previousAnnotations, event]} })
+      if (isAnnotation(event)) {
+        setAnnotations(addAnnotation(annotations, event));
+      } else {
+        // check behavior later
+        setRoomEvents({
+          ...roomEvents,
+          [room.roomId]: [...currentRoomEvents, event],
+        });
       }
 
-      // check behavior later
-      setRoomEvents({
-        ...roomEvents,
-        [room.roomId]: [...currentRoomEvents, event],
-      });
     }
   });
 

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { MatrixClient } from "matrix-js-sdk";
+import { MatrixClient, MatrixEvent, RelationType } from "matrix-js-sdk";
 
 export const extractAttributes = (
   s: string,
@@ -17,6 +17,24 @@ export const extractAttributes = (
 interface TagContents {
   in_reply_to: string;
   message: string;
+}
+
+export const addAnnotation = (annotations: Record<string, Record<string, MatrixEvent[]>>, event: MatrixEvent) => {
+  const roomId = event.getRoomId();
+  const relationId = event.getContent()["m.relates_to"]?.event_id;
+  const relation = event.getRelation();
+
+  if (!(roomId && relationId && relation && relation.rel_type === RelationType.Annotation)) {
+    return annotations;
+  }
+
+  const roomAnnotations = annotations[roomId];
+  const eventAnnotations = roomAnnotations ? roomAnnotations[relationId] || [] : [];
+
+  return ({
+    ...annotations,
+    [roomId]: ({ ...roomAnnotations || {}, [relationId]: [...eventAnnotations, event] }),
+  });
 }
 
 // keeping it easy for now, will see about adding the formatted body later
