@@ -43,12 +43,14 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
 
   useEffect(() => {
     if (events) {
-      bottomDivRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
+      if (bottomDivRef) {
+        bottomDivRef.current.scrollIntoView({
+          behavior: "instant",
+          block: "end",
+        });
+      }
     }
-  }, [events]);
+  }, [events, bottomDivRef]);
 
   if (!events) {
     return <div></div>;

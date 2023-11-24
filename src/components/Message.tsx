@@ -75,17 +75,17 @@ const TextMessage = ({
   const client = useContext(ClientContext);
   const content = event.getContent();
 
-  const annotationsGrouped = new Map();
+  // const annotationsGrouped = new Map();
 
-  const ok = 
-    annotations
-      .map((a) => {
-        const sender = a.getSender();
-        const relation = a.getContent()["m.relates_to"];
+  // const ok = 
+  //   annotations
+  //     .map((a) => {
+  //       const sender = a.getSender();
+  //       const relation = a.getContent()["m.relates_to"];
 
-        return sender && relation && relation.key ? [relation.key, []] : null
-      })
-      .filter((a) => !!a);
+  //       return sender && relation && relation.key ? [relation.key, []] : null
+  //     })
+  //     .filter((a) => !!a);
 
   const src =
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
@@ -171,7 +171,7 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
   switch (content.msgtype) {
     case MsgType.Text: {
       if (content.format === "org.matrix.custom.html") {
-        console.log(content);
+        // console.log(content);
 
         return extractedAttributes ? (
           <ContentFormatter
