@@ -12,16 +12,16 @@ import Annotation from "./chips/Annotation";
 
 const Message = ({
   event,
-  // annotations,
+  annotations,
 }: {
   event: MatrixEvent;
-  // annotations: MatrixEvent[];
+  annotations: MatrixEvent[] | null;
 }) => {
   const eventType = findEventType(event);
 
   switch (eventType) {
     case "text":
-      return <TextMessage event={event} annotations={[]} />;
+      return <TextMessage event={event} annotations={annotations} />;
     case "annotation":
     case "join":
     case "leave":
@@ -69,7 +69,7 @@ const TextMessage = ({
   annotations,
 }: {
   event: MatrixEvent;
-  annotations: MatrixEvent[];
+  annotations: MatrixEvent[] | null;
 }) => {
   const client = useContext(ClientContext);
   const content = event.getContent();
