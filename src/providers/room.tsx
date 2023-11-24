@@ -1,4 +1,4 @@
-import { ClientEvent, MatrixEvent, Room, RoomEvent } from "matrix-js-sdk";
+import { ClientEvent, MatrixEvent, RelationType, Room, RoomEvent } from "matrix-js-sdk";
 import {
   PropsWithChildren,
   createContext,
@@ -119,6 +119,17 @@ const RoomProvider = (props: PropsWithChildren) => {
         currentRoomEvents[currentRoomEvents.length - 1] === event
       ) {
         return;
+      }
+
+      const relation = event.getRelation();
+      const roomId = event.getRoomId();
+      const relatesTo = event.getContent()["m.relates_to"]?.event_id;
+
+      if (relation && roomId && relatesTo && relation.rel_type === RelationType.Annotation) {
+        const roomAnnotations = annotations[roomId];
+        const previousAnnotations = roomAnnotations ? (roomAnnotations[relatesTo] ? roomAnnotations[relatesTo] || [] : []) : [];
+
+        setAnnotations({...annotations, [roomId]: {...annotations[roomId], [relatesTo]: [...previousAnnotations, event]} })
       }
 
       // check behavior later

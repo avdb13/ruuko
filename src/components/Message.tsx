@@ -71,6 +71,7 @@ const TextMessage = ({
   event: MatrixEvent;
   annotations: MatrixEvent[] | null;
 }) => {
+  console.log(annotations?.map(a => a.getContent()));
   const client = useContext(ClientContext);
   const content = event.getContent();
 
