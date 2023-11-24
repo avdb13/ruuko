@@ -1,5 +1,10 @@
 import { EventType, IContent, MatrixEvent, MsgType } from "matrix-js-sdk";
-import { extractAttributes, extractStyles, extractTags } from "../lib/helpers";
+import {
+  extractAttributes,
+  extractStyles,
+  extractTags,
+  mxcUrlToHttp,
+} from "../lib/helpers";
 import { useContext } from "react";
 import { ClientContext } from "../providers/client";
 import formatEvent, { findEventType } from "../lib/eventFormatter";
@@ -68,13 +73,19 @@ const TextMessage = ({
   annotations: MatrixEvent[];
 }) => {
   const client = useContext(ClientContext);
+  const content = event.getContent();
 
-  const isReply = !!event.getContent()["m.relates_to"]?.["m.in_reply_to"];
-  if (isReply) {
-    console.log("reply: ", extractTags(event.getContent().formatted_body));
-  }
+  const annotationsGrouped = new Map();
 
-  const inReplyTo = <p className="border-l-2 border-slate-400 px-1">hello</p>;
+  const ok = 
+    annotations
+      .map((a) => {
+        const sender = a.getSender();
+        const relation = a.getContent()["m.relates_to"];
+
+        return sender && relation && relation.key ? [relation.key, []] : null
+      })
+      .filter((a) => !!a);
 
   const src =
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
@@ -91,7 +102,6 @@ const TextMessage = ({
           <div className="flex gap-4">
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
           </div>
-          {inReplyTo}
           <ContentFormatter content={event.getContent()} />
           <div className="flex gap-2">
             {annotations
@@ -147,29 +157,48 @@ export const JoinMessage = ({ event }: { event: MatrixEvent }) => {
   );
 };
 
-        // <ContentFormatter
-        //   content={{
-        //     url: content.body.match(/src\s*=\s*"(.+?)"/)[1],
-        //     body: content.body.match(/alt\s*=\s*"(.+?)"/)[1],
-        //   }}
-        // />
 const ContentFormatter = ({ content }: { content: IContent }) => {
   const client = useContext(ClientContext);
-  const extractedAttributes = content.body ? extractAttributes(content.body, ["src", "alt"]) : null;
+  const extractedAttributes = content.body
+    ? extractAttributes(content.body, ["src", "alt"])
+    : null;
 
-  // console.log(content);
+  const reply =
+    !!content["m.relates_to"]?.["m.in_reply_to"] && content.formatted_body
+      ? extractTags(content.formatted_body)
+      : null;
 
   switch (content.msgtype) {
-    case MsgType.Text:
-      return content.format === "org.matrix.custom.html" ? (
-        extractedAttributes ? (
-          <ContentFormatter content={{url: extractedAttributes.get("src"), body: extractedAttributes.get("alt") }} />
-        ) : null
-      ) : (
-        <p className="whitespace-normal break-all">{content.body}</p>
-      );
+    case MsgType.Text: {
+      if (content.format === "org.matrix.custom.html") {
+        console.log(content);
+
+        return extractedAttributes ? (
+          <ContentFormatter
+            content={{
+              url: extractedAttributes.get("src"),
+              body: extractedAttributes.get("alt"),
+            }}
+          />
+        ) : reply ? (
+          <>
+            <p className="border-l-2 border-slate-400 px-1 whitespace-normal break-all">
+              {reply.in_reply_to}
+            </p>
+            <p className="whitespace-normal break-all">{reply.message}</p>
+          </>
+        ) : (
+          // can contain newline
+          (content.body as string)
+            .split("\n")
+            .map((s) => <p className="whitespace-normal break-all">{s}</p>)
+        );
+      }
+
+      return <p className="whitespace-normal break-all">{content.body}</p>;
+    }
     case MsgType.Image:
-      return <img src={client.mxcUrlToHttp(content.url)!} alt={content.body} />;
+      return <img src={mxcUrlToHttp(client, content.url)} alt={content.body} />;
     default:
       return content.url ? (
         <img

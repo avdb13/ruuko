@@ -32,12 +32,12 @@ const MessageWindow = ({ currentRoom }: { currentRoom: Room }) => {
         setAnnotations(new Map());
         setEvents(eventMap);
 
-        annotationsArr.forEach((annotation) => {
+        for (const annotation of annotationsArr) {
           const key = annotation.getContent()["m.relates_to"]?.event_id;
           const newAnnotations: MatrixEvent[] = [...(annotations.get(key!) || []), annotation];
 
           setAnnotations(annotations.set(key!, newAnnotations))
-        });
+        }
       });
   }, [currentRoom]);
 

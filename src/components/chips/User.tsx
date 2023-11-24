@@ -1,7 +1,8 @@
 import { useContext } from "react";
-import { DisplayedMember, fallbackMxcUrlToHttp } from ".";
+import { DisplayedMember } from ".";
 import { ClientContext } from "../../providers/client";
 import { RoomContext } from "../../providers/room";
+import { mxcUrlToHttp } from "../../lib/helpers";
 
 const UserChip = ({
   member,
@@ -11,8 +12,8 @@ const UserChip = ({
   closeModal: () => void;
 }) => {
   const client = useContext(ClientContext);
-  const src = fallbackMxcUrlToHttp(client, member.avatar_url);
   const { setCurrentRoom } = useContext(RoomContext)!;
+  const src = mxcUrlToHttp(client, member.avatar_url!);
 
   const createRoom = () => {
     closeModal();

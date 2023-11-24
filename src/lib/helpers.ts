@@ -1,3 +1,6 @@
+import axios from "axios";
+import { MatrixClient } from "matrix-js-sdk";
+
 export const extractAttributes = (
   s: string,
   attributes: Array<string>,
@@ -34,4 +37,11 @@ export const extractTags = (s: string): TagContents | null => {
     .join("");
 
   return quote ? { message, in_reply_to } : null;
+};
+
+export const mxcUrlToHttp = (client: MatrixClient, url: string) => {
+  const original = client.mxcUrlToHttp(url, 80, 80, "scale", true);
+
+  // return axios.get(original).then(_ => original).catch(_ => original!.replace(client.baseUrl, "matrix.org"))
+  return original!.replace(client.baseUrl, "matrix.org")
 };
