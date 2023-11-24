@@ -119,7 +119,7 @@ export const DateMessage = ({ date }: { date: Date }) => {
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
       <li className="flex content-center gap-2">
-        <p>{date.toLocaleString("en-US")}</p>
+        <p className="break-all">{date.toLocaleString("en-US")}</p>
       </li>
     </div>
   );
@@ -150,7 +150,7 @@ export const JoinMessage = ({ event }: { event: MatrixEvent }) => {
           }
           className="object-cover h-16 w-16 rounded-full self-center border-2"
         />
-        <div className="flex flex-col justify-center">{content}</div>
+        <p className="flex flex-col justify-center whitespace-normal break-all">{content}</p>
       </li>
     </div>
   );
@@ -206,7 +206,7 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
           className="h-16 w-16"
         />
       ) : (
-        <p>`unsupported: ${JSON.stringify(content)}`</p>
+        <p className="whitespace-normal break-all">`unsupported: ${JSON.stringify(content)}`</p>
       );
   }
 };
