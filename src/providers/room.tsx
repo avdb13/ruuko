@@ -47,6 +47,9 @@ const RoomProvider = (props: PropsWithChildren) => {
   };
 
   useEffect(() => {
+    client.once(ClientEvent.Sync, (state, previousState, res) => {
+    })
+
     setRooms(client.getRooms());
   }, []);
 
@@ -54,11 +57,6 @@ const RoomProvider = (props: PropsWithChildren) => {
     if (rooms.length > 0) {
       rooms.forEach((r) =>
         client.scrollback(r, Number.MAX_SAFE_INTEGER).then((scrollback) => {
-          console.log(
-            roomEvents,
-            scrollback.getLiveTimeline().getEvents().length,
-          );
-
           // WARNING: we're inside a map, React batches updates so we have to pass a closure to use `previousEvents` here
           setRoomEvents((previousEvents) => ({
             ...previousEvents,
@@ -73,7 +71,6 @@ const RoomProvider = (props: PropsWithChildren) => {
   useEffect(() => {
     if (client.getRooms().length === rooms.length) {
       Object.entries(roomEvents).forEach(([roomId, events]) => {
-        console.log(events.filter(isAnnotation));
         events.filter(isAnnotation).forEach((annotation) => {
           const roomAnnotations = annotations[roomId];
           const key = annotation.getContent()["m.relates_to"]?.event_id;
@@ -111,7 +108,12 @@ const RoomProvider = (props: PropsWithChildren) => {
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
     // weird bug that gets triggered the message twice
     if (room) {
-      const currentRoomEvents = roomEvents[room.roomId]!;
+      const currentRoomEvents = roomEvents[room.roomId];
+
+      if (!currentRoomEvents) {
+        return
+      }
+
       if (
         startOfTimeline ||
         currentRoomEvents[currentRoomEvents.length - 1] === event

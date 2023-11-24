@@ -1,6 +1,4 @@
-import { IContent, MatrixEvent, MsgType, RelationType } from "matrix-js-sdk";
-import { useContext } from "react";
-import { ClientContext } from "../providers/client";
+import { EventType, MatrixEvent } from "matrix-js-sdk";
 
 type eventType = "text" | "annotation" | "join" | "leave" | "invite" | "displayNameChange" | "avatarChange" | "reply" | "edit" | "redaction" | "unimplemented"
 
@@ -15,7 +13,7 @@ const formatText = (event: MatrixEvent, members: number) => event.getContent().b
   )) : null;
 
 export const isAnnotation = (event: MatrixEvent) =>
-  event.getContent()["m.relates_to"] && event.getContent()["m.relates_to"]?.rel_type === RelationType.Annotation
+  !!event.getContent()["m.relates_to"]
 
 // find a fix to replace the key with the actual message later
 const formatAnnotation = (event: MatrixEvent) =>
