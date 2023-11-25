@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { DisplayedMember } from ".";
 import { ClientContext } from "../../providers/client";
 import { RoomContext } from "../../providers/room";
-import Avatar from "../Avatar";
+import Avatar, { DirectAvatar } from "../Avatar";
 
 const UserChip = ({
   member,
@@ -26,7 +26,7 @@ const UserChip = ({
       key={member.user_id}
       onClick={createRoom}
     >
-      <Avatar id={member.user_id} type="user" size={8} />
+      <DirectAvatar url={member.avatar_url!} size={8}  />
       <p className="px-1">{member.display_name}</p>
       <p className="text-zinc-500">{member.user_id}</p>
     </button>
