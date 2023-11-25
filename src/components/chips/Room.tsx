@@ -2,7 +2,7 @@ import { IPublicRoomsChunkRoom } from "matrix-js-sdk";
 import { useContext } from "react";
 import { ClientContext } from "../../providers/client";
 import { RoomContext } from "../../providers/room";
-import { mxcUrlToHttp } from "../../lib/helpers";
+import Avatar from "../Avatar";
 
 const RoomChip = ({
   room,
@@ -13,8 +13,6 @@ const RoomChip = ({
 }) => {
   const client = useContext(ClientContext);
   const { setCurrentRoom } = useContext(RoomContext)!;
-
-  const src = mxcUrlToHttp(client, room.avatar_url!);
 
   const joinRoom = () => {
     closeModal();
@@ -27,7 +25,7 @@ const RoomChip = ({
       key={room.room_id}
       onClick={joinRoom}
     >
-      <img src={src} alt={room.name} className="rounded-full w-8 h-8" />
+      <Avatar id={room.room_id} type="room" size={16} />
       <div className="flex flex-col min-w-0 items-start">
         <p className="px-1">{room.name}</p>
         <p className="text-zinc-500 truncate max-w-full">{room.topic}</p>

@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { DisplayedMember } from ".";
 import { ClientContext } from "../../providers/client";
 import { RoomContext } from "../../providers/room";
-import { mxcUrlToHttp } from "../../lib/helpers";
+import Avatar from "../Avatar";
 
 const UserChip = ({
   member,
@@ -13,7 +13,6 @@ const UserChip = ({
 }) => {
   const client = useContext(ClientContext);
   const { setCurrentRoom } = useContext(RoomContext)!;
-  const src = mxcUrlToHttp(client, member.avatar_url!);
 
   const createRoom = () => {
     closeModal();
@@ -27,7 +26,7 @@ const UserChip = ({
       key={member.user_id}
       onClick={createRoom}
     >
-      <img src={src} alt={member.user_id} className="rounded-full w-8 h-8" />
+      <Avatar id={member.user_id} type="user" size={8} />
       <p className="px-1">{member.display_name}</p>
       <p className="text-zinc-500">{member.user_id}</p>
     </button>

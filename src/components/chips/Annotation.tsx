@@ -1,13 +1,10 @@
 import {
   EventType,
   IContent,
-  MatrixEvent,
   RelationType,
-  RoomMember,
 } from "matrix-js-sdk";
 import { useContext } from "react";
 import { ClientContext } from "../../providers/client";
-import { mxcUrlToHttp } from "../../lib/helpers";
 import { RoomContext } from "../../providers/room";
 import { formatAnnotators } from "../../lib/eventFormatter";
 
@@ -25,7 +22,7 @@ const Annotation = ({
 
   console.log(annotators);
 
-  const src = mxcUrlToHttp(client, annotation!);
+  const src = client.mxcUrlToHttp(annotation, 40, 40, "scale", true);
 
   const handleClick = () => {
     const myId = client.getUserId()!;

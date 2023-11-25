@@ -5,8 +5,6 @@ import {
 import {
   useState,
   useRef,
-  useCallback,
-  useEffect,
   PropsWithChildren,
   Ref,
   useContext,
@@ -19,6 +17,9 @@ import RoomChip from "./chips/Room";
 import { RoomContext } from "../providers/room";
 import formatEvent from "../lib/eventFormatter";
 import Resizable from "./Resizable";
+import Scrollbar from "./Scrollbar";
+import UserPanel from "./UserPanel";
+import Avatar from "./Avatar";
 
 const sortRooms = (prev: Room, next: Room) => {
   const prevEvents = prev.getLiveTimeline().getEvents();
@@ -38,29 +39,16 @@ const sortRooms = (prev: Room, next: Room) => {
     : -1;
 };
 
-const roomToAvatarUrl = (room: Room, userId: string) =>
-  room.getMembers().length <= 2
-    ? room
-        .getMembers()
-        .find((member) => member.userId !== userId)
-        ?.getAvatarUrl("https://matrix.org", 120, 120, "scale", true, true)
-    : room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
-
 const RoomIconWidget = ({
   room,
 }: {
   room: Room;
 }) => {
-  const client = useContext(ClientContext);
   const { setCurrentRoom } = useContext(RoomContext)!;
 
   return (
     <button onClick={() => setCurrentRoom(room)}>
-      <img
-        className="h-[50px] w-[50px] rounded-full border-slate-400"
-        src={roomToAvatarUrl(room, client.getUserId()!)!}
-        title={room.name}
-      />
+      <Avatar id={room.roomId} type="room" size={16} />
     </button>
   );
 };
@@ -70,7 +58,6 @@ const RoomWidget = ({
 }: {
   room: Room;
 }) => {
-  const client = useContext(ClientContext);
   const { setCurrentRoom } = useContext(RoomContext)!;
 
   const events = room.getLiveTimeline().getEvents();
@@ -82,14 +69,10 @@ const RoomWidget = ({
       className="flex items-center shrink gap-2 p-4 w-full border-2 rounded-md hover:bg-green-300"
       key={room.name}
     >
-      <img
-        className="h-[60px] w-[60px] rounded-full border-2 border-black"
-        src={roomToAvatarUrl(room, client.getUserId()!)!}
-        title={room.name}
-      />
+      <Avatar id={room.roomId} type="room" size={16} />
       <div className="flex flex-col items-start bg-green-200 min-w-0">
         <p className="max-w-full truncate">{room.name}</p>
-        <p className="max-w-full truncate">{latestEvent ? formatEvent(latestEvent, room) : null}</p>
+        <p className="max-w-full truncate">{latestEvent ? formatEvent(latestEvent, room.getMembers().length) : null}</p>
       </div>
     </button>
   );
@@ -123,7 +106,6 @@ const RoomList = ({
 
 // temporary solution
 type ModalType = "friendModal" | "publicRoomModal";
-
 const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   const client = useContext(ClientContext);
 
@@ -238,27 +220,45 @@ const Sidebar = () => {
 
   return (
     <Resizable width={sidebarWidth} setWidth={setSidebarWidth}>
-      <Togglable
-        title={sidebarWidth < 120 ? "" : "people"}
-        modalType="friendModal"
-      >
-        <RoomList
-          rooms={sortedRooms.filter((r) => r.getMembers().length <= 2)}
-          sidebarWidth={sidebarWidth}
-        />
-      </Togglable>
-      <Togglable
-        title={sidebarWidth < 120 ? "" : "public rooms"}
-        modalType="publicRoomModal"
-      >
-        <RoomList
-          rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
-          sidebarWidth={sidebarWidth}
-        />
-      </Togglable>
-      <div className="h-[100px] bg-black">
-        AAAAAAAAAAA
-      </div>
+      <Scrollbar>
+        <Togglable
+          title={sidebarWidth < 120 ? "" : "people"}
+          modalType="friendModal"
+        >
+          <RoomList
+            rooms={sortedRooms.filter((r) => r.getMembers().length <= 2)}
+            sidebarWidth={sidebarWidth}
+          />
+        </Togglable>
+        <Togglable
+          title={sidebarWidth < 120 ? "" : "public rooms"}
+          modalType="publicRoomModal"
+        >
+          <RoomList
+            rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
+            sidebarWidth={sidebarWidth}
+          />
+        </Togglable>
+        <Togglable
+          title={sidebarWidth < 120 ? "" : "people"}
+          modalType="friendModal"
+        >
+          <RoomList
+            rooms={sortedRooms.filter((r) => r.getMembers().length <= 2)}
+            sidebarWidth={sidebarWidth}
+          />
+        </Togglable>
+        <Togglable
+          title={sidebarWidth < 120 ? "" : "public rooms"}
+          modalType="publicRoomModal"
+        >
+          <RoomList
+            rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
+            sidebarWidth={sidebarWidth}
+          />
+        </Togglable>
+      </Scrollbar>
+      <UserPanel />
     </Resizable>
   );
 };

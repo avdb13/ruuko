@@ -2,13 +2,13 @@ import {  IContent, MatrixEvent, MsgType } from "matrix-js-sdk";
 import {
   extractAttributes,
   extractTags,
-  mxcUrlToHttp,
 } from "../lib/helpers";
 import { useContext } from "react";
 import { ClientContext } from "../providers/client";
 import formatEvent, { findEventType } from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
+import Avatar from "./Avatar";
 
 const Message = ({
   event,
@@ -71,9 +71,6 @@ const TextMessage = ({
   event: MatrixEvent;
   annotations: MatrixEvent[] | null;
 }) => {
-  const client = useContext(ClientContext);
-  const content = event.getContent();
-
   const groupedAnnotations = annotations ? annotations.reduce((record, a) => {
     const key = a.getContent()["m.relates_to"]?.key;
     const sender = a.getSender();
@@ -81,17 +78,10 @@ const TextMessage = ({
     return key && sender && eventId ? ({...record, [key]: [...record[key] || [], [sender, eventId]] }) : record;
   }, {} as Record<string, string[][]>) : null;
 
-  const src =
-    event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
-    "/public/anonymous.jpg";
-
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
       <div className="flex content-center gap-2">
-        <img
-          src={src}
-          className="object-cover self-start h-16 w-16 rounded-full border-2"
-        />
+        <Avatar id={event.getSender()!} type="user" size={16} />
         <div className="flex flex-col gap-2">
           <div className="flex gap-4">
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
@@ -190,7 +180,7 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
       return <p className="whitespace-normal break-all">{content.body}</p>;
     }
     case MsgType.Image:
-      return <img src={mxcUrlToHttp(client, content.url)} alt={content.body} />;
+      return <img src={client.mxcUrlToHttp(content.url, 120, 120, "scale", true)!} alt={content.body} />;
     default:
       return content.url ? (
         <img

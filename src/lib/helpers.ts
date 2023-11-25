@@ -1,5 +1,6 @@
 import axios from "axios";
-import { MatrixClient, MatrixEvent, RelationType } from "matrix-js-sdk";
+import { MatrixClient, MatrixEvent, RelationType, Room, User } from "matrix-js-sdk";
+import { AvatarType } from "../components/Avatar";
 
 export const extractAttributes = (
   s: string,
@@ -57,9 +58,22 @@ export const extractTags = (s: string): TagContents | null => {
   return quote ? { message, in_reply_to } : null;
 };
 
-export const mxcUrlToHttp = (client: MatrixClient, url: string) => {
-  const original = client.mxcUrlToHttp(url, 80, 80, "scale", true);
+export const getAvatarUrl = (client: MatrixClient, id: string, type: AvatarType) => {
+  switch (type) {
+    case "room": {
+      const room = client.getRoom(id)!;
 
-  // return axios.get(original).then(_ => original).catch(_ => original!.replace(client.baseUrl, "matrix.org"))
-  return original!.replace(client.baseUrl, "https://matrix.org")
-};
+      return room.getMembers().length <= 2
+          ? room
+              .getMembers()
+              .find((member) => member.userId !== client.getUserId())
+              ?.getAvatarUrl("https://matrix.org", 120, 120, "scale", true, true)
+          : room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
+    }
+    case "user": {
+      const user = client.getUser(id)!;
+
+      return user.avatarUrl;
+    }
+  }
+}
