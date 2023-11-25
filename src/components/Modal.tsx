@@ -31,7 +31,7 @@ const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string}>>((props,
   useImperativeHandle(ref, () => ({ toggleVisibility }));
 
   return (
-    <dialog ref={modalRef} id="modal" className="w-[600px] h-[400px]">
+    <dialog ref={modalRef} id="modal" className="w-[600px] h-[400px] open:animate-modal">
       <div className="flex flex-col">
         <div className="flex justify-between m-4 items-center">
           <h1 className="bg-zinc-100 rounded-md py-1 font-bold text-xl">{props.title}</h1>

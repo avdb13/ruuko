@@ -71,8 +71,8 @@ const RoomWidget = ({
     >
       <Avatar id={room.roomId} type="room" size={16} />
       <div className="flex flex-col items-start bg-green-200 min-w-0">
-        <p className="max-w-full truncate">{room.name}</p>
-        <p className="max-w-full truncate">{latestEvent ? formatEvent(latestEvent, room.getMembers().length) : null}</p>
+        <p className="max-w-full truncate font-bold">{room.name}</p>
+        <p className="max-w-full truncate text-sm">{latestEvent ? formatEvent(latestEvent, room.getMembers().length) : null}</p>
       </div>
     </button>
   );
