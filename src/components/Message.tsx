@@ -93,12 +93,12 @@ const TextMessage = ({
 
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
-      <li className="flex content-center gap-2">
+      <div className="flex content-center gap-2">
         <img
           src={src}
-          className="object-cover h-16 w-16 rounded-full self-center border-2"
+          className="object-cover self-start h-16 w-16 rounded-full border-2"
         />
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           <div className="flex gap-4">
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
           </div>
@@ -111,7 +111,7 @@ const TextMessage = ({
               : null}
           </div>
         </div>
-      </li>
+      </div>
     </div>
   );
 };
