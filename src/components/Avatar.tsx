@@ -9,8 +9,9 @@ const Avatar = ({ id, type, size }: { id: string, type: AvatarType, size: number
 
   return (
     <img
-      src={getAvatarUrl(client, id, type)!}
-      className={`object-cover self-start h-${size} w-${size} rounded-full border-2`}
+      src={getAvatarUrl(client, id, type) || "/public/anonymous.jpg"}
+      className={`object-cover self-start rounded-full border-2`}
+      style={{height: size*4, width: size*4, minWidth: size*4}}
     />
   )
 

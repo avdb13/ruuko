@@ -73,7 +73,7 @@ export const getAvatarUrl = (client: MatrixClient, id: string, type: AvatarType)
     case "user": {
       const user = client.getUser(id)!;
 
-      return user.avatarUrl;
+      return client.mxcUrlToHttp(user.avatarUrl!, 120, 120, "scale", true);
     }
   }
 }
