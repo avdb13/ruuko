@@ -63,6 +63,8 @@ export const getAvatarUrl = (client: MatrixClient, id: string, type: AvatarType)
     case "room": {
       const room = client.getRoom(id)!;
 
+      console.log(room.name, room.getMxcAvatarUrl(), room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true))
+
       return room.getMembers().length <= 2
           ? room
               .getMembers()

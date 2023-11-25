@@ -2,7 +2,7 @@ import { IPublicRoomsChunkRoom } from "matrix-js-sdk";
 import { useContext } from "react";
 import { ClientContext } from "../../providers/client";
 import { RoomContext } from "../../providers/room";
-import Avatar from "../Avatar";
+import Avatar, { DirectAvatar } from "../Avatar";
 
 const RoomChip = ({
   room,
@@ -25,7 +25,7 @@ const RoomChip = ({
       key={room.room_id}
       onClick={joinRoom}
     >
-      <Avatar id={room.room_id} type="room" size={16} />
+      <DirectAvatar url={room.avatar_url!} size={8} />
       <div className="flex flex-col min-w-0 items-start">
         <p className="px-1">{room.name}</p>
         <p className="text-zinc-500 truncate max-w-full">{room.topic}</p>

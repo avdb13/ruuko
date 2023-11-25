@@ -106,6 +106,7 @@ const RoomList = ({
 
 // temporary solution
 type ModalType = "friendModal" | "publicRoomModal";
+
 const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   const client = useContext(ClientContext);
 
@@ -163,7 +164,6 @@ const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
           type="text"
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          autoFocus
         />
         <button className="rounded-md bg-zinc-100 p-[10px]">🔍</button>
       </div>
