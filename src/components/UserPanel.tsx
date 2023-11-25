@@ -1,16 +1,43 @@
-import { Ref, useContext, useRef } from "react";
+import { ChangeEvent, Ref, useContext, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 import Avatar from "./Avatar";
 import Gear from "./icons/Gear";
 import Modal from "./Modal";
 import Exit from "./icons/Exit";
+import Pencil from "./icons/Pencil";
 
 const AccountTab = () => {
-  const client = useContext(ClientContext);
 
   return (
-    <div>
-      <Avatar id={client.getUserId()!} size={24} type="user" />
+    <EditableAvatar />
+  )
+}
+
+const EditableAvatar = () => {
+  const client = useContext(ClientContext);
+
+  const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files.length > 0 ? e.target.files[0] || null : null;
+
+    if (file) {
+      const resp = await client.uploadContent(file);
+      try {
+        client.setAvatarUrl(resp.content_uri);
+      } catch(e) {
+        console.log(e);
+      }
+    }
+  }
+
+  return (
+    <div className="group relative border-2 grow">
+      <Avatar id={client.getUserId()!} size={24} type="user" className="group-hover:scale-90 group-hover:blur-sm transition-all duration-300 ease-out" />
+      <div className="opacity-0 group-hover:opacity-50 absolute -top-0 rounded-full w-24 h-24 transition-all duration-300 ease-out" style={{backgroundImage: "radial-gradient(rgb(0 0 0 / 20%), rgb(0 0 0 / 40%), rgb(0 0 0 / 80%), rgb(0 0 0 / 20%), rgb(0 0 0 / 0))"}}>
+      </div>
+      <div className="absolute w-24 h-24 -top-0 flex justify-center items-center rounded-full border-4">
+        <Pencil className="invert opacity-0 group-hover:opacity-100 group-hover:scale-125 group-hover:transition-all duration-300 ease-out" />
+      </div>
+      <input className="absolute w-24 h-24 -top-0 invisible" type="file" onChange={uploadAvatar} />
     </div>
   )
 }
@@ -30,8 +57,9 @@ type Submenus = SubmenusReadOnly[number];
 
 const UserPanel = () => {
   const client = useContext(ClientContext);
-  const userId = client.getUserId();
   const modalRef = useRef<ModalProps>(null);
+
+  const userId = client.getUserId();
 
   return (
     <div className="flex justify-between h-[300px] bg-cyan-100 gap-2 p-2">
@@ -55,16 +83,16 @@ const UserPanel = () => {
 
 
 const Settings = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
+  const [selection, setSelection] = useState<Submenus>("Account");
+
   return (
-    <Modal title="settings" ref={modalRef}>
-      <div className="flex justify-between">
-        <ul className="flex flex-col gap-2 basis-1/2 grow bg-gray-100">
+    <Modal title="settings" ref={modalRef} className="flex gap-2">
+        <ul className="flex flex-col justify-self-start gap-2 basis-1/4 bg-gray-100">
           {submenus.map((menu) => (
-            <button onClick={() => {}} className="bg-gray-300 text-center p-2">{menu}</button>
+            <button onClick={() => setSelection(menu)} className="bg-gray-300 text-center p-2">{menu}</button>
           ))}
         </ul>
-        <div className="basis-1/2 grow"></div>
-      </div>
+        <div className="flex-1 basis-3/4 grow"><AccountTab /></div>
     </Modal>
   );
 };

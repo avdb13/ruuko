@@ -2,6 +2,7 @@ import { PropsWithChildren, createContext, useState } from "react";
 
 interface Settings {
   showJoinLeaveMessages: boolean;
+  onlineStatus: boolean;
 }
 
 const defaultSettings = {

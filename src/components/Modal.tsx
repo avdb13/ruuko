@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 
-const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string}>>((props, ref) => {
+const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string, className?: string}>>((props, ref) => {
   const modalRef = useRef<HTMLDialogElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -37,7 +37,7 @@ const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string}>>((props,
           <h1 className="bg-zinc-100 rounded-md py-1 font-bold text-xl">{props.title}</h1>
           <button className="m-4 border-2 border-black w-8 h-8" onClick={toggleVisibility}>{"x"}</button>
         </div>
-        <div className="flex flex-col items-center gap-4">
+        <div className={props.className || "flex flex-col items-center gap-4"}>
           {props.children}
         </div>
       </div>
