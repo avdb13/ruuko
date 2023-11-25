@@ -79,4 +79,12 @@ export const findEventType = (event: MatrixEvent): eventType => {
   }
 }
 
+export const formatAnnotators = (annotators: string[]) => {
+  switch (annotators.length) {
+    case 1: return annotators[0]
+    case 2: return `${annotators[0]} and ${annotators[1]}`
+    default: return `${annotators[0]}, ${annotators[1]} and ${annotators.length-2} others`
+  }
+}
+
 export default formatEvent;

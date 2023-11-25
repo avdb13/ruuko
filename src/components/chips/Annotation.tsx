@@ -1,48 +1,74 @@
-import { EventType, MatrixEvent, RelationType, RoomMember } from "matrix-js-sdk";
+import {
+  EventType,
+  IContent,
+  MatrixEvent,
+  RelationType,
+  RoomMember,
+} from "matrix-js-sdk";
 import { useContext } from "react";
 import { ClientContext } from "../../providers/client";
 import { mxcUrlToHttp } from "../../lib/helpers";
 import { RoomContext } from "../../providers/room";
+import { formatAnnotators } from "../../lib/eventFormatter";
 
 const Annotation = ({
   annotation,
   annotators,
   eventId,
 }: {
-  annotation: MatrixEvent;
-  annotators: RoomMember[];
+  annotation: string;
+  annotators: string[][];
   eventId: string;
 }) => {
   const client = useContext(ClientContext);
   const { currentRoom } = useContext(RoomContext)!;
 
-  const annotatorsExample = [client.getUserId()!];
-
-  const key = annotation.getContent()["m.relates_to"]?.key;
-  const src = mxcUrlToHttp(client, key!);
-  const anchorContent = annotatorsExample.length === 1 ? "bobby and mary" : "";
+  const src = mxcUrlToHttp(client, annotation!);
 
   const handleClick = () => {
-    if (annotatorsExample.find(a => a === client.getUserId()!)) {
-      client.redactEvent(currentRoom!.roomId!, annotation.getId()!);
+    const myId = client.getUserId()!;
+    const myAnnotation = annotators.find(
+      ([sender, _eventId]) => sender === myId,
+    );
+
+    if (myAnnotation) {
+      client.redactEvent(currentRoom!.roomId!, myAnnotation[1]!);
     } else {
-      client.sendEvent(currentRoom!.roomId!, EventType.Reaction, {"m.relates_to": {event_id: eventId, key, rel_type: RelationType.Annotation }});
+      const content: IContent = {
+        "m.relates_to": {
+          event_id: eventId,
+          key: annotation,
+          rel_type: RelationType.Annotation,
+        },
+      };
+      client.sendEvent(currentRoom!.roomId!, EventType.Reaction, content);
     }
   };
 
   return (
-    <div className="group">
-      <button className="relative z-0 w-[50px] h-[30px] flex justify-center items-center gap-1 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all text-gray-600 rounded-md">
-          {key?.startsWith("mxc") ? (
-            <img src={src} className="h-5" alt={key} />
-          ) : (
-            key
-          )}
-          <p className="font-bold">5</p>
-    <div className="absolute z-10 w-[200px] h-[40px] bottom-[45px] group-hover:bottom-[35px] shadow-sm shadow-black flex justify-center items-center opacity-0 bg-black text-white font-bold rounded-md group-hover:opacity-100 transition-opacity" style={{transition: "all 0.2s ease-in-out"}} id="annotation-button">
-            <p>{anchorContent}</p>
-          </div>
+    <div className="relative flex justify-center items-center gap-1">
+      <button
+        className="flex justify-center items-center gap-1 peer z-0 w-[50px] h-[30px] rounded-xl bg-gray-50 hover:bg-gray-100 transition-all text-gray-600 rounded-md border-2"
+        onClick={handleClick}
+      >
+        {annotation?.startsWith("mxc") ? (
+          <img src={src} className="h-5" alt={annotation} />
+        ) : (
+          annotation
+        )}
+        <p className="font-bold">{annotators.length}</p>
       </button>
+      <div
+        className="absolute z-1 p-1 w-[200px] bottom-[45px] peer-hover:bottom-[35px] peer-hover:opacity-100 transition-opacity shadow-sm shadow-black opacity-0 bg-black text-white font-bold rounded-md"
+        style={{ transition: "all 0.2s ease-in-out" }}
+        id="annotation-button"
+      >
+        <p className="text-center">
+          {formatAnnotators(
+            annotators.map(([annotator, _eventId]) => annotator!),
+          )}
+        </p>
+      </div>
     </div>
   );
 };

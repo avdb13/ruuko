@@ -71,21 +71,15 @@ const TextMessage = ({
   event: MatrixEvent;
   annotations: MatrixEvent[] | null;
 }) => {
-  console.log(annotations?.map(a => a.getContent()));
   const client = useContext(ClientContext);
   const content = event.getContent();
 
-  // const annotationsGrouped = new Map();
-
-  // const ok = 
-  //   annotations
-  //     .map((a) => {
-  //       const sender = a.getSender();
-  //       const relation = a.getContent()["m.relates_to"];
-
-  //       return sender && relation && relation.key ? [relation.key, []] : null
-  //     })
-  //     .filter((a) => !!a);
+  const groupedAnnotations = annotations ? annotations.reduce((record, a) => {
+    const key = a.getContent()["m.relates_to"]?.key;
+    const sender = a.getSender();
+    const eventId = a.getId();
+    return key && sender && eventId ? ({...record, [key]: [...record[key] || [], [sender, eventId]] }) : record;
+  }, {} as Record<string, string[][]>) : null;
 
   const src =
     event.sender!.getAvatarUrl(client.baseUrl, 80, 80, "scale", true, true) ||
@@ -104,9 +98,9 @@ const TextMessage = ({
           </div>
           <ContentFormatter content={event.getContent()} />
           <div className="flex gap-2">
-            {annotations
-              ? annotations.map((annotation) =>
-                  annotation ? <Annotation annotation={annotation} /> : null,
+            {groupedAnnotations
+              ? Object.entries(groupedAnnotations).map(([annotation, annotators]) =>
+                  <Annotation annotation={annotation} annotators={annotators} eventId={event.getId()!} />
                 )
               : null}
           </div>
