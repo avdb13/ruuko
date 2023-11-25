@@ -15,12 +15,15 @@ const AccountTab = () => {
 
 const EditableAvatar = () => {
   const client = useContext(ClientContext);
+  const inputRef = useRef<HTMLInputElement>();
+  const [avatar, setAvatar] = useState<File | null>(null);
 
-  const uploadAvatar = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files.length > 0 ? e.target.files[0] || null : null;
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => e.target.files && e.target.files.length > 0 ? setAvatar(e.target.files[0]!) : null;
 
-    if (file) {
-      const resp = await client.uploadContent(file);
+  const onSubmit = async () => {
+    if (avatar) {
+      console.log("file found");
+      const resp = await client.uploadContent(avatar);
       try {
         client.setAvatarUrl(resp.content_uri);
       } catch(e) {
@@ -37,7 +40,7 @@ const EditableAvatar = () => {
       <div className="absolute w-24 h-24 -top-0 flex justify-center items-center rounded-full border-4">
         <Pencil className="invert opacity-0 group-hover:opacity-100 group-hover:scale-125 group-hover:transition-all duration-300 ease-out" />
       </div>
-      <input className="absolute w-24 h-24 -top-0 invisible" type="file" onChange={uploadAvatar} />
+      <input className="z-1 absolute w-24 h-24 -top-0 opacity-0" type="file" onChange={(e) => onChange(e) && inputRef.current?.form?.submit()} onSubmit={onSubmit} ref={inputRef} />
     </div>
   )
 }
