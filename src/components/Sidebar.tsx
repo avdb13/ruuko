@@ -18,6 +18,7 @@ import UserChip from "./chips/User";
 import RoomChip from "./chips/Room";
 import { RoomContext } from "../providers/room";
 import formatEvent from "../lib/eventFormatter";
+import Resizable from "./Resizable";
 
 const sortRooms = (prev: Room, next: Room) => {
   const prevEvents = prev.getLiveTimeline().getEvents();
@@ -231,73 +232,34 @@ const Togglable = (
 };
 
 const Sidebar = () => {
-  const [sidebarWidth, setSidebarWidth] = useState(300);
-  const [isResizing, setIsResizing] = useState(false);
   const { rooms } = useContext(RoomContext)!;
   const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
-  const sidebarRef = useRef<HTMLDivElement | null>(null);
-
-
-  const startResizing = useCallback(() => {
-    setIsResizing(true);
-  }, []);
-  const stopResizing = useCallback(() => {
-    setIsResizing(false);
-  }, []);
-
-  const resize = useCallback(
-    (mouseMoveEvent: MouseEvent) => {
-      if (isResizing) {
-        setSidebarWidth(mouseMoveEvent.clientX);
-        if (mouseMoveEvent.clientX < 120) {
-          setSidebarWidth(60);
-        }
-      }
-    },
-    [isResizing],
-  );
-
-  useEffect(() => {
-    window.addEventListener("mousemove", resize);
-    window.addEventListener("mouseup", stopResizing);
-    return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
-    };
-  }, [resize, stopResizing]);
+  const [sidebarWidth, setSidebarWidth] = useState(300);
 
   return (
-    <>
-      <div
-        className="flex flex-col shrink-0 grow-0 basis-1/2 bg-green-100 h-screen overflow-y-auto scrollbar px-2 w-min-0"
-        onMouseDown={(e) => e.preventDefault()}
-        style={{ flexBasis: sidebarWidth }}
-        ref={sidebarRef}
+    <Resizable width={sidebarWidth} setWidth={setSidebarWidth}>
+      <Togglable
+        title={sidebarWidth < 120 ? "" : "people"}
+        modalType="friendModal"
       >
-        <Togglable
-          title={sidebarWidth < 120 ? "" : "people"}
-          modalType="friendModal"
-        >
-          <RoomList
-            rooms={sortedRooms.filter((r) => r.getMembers().length <= 2)}
-            sidebarWidth={sidebarWidth}
-          />
-        </Togglable>
-        <Togglable
-          title={sidebarWidth < 120 ? "" : "public rooms"}
-          modalType="publicRoomModal"
-        >
-          <RoomList
-            rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
-            sidebarWidth={sidebarWidth}
-          />
-        </Togglable>
+        <RoomList
+          rooms={sortedRooms.filter((r) => r.getMembers().length <= 2)}
+          sidebarWidth={sidebarWidth}
+        />
+      </Togglable>
+      <Togglable
+        title={sidebarWidth < 120 ? "" : "public rooms"}
+        modalType="publicRoomModal"
+      >
+        <RoomList
+          rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
+          sidebarWidth={sidebarWidth}
+        />
+      </Togglable>
+      <div className="h-[100px] bg-black">
+        AAAAAAAAAAA
       </div>
-      <div
-        className="p-1 cursor-col-resize resize-x bg-green-50"
-        onMouseDown={startResizing}
-      ></div>
-    </>
+    </Resizable>
   );
 };
 

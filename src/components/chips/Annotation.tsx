@@ -23,6 +23,8 @@ const Annotation = ({
   const client = useContext(ClientContext);
   const { currentRoom } = useContext(RoomContext)!;
 
+  console.log(annotators);
+
   const src = mxcUrlToHttp(client, annotation!);
 
   const handleClick = () => {
