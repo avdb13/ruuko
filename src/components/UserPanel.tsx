@@ -17,6 +17,11 @@ const AccountTab = () => {
 
   const user = client.getUser(client.getUserId()!)!;
 
+  const addEmail = async () => {
+    const resp = await client.requestAdd3pidEmailToken(newEmail, client.generateClientSecret(), 1);
+    console.log(resp);
+  }
+
   return (
     <div className="flex grow border-2 gap-2">
       <EditableAvatar />
@@ -30,15 +35,32 @@ const AccountTab = () => {
           <p className="">{user.userId}</p>
         </div>
         <div>
-          <p className="uppercase font-bold text-xs">email</p>
-          {settings.emails.map(email => <p>{email}</p>)}
-          <ModalInput
-            type="text" value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
-          />
+          <p className="uppercase font-bold text-xs">email addresses</p>
+          {settings.emails.map((email) => (
+            <p>{email}</p>
+          ))}
+          <div className="flex">
+            <ModalInput
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              className="bg-gray-100 h-6 focus:outline-none invalid:bg-red-100"
+            />
+            <button className="bg-gray-300 w-6 h-6" onClick={addEmail}>
+              +
+            </button>
+          </div>
         </div>
         <div>
-          <p className="uppercase font-bold text-xs">phone number</p>
-          {settings.phoneNumbers.map(number => <p>{number}</p>)}
+          <p className="uppercase font-bold text-xs">phone numbers</p>
+          {settings.phoneNumbers.map((number) => (
+            <p>{number}</p>
+          ))}
+          <ModalInput
+            type="text"
+            value={newNumber}
+            onChange={(e) => setNewNumber(e.target.value)}
+          />
         </div>
       </div>
     </div>

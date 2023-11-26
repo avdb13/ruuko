@@ -1,13 +1,11 @@
-import {
-  IPublicRoomsChunkRoom,
-  Room,
-} from "matrix-js-sdk";
+import { IPublicRoomsChunkRoom, Room } from "matrix-js-sdk";
 import {
   useState,
   useRef,
   PropsWithChildren,
   Ref,
   useContext,
+  useEffect,
 } from "react";
 import Modal from "./Modal";
 import { ClientContext } from "../providers/client";
@@ -40,11 +38,7 @@ const sortRooms = (prev: Room, next: Room) => {
     : -1;
 };
 
-const RoomIconWidget = ({
-  room,
-}: {
-  room: Room;
-}) => {
+const RoomIconWidget = ({ room }: { room: Room }) => {
   const { setCurrentRoom } = useContext(RoomContext)!;
 
   return (
@@ -54,11 +48,7 @@ const RoomIconWidget = ({
   );
 };
 
-const RoomWidget = ({
-  room,
-}: {
-  room: Room;
-}) => {
+const RoomWidget = ({ room }: { room: Room }) => {
   const { setCurrentRoom } = useContext(RoomContext)!;
 
   const events = room.getLiveTimeline().getEvents();
@@ -73,7 +63,11 @@ const RoomWidget = ({
       <Avatar id={room.roomId} type="room" size={16} />
       <div className="flex flex-col items-start bg-green-200 min-w-0">
         <p className="max-w-full truncate font-bold">{room.name}</p>
-        <p className="max-w-full truncate text-sm">{latestEvent ? formatEvent(latestEvent, room.getMembers().length) : null}</p>
+        <p className="max-w-full truncate text-sm">
+          {latestEvent
+            ? formatEvent(latestEvent, room.getMembers().length)
+            : null}
+        </p>
       </div>
     </button>
   );
@@ -113,7 +107,15 @@ const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
 
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<DisplayedMember[] | null>(null);
-  client.searchUserDirectory({ term }).then((resp) => setResult(resp.results));
+
+  useEffect(() => {
+    if (term.length > 0) {
+      console.log("SEARCHING");
+      client
+        .searchUserDirectory({ term })
+        .then((resp) => setResult(resp.results));
+    }
+  }, [term]);
 
   return (
     <Modal ref={modalRef} title="Direct Messages">
@@ -148,13 +150,18 @@ const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<IPublicRoomsChunkRoom[] | null>(null);
 
-  client
-    .publicRooms({
-      // server: "https://matrix.org",
-      limit: 50,
-      filter: { generic_search_term: term },
-    })
-    .then((resp) => setResult(resp.chunk));
+  useEffect(() => {
+    if (term.length > 0) {
+      console.log("SEARCHING");
+      client
+        .publicRooms({
+          // server: "https://matrix.org",
+          limit: 50,
+          filter: { generic_search_term: term },
+        })
+        .then((resp) => setResult(resp.chunk));
+    }
+  }, [term]);
 
   return (
     <Modal ref={modalRef} title="Public Rooms">
