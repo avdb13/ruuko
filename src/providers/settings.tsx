@@ -25,7 +25,6 @@ const SettingsProvider = (props: PropsWithChildren) => {
 
   const getPhoneNumbers = async () => {
     const { threepids } = await client.getThreePids();
-    console.log(threepids);
     return threepids.filter(t => t.medium === ThreepidMedium.Phone).map(t => t.address);
   };
 
@@ -35,16 +34,14 @@ const SettingsProvider = (props: PropsWithChildren) => {
   };
 
   useEffect(() => {
-    console.log("before useEffect");
-    async () => {
-      console.log("during useEffect");
-      const emails = await getEmails();
-      const phoneNumbers = await getPhoneNumbers();
-
-      setSettings({ ...settings, emails, phoneNumbers })
-    };
-    console.log("after useEffect");
-  }, [])
+    console.log(settings);
+      getEmails().then(emails => {
+        setSettings((prevSettings) => ({ ...prevSettings, emails }));
+      });
+      getPhoneNumbers().then(phoneNumbers => {
+        setSettings((prevSettings) => ({ ...prevSettings, phoneNumbers }));
+      });
+  }, []);
 
   return (
     <SettingsContext.Provider value={{settings, setSettings}}>

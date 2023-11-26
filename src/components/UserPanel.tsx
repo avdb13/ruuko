@@ -26,6 +26,10 @@ const AccountTab = () => {
           <p className="">{user.userId}</p>
         </div>
         <div>
+          <p className="uppercase font-bold text-xs">email</p>
+          {settings.emails.map(email => <p>{email}</p>)}
+        </div>
+        <div>
           <p className="uppercase font-bold text-xs">phone number</p>
           {settings.phoneNumbers.map(number => <p>{number}</p>)}
         </div>
