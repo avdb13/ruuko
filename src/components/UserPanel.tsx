@@ -6,12 +6,16 @@ import Modal from "./Modal";
 import Exit from "./icons/Exit";
 import Pencil from "./icons/Pencil";
 import { SettingsContext } from "../providers/settings";
+import ModalInput from "./ModalInput";
 
 const AccountTab = () => {
   const client = useContext(ClientContext);
   const { settings, setSettings } = useContext(SettingsContext)!;
+
+  const [newNumber, setNewNumber] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+
   const user = client.getUser(client.getUserId()!)!;
-  console.log(settings);
 
   return (
     <div className="flex grow border-2 gap-2">
@@ -28,6 +32,9 @@ const AccountTab = () => {
         <div>
           <p className="uppercase font-bold text-xs">email</p>
           {settings.emails.map(email => <p>{email}</p>)}
+          <ModalInput
+            type="text" value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
+          />
         </div>
         <div>
           <p className="uppercase font-bold text-xs">phone number</p>

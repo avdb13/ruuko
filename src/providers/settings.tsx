@@ -34,7 +34,6 @@ const SettingsProvider = (props: PropsWithChildren) => {
   };
 
   useEffect(() => {
-    console.log(settings);
       getEmails().then(emails => {
         setSettings((prevSettings) => ({ ...prevSettings, emails }));
       });

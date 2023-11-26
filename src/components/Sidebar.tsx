@@ -20,6 +20,7 @@ import Resizable from "./Resizable";
 import Scrollbar from "./Scrollbar";
 import UserPanel from "./UserPanel";
 import Avatar from "./Avatar";
+import ModalInput from "./ModalInput";
 
 const sortRooms = (prev: Room, next: Room) => {
   const prevEvents = prev.getLiveTimeline().getEvents();
@@ -109,7 +110,6 @@ type ModalType = "friendModal" | "publicRoomModal";
 
 const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   const client = useContext(ClientContext);
-  const searchRef = useRef<HTMLInputElement>();
 
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<DisplayedMember[] | null>(null);
@@ -118,13 +118,11 @@ const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   return (
     <Modal ref={modalRef} title="Direct Messages">
       <div className="flex items-center m-4 w-[80%]">
-        <input
-          ref={searchRef}
+        <ModalInput
           placeholder="room"
           className="basis-full p-4 mx-4 max-h-[40px] flex-1 focus:border-2"
           type="text"
           onChange={(e) => setTerm(e.target.value)}
-          onClick={() => searchRef.current?.focus()}
         />
         <button className="rounded-md bg-zinc-100 p-[10px]">🔍</button>
       </div>
@@ -161,7 +159,7 @@ const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
   return (
     <Modal ref={modalRef} title="Public Rooms">
       <div className="flex items-center m-4 w-[80%]">
-        <input
+        <ModalInput
           className="basis-full mx-4 max-h-[40px] flex-1"
           type="text"
           value={term}
