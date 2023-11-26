@@ -1,12 +1,14 @@
 import { ChangeEvent, Ref, useContext, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
+import countries from "../../data/countries.json";
 import Avatar from "./Avatar";
 import Gear from "./icons/Gear";
 import Modal from "./Modal";
 import Exit from "./icons/Exit";
 import Pencil from "./icons/Pencil";
 import { SettingsContext } from "../providers/settings";
-import ModalInput from "./ModalInput";
+import { ModalSelect, ModalInput } from "./ModalElements";
+import { getFlagEmoji } from "../lib/helpers";
 
 const AccountTab = () => {
   const client = useContext(ClientContext);
@@ -14,10 +16,13 @@ const AccountTab = () => {
 
   const [newNumber, setNewNumber] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [requested, setRequested] = useState(false);
 
   const user = client.getUser(client.getUserId()!)!;
 
   const addEmail = async () => {
+    setRequested(true);
+    
     const resp = await client.requestAdd3pidEmailToken(newEmail, client.generateClientSecret(), 1);
     console.log(resp);
   }
@@ -50,17 +55,25 @@ const AccountTab = () => {
               +
             </button>
           </div>
+          {requested ? <p>check your email</p> : null}
         </div>
         <div>
           <p className="uppercase font-bold text-xs">phone numbers</p>
           {settings.phoneNumbers.map((number) => (
             <p>{number}</p>
           ))}
-          <ModalInput
-            type="text"
-            value={newNumber}
-            onChange={(e) => setNewNumber(e.target.value)}
-          />
+          <div className="flex">
+            <ModalSelect>{countries.map(c => <option>{getFlagEmoji(c.code)} {c.dial_code}</option>)}</ModalSelect>
+            <ModalInput
+              type="text"
+              value={newNumber}
+              onChange={(e) => setNewNumber(e.target.value)}
+              className="bg-gray-100 h-6 focus:outline-none invalid:bg-red-100"
+            />
+            <button className="bg-gray-300 w-6 h-6" onClick={addEmail}>
+              +
+            </button>
+          </div>
         </div>
       </div>
     </div>

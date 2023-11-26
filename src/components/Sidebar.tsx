@@ -18,7 +18,7 @@ import Resizable from "./Resizable";
 import Scrollbar from "./Scrollbar";
 import UserPanel from "./UserPanel";
 import Avatar from "./Avatar";
-import ModalInput from "./ModalInput";
+import { ModalInput } from "./ModalElements";
 
 const sortRooms = (prev: Room, next: Room) => {
   const prevEvents = prev.getLiveTimeline().getEvents();
