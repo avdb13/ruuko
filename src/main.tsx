@@ -5,13 +5,16 @@ import ClientProvider from "./providers/client.tsx";
 import { CookiesProvider } from "react-cookie";
 import App from "./App.tsx";
 import RoomProvider from "./providers/room.tsx";
+import SettingsProvider from "./providers/settings.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <CookiesProvider>
     <ClientProvider>
-      <RoomProvider>
-        <App />
-      </RoomProvider>
+      <SettingsProvider>
+        <RoomProvider>
+          <App />
+        </RoomProvider>
+      </SettingsProvider>
     </ClientProvider>
   </CookiesProvider>,
 );
