@@ -1,4 +1,11 @@
-import React, { ChangeEvent, ReactNode, Ref, useContext, useRef, useState } from "react";
+import React, {
+  ChangeEvent,
+  ReactNode,
+  Ref,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 import { ClientContext } from "../providers/client";
 import countries from "../../data/countries.json";
 import Avatar from "./Avatar";
@@ -10,25 +17,83 @@ import { SettingsContext } from "../providers/settings";
 import { ModalSelect, ModalInput } from "./ModalElements";
 import { getFlagEmoji } from "../lib/helpers";
 
-const DevicesTab = () => { return (<div></div>) }
-const AppearanceTab = () => { return (<div></div>) }
-const ContentTab = () => { return (<div></div>) }
-const NotificationsTab = () => { return (<div></div>) }
-const AboutTab = () => { return (<div></div>) }
+const DevicesTab = () => {
+  return <div></div>;
+};
+const AppearanceTab = () => {
+  return <div></div>;
+};
+const ContentTab = () => {
+  return <div></div>;
+};
+const NotificationsTab = () => {
+  return <div></div>;
+};
+const AboutTab = () => {
+  return <div></div>;
+};
 
+type backupMethod = "recoveryKey" | "password";
 
 const PrivacyTab = () => {
+  const [backupMethod, setBackupMethod] = useState<backupMethod | null>(null);
+  const [backupInputVisibility, setbackupInputVisibility] = useState(false);
+  const backupRef = useRef<HTMLInputElement>();
   const client = useContext(ClientContext);
+  client.restoreKeyBackupWithSecretStorage;
+
+  const generateBackupKey = () => {
+    client.getDeviceEd25519Key();
+    setbackupInputVisibility(true);
+
+    if (backupMethod === "password") {
+      client.keyBackupKeyFromPassword(backupRef.current?.value);
+    } else {
+      client.keyBackupKeyFromRecoveryKey();
+    }
+  };
 
   return (
     <div className="flex grow border-2 gap-2">
       <div>
         <p className="uppercase font-bold text-xs">encryption</p>
-        <p className="">generate keys</p>
+        <div className="group">
+          <label>
+            <input
+              className="invisible peer -mr-4"
+              type="radio"
+              name="radio"
+              onClick={() => {
+                setBackupMethod("password");
+              }}
+            />
+            <span className="border-2 p-2 rounded-md peer-checked:text-red-100">password</span>
+          </label>
+          <label>
+            <input
+              className="invisible peer -mr-4"
+              type="radio"
+              name="radio"
+              onClick={() => {
+                setBackupMethod("recoveryKey");
+              }}
+            />
+            <span className="border-2 p-2 rounded-md peer-checked:text-red-100">recovery key</span>
+          </label>
+          <button
+            className="pointer-events-none [.group:has(:checked)_&]:pointer-events-auto [.group:has(:checked)_&]:bg-green-200 bg-gray-200 rounded-md p-2"
+            onClick={generateBackupKey}
+          >
+            reset backup
+          </button>
+          {backupInputVisibility ? (
+            <input type="password" ref={backupRef} />
+          ) : null}
+        </div>
       </div>
     </div>
   );
-}
+};
 
 const AccountTab = () => {
   const client = useContext(ClientContext);
@@ -44,11 +109,14 @@ const AccountTab = () => {
     setNewEmail("");
     setRequested(true);
 
-
-    const resp = await client.requestAdd3pidEmailToken(newEmail, client.generateClientSecret(), 1);
+    const resp = await client.requestAdd3pidEmailToken(
+      newEmail,
+      client.generateClientSecret(),
+      1,
+    );
     // TODO:
     setRequested(false);
-  }
+  };
 
   return (
     <div className="flex grow border-2 gap-2">
@@ -86,7 +154,11 @@ const AccountTab = () => {
             <p>{number}</p>
           ))}
           <div className="flex">
-            <ModalSelect options={countries.map(c => getFlagEmoji(c.code) + " " + c.dial_code)} />
+            <ModalSelect
+              options={countries.map(
+                (c) => getFlagEmoji(c.code) + " " + c.dial_code,
+              )}
+            />
             <ModalInput
               type="text"
               value={newNumber}
@@ -164,9 +236,20 @@ const submenus = [
   "About",
 ] as const;
 
-const submenuComponents = [<AccountTab />, <PrivacyTab />, <DevicesTab />, <AppearanceTab />, <ContentTab />, <NotificationsTab />, <AboutTab />];
+const submenuComponents = [
+  <AccountTab />,
+  <PrivacyTab />,
+  <DevicesTab />,
+  <AppearanceTab />,
+  <ContentTab />,
+  <NotificationsTab />,
+  <AboutTab />,
+];
 
-const submenusObj = submenus.reduce((init, key, i) => ({...init, [key]: submenuComponents[i]}), {} as Record<Submenu, ReactNode>);
+const submenusObj = submenus.reduce(
+  (init, key, i) => ({ ...init, [key]: submenuComponents[i] }),
+  {} as Record<Submenu, ReactNode>,
+);
 
 type SubmenusReadOnly = typeof submenus;
 type Submenu = SubmenusReadOnly[number];
@@ -214,9 +297,7 @@ const Settings = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
           </button>
         ))}
       </ul>
-      <div className="flex-1 basis-3/4 grow">
-        {submenusObj[selection]}
-      </div>
+      <div className="flex-1 basis-3/4 grow">{submenusObj[selection]}</div>
     </Modal>
   );
 };
