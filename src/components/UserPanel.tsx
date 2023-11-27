@@ -1,4 +1,4 @@
-import { ChangeEvent, Ref, useContext, useRef, useState } from "react";
+import React, { ChangeEvent, ReactNode, Ref, useContext, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 import countries from "../../data/countries.json";
 import Avatar from "./Avatar";
@@ -10,11 +10,22 @@ import { SettingsContext } from "../providers/settings";
 import { ModalSelect, ModalInput } from "./ModalElements";
 import { getFlagEmoji } from "../lib/helpers";
 
+const DevicesTab = () => { return (<div></div>) }
+const AppearanceTab = () => { return (<div></div>) }
+const ContentTab = () => { return (<div></div>) }
+const NotificationsTab = () => { return (<div></div>) }
+const AboutTab = () => { return (<div></div>) }
+
+
 const PrivacyTab = () => {
   const client = useContext(ClientContext);
 
   return (
     <div className="flex grow border-2 gap-2">
+      <div>
+        <p className="uppercase font-bold text-xs">encryption</p>
+        <p className="">generate keys</p>
+      </div>
     </div>
   );
 }
@@ -153,8 +164,12 @@ const submenus = [
   "About",
 ] as const;
 
+const submenuComponents = [<AccountTab />, <PrivacyTab />, <DevicesTab />, <AppearanceTab />, <ContentTab />, <NotificationsTab />, <AboutTab />];
+
+const submenusObj = submenus.reduce((init, key, i) => ({...init, [key]: submenuComponents[i]}), {} as Record<Submenu, ReactNode>);
+
 type SubmenusReadOnly = typeof submenus;
-type Submenus = SubmenusReadOnly[number];
+type Submenu = SubmenusReadOnly[number];
 
 const UserPanel = () => {
   const client = useContext(ClientContext);
@@ -185,7 +200,7 @@ const UserPanel = () => {
 };
 
 const Settings = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
-  const [selection, setSelection] = useState<Submenus>("Account");
+  const [selection, setSelection] = useState<Submenu>("Account");
 
   return (
     <Modal title="settings" ref={modalRef} className="flex gap-2">
@@ -200,7 +215,7 @@ const Settings = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
         ))}
       </ul>
       <div className="flex-1 basis-3/4 grow">
-        <AccountTab />
+        {submenusObj[selection]}
       </div>
     </Modal>
   );

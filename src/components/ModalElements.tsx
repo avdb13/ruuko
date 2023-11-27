@@ -27,15 +27,17 @@ export const ModalSelect = (props: SelectProps) => {
   return (
     <select
       ref={ref}
-      onClick={() =>
-        ref.current ? (ref.current.size = props.options.length) : null
-      }
+      onClick={() => {
+        console.log("clicked select");
+        ref.current && ref.current.size === 0 ? (ref.current.size = props.options.length) : null
+      }}
       onBlur={() => (ref.current ? (ref.current.size = 0) : null)}
       {...props}
     >
       {props.options.map((option) => (
         <option
           onClick={() => {
+            console.log("clicked option", option);
             if (ref.current) {
               ref.current.value = option;
               ref.current.size = 0;

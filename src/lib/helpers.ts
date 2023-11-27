@@ -73,7 +73,12 @@ export const getAvatarUrl = (client: MatrixClient, id: string, type: AvatarType)
     case "user": {
       const user = client.getUser(id)!;
 
-      return client.mxcUrlToHttp(user.avatarUrl!, 120, 120, "scale", true);
+      // bug: avatar doesn't load sometimes since this method returns null for some reason.
+      const httpUrl = client.mxcUrlToHttp(user.avatarUrl!, 120, 120, "scale", true);
+
+      console.log("fetching avatar: ", httpUrl);
+      // return !httpUrl || httpUrl.length === 0 ? getAvatarUrl(client, id, type) : httpUrl;
+      return httpUrl;
     }
   }
 }
