@@ -4,15 +4,17 @@ import Spinner from "./components/Spinner";
 import MessageWindow from "./components/MessageWindow";
 import { RoomContext } from "./providers/room";
 import { ClientContext } from "./providers/client";
+import { SyncState } from "matrix-js-sdk";
 
 const App = () => {
   const roomState = useContext(RoomContext);
   const client = useContext(ClientContext);
   const _ = useContext(RoomContext);
 
-  console.log(Object.entries(roomState.roomEvents).length);
-
-  if (!roomState || Object.entries(roomState.roomEvents).length !== client.getRooms().length) {
+  const rooms = client.getRooms().length;
+  // find out how we can make this more concise
+  console.log(rooms, Object.entries(roomState?.roomEvents).length);
+  if (!roomState || rooms === 0 || Object.entries(roomState.roomEvents).length !== rooms || roomState.rooms.length !== rooms) {
     return <Spinner />;
   }
 

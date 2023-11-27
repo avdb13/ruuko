@@ -98,12 +98,9 @@ const TextMessage = ({
       )
     : null;
 
-  console.log(roomEvents, Object.entries(roomEvents).length, currentRoom!.roomId)
-  console.log(currentRoom!.roomId!, roomEvents[currentRoom!.roomId!])
-
-  // if (reply) {
-  //   console.log(Object.entries(roomEvents[currentRoom!.roomId!]!).map(([x,y]) => [x, y.getContent()]), content["m.relates_to"]?.event_id);
-  // }
+  if (content["m.relates_to"]) {
+    console.log(roomEvents[currentRoom?.roomId!]!, content, roomEvents[currentRoom?.roomId!]![content["m.relates_to"]["m.in_reply_to"]?.event_id!])
+  }
 
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">

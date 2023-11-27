@@ -58,7 +58,8 @@ const RoomProvider = (props: PropsWithChildren) => {
       console.log(rooms.length);
 
       rooms.forEach((r) =>
-        client.scrollback(r, Number.MAX_SAFE_INTEGER).then((scrollback) => {
+        // allow setting limit later
+        client.scrollback(r).then((scrollback) => {
           // WARNING: we're inside a map, React batches updates so we have to pass a closure to use `previousEvents` here
           setRoomEvents((previousEvents) => ({
             ...previousEvents,
@@ -108,6 +109,8 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
     // weird bug that gets triggered the message twice
+    console.log(event.getContent());
+
     if (room) {
       const currentRoomEvents = roomEvents[room.roomId];
 
