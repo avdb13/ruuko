@@ -40,9 +40,9 @@ const ClientProvider = (props: PropsWithChildren) => {
       const client = initClient(session);
       setClient(client);
 
-      client.initCrypto().then(() => {
+      // client.initCrypto().finally(() => {
         client.startClient({ lazyLoadMembers: true });
-      });
+      // });
     }
   }, [cookies, session]);
 

@@ -1,14 +1,20 @@
-import { EventType, MatrixEvent } from "matrix-js-sdk";
+import {  MatrixEvent } from "matrix-js-sdk";
 import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef } from "react";
 import { RoomContext } from "../providers/room";
+import { ClientContext } from "../providers/client";
+import { isAnnotation } from "../lib/eventFormatter";
 
 const MessageWindow = () => {
+  // no idea why roomEvents doesn't contain replies.
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
   const bottomDivRef = useRef<HTMLDivElement>(null);
   const { annotations } = useContext(RoomContext)!;
   const roomAnnotations = annotations[currentRoom!.roomId] || {};
+
+  const client = useContext(ClientContext);
+  const temporaryEvents = client.getRoom(currentRoom?.roomId)!.getLiveTimeline().getEvents().filter(isAnnotation);
 
   const events = useMemo(
     () => roomEvents[currentRoom!.roomId] || [],
@@ -37,7 +43,7 @@ const MessageWindow = () => {
       </div>
       <div className="overflow-y-auto">
         <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
-          <MessagesWithDayBreak events={events} annotations={roomAnnotations} />
+          <MessagesWithDayBreak events={temporaryEvents.reduce((init, e) => (e.getId() ? ({ ...init, [e.getId()!]: e }) : init), {} as Record<string, MatrixEvent>)} annotations={roomAnnotations} />
         </div>
         <InputBar roomId={currentRoom.roomId} />
         <div id="autoscroll-bottom" ref={bottomDivRef}></div>
@@ -46,8 +52,8 @@ const MessageWindow = () => {
   );
 };
 
-export const MessagesWithDayBreak = ({ events, annotations }: { events: MatrixEvent[], annotations: Record<string, MatrixEvent[]> }) => {
-  return events.map((event, i) => {
+export const MessagesWithDayBreak = ({ events, annotations }: { events: Record<string, MatrixEvent>, annotations: Record<string, MatrixEvent[]> }) => {
+  return Object.values(events).map((event, i) => {
     const eventId = event.getId();
     const eventAnnotations = eventId ? annotations[eventId] || null : null;
 
@@ -56,7 +62,7 @@ export const MessagesWithDayBreak = ({ events, annotations }: { events: MatrixEv
     } else {
       const [messageTs, prevMessageTs] = [
         new Date(event.getTs()),
-        new Date(events[i - 1]!.getTs()),
+        new Date(Object.values(events)[i - 1]!.getTs()),
       ];
 
       return prevMessageTs.getDate() === messageTs.getDate() ? (

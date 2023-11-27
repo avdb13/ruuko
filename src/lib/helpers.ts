@@ -38,26 +38,6 @@ export const addAnnotation = (annotations: Record<string, Record<string, MatrixE
   });
 }
 
-// keeping it easy for now, will see about adding the formatted body later
-export const extractTags = (s: string): TagContents | null => {
-  const end = s.lastIndexOf(">");
-  const message = [...s].slice(end + 1).join("");
-  const quote = [...s]
-    .slice(0, end)
-    .join("")
-    .match(/<blockquote>(.*?)<\/blockquote>/);
-
-  if (!quote || !quote[1]) {
-    return null;
-  }
-
-  const in_reply_to = [...quote[1]]
-    .slice(quote[1].lastIndexOf(">") + 1)
-    .join("");
-
-  return quote ? { message, in_reply_to } : null;
-};
-
 export const getAvatarUrl = (client: MatrixClient, id: string, type: AvatarType) => {
   switch (type) {
     case "room": {
@@ -76,7 +56,7 @@ export const getAvatarUrl = (client: MatrixClient, id: string, type: AvatarType)
       // bug: avatar doesn't load sometimes since this method returns null for some reason.
       const httpUrl = client.mxcUrlToHttp(user.avatarUrl!, 120, 120, "scale", true);
 
-      console.log("fetching avatar: ", httpUrl);
+      // console.log("fetching avatar: ", httpUrl);
       // return !httpUrl || httpUrl.length === 0 ? getAvatarUrl(client, id, type) : httpUrl;
       return httpUrl;
     }

@@ -16,11 +16,11 @@ export const RoomContext = createContext<RoomState | null>(null);
 interface RoomState {
   rooms: Room[];
   currentRoom: Room | null;
-  roomEvents: Record<string, MatrixEvent[]>;
+  roomEvents: Record<string, Record<string, MatrixEvent>>;
   annotations: Record<string, Record<string, MatrixEvent[]>>;
   setRooms: (_: Room[]) => void;
   setCurrentRoom: (_: Room) => void;
-  setRoomEvents: (_: Record<string, MatrixEvent[]>) => void;
+  setRoomEvents: (_: Record<string, Record<string, MatrixEvent>>) => void;
   setAnnotations: (_: Record<string, Record<string, MatrixEvent[]>>) => void;
 }
 
@@ -28,9 +28,9 @@ const RoomProvider = (props: PropsWithChildren) => {
   const client = useContext(ClientContext);
 
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [roomEvents, setRoomEvents] = useState<Record<string, MatrixEvent[]>>(
-    {},
-  );
+  const [roomEvents, setRoomEvents] = useState<
+    Record<string, Record<string, MatrixEvent>>
+  >({});
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [annotations, setAnnotations] = useState<
     Record<string, Record<string, MatrixEvent[]>>
@@ -48,33 +48,41 @@ const RoomProvider = (props: PropsWithChildren) => {
   };
 
   useEffect(() => {
-    client.once(ClientEvent.Sync, (state, previousState, res) => {
-    })
+    client.once(ClientEvent.Sync, (state, previousState, res) => {});
 
     setRooms(client.getRooms());
   }, []);
 
   useEffect(() => {
     if (rooms.length > 0) {
+      console.log(rooms.length);
+
       rooms.forEach((r) =>
         client.scrollback(r, Number.MAX_SAFE_INTEGER).then((scrollback) => {
           // WARNING: we're inside a map, React batches updates so we have to pass a closure to use `previousEvents` here
           setRoomEvents((previousEvents) => ({
             ...previousEvents,
-            [r.roomId]: [...scrollback.getLiveTimeline().getEvents()],
+            [scrollback.roomId]: scrollback
+              .getLiveTimeline()
+              .getEvents()
+              .reduce(
+                (init, e) => ({ ...init, [e.getId()!]: e }),
+                {} as Record<string, MatrixEvent>,
+              ),
           }));
         }),
       );
     }
-
   }, [rooms.length]);
 
   useEffect(() => {
     if (client.getRooms().length === rooms.length) {
       for (const events of Object.values(roomEvents)) {
-        for (const event of events) {
+        for (const event of Object.values(events)) {
           if (isAnnotation(event)) {
-            setAnnotations((previousAnnotations) => addAnnotation(previousAnnotations, event))
+            setAnnotations((previousAnnotations) =>
+              addAnnotation(previousAnnotations, event),
+            );
           }
         }
       }
@@ -82,14 +90,19 @@ const RoomProvider = (props: PropsWithChildren) => {
       const roomEventsWithoutAnnotations = Object.entries(roomEvents).reduce(
         (obj, [roomId, events]) => ({
           ...obj,
-          [roomId]: events.filter((e) => !isAnnotation(e)),
+          [roomId]: Object.values(events)
+            .filter((e) => !isAnnotation(e))
+            .reduce(
+              (init, e) => (e.getId() ? { ...init, [e.getId()!]: e } : init),
+              {} as Record<string, MatrixEvent>,
+            ),
         }),
-        {} as Record<string, MatrixEvent[]>,
+        {} as Record<string, Record<string, MatrixEvent>>,
       );
 
       setRoomEvents(roomEventsWithoutAnnotations);
     }
-  }, [rooms.length, Object.entries(roomEvents).length])
+  }, [rooms.length, Object.entries(roomEvents).length]);
 
   client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
 
@@ -99,12 +112,12 @@ const RoomProvider = (props: PropsWithChildren) => {
       const currentRoomEvents = roomEvents[room.roomId];
 
       if (!currentRoomEvents) {
-        return
+        return;
       }
 
       if (
         startOfTimeline ||
-        currentRoomEvents[currentRoomEvents.length - 1] === event
+        currentRoomEvents[Object.values(currentRoomEvents).length - 1] === event
       ) {
         return;
       }
@@ -115,10 +128,9 @@ const RoomProvider = (props: PropsWithChildren) => {
         // check behavior later
         setRoomEvents({
           ...roomEvents,
-          [room.roomId]: [...currentRoomEvents, event],
+          [room.roomId]: { ...currentRoomEvents, [event.getId()!]: event },
         });
       }
-
     }
   });
 

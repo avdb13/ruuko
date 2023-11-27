@@ -16,6 +16,7 @@ import Pencil from "./icons/Pencil";
 import { SettingsContext } from "../providers/settings";
 import { ModalSelect, ModalInput } from "./ModalElements";
 import { getFlagEmoji } from "../lib/helpers";
+import { EventType } from "matrix-js-sdk";
 
 const DevicesTab = () => {
   return <div></div>;
@@ -103,6 +104,7 @@ const AccountTab = () => {
   const [newEmail, setNewEmail] = useState("");
   const [requested, setRequested] = useState(false);
 
+  console.log(client.getUserId()!);
   const user = client.getUser(client.getUserId()!)!;
 
   const addEmail = async () => {
