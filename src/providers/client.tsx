@@ -1,4 +1,5 @@
 import { IndexedDBStore, MatrixClient, createClient } from "matrix-js-sdk";
+import "@matrix-org/olm";
 import {
   PropsWithChildren,
   createContext,
@@ -25,7 +26,8 @@ const initClient = (session: Session) => {
   store.startup();
 
   const { accessToken, baseUrl, user } = session;
-  return createClient({ accessToken, baseUrl, userId: user, store });
+  // is deviceId correct here?
+  return createClient({ accessToken, baseUrl, userId: user, deviceId: "Ruuko", store });
 };
 
 const ClientProvider = (props: PropsWithChildren) => {
@@ -38,7 +40,9 @@ const ClientProvider = (props: PropsWithChildren) => {
       const client = initClient(session);
       setClient(client);
 
-      client.startClient({ lazyLoadMembers: true });
+      client.initCrypto().then(() => {
+        client.startClient({ lazyLoadMembers: true });
+      });
     }
   }, [cookies, session]);
 

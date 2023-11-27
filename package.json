@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@matrix-org/olm": "^3.2.15",
     "axios": "^1.6.2",
     "highlight.js": "^11.9.0",
     "matrix-js-sdk": "^29.1.0",

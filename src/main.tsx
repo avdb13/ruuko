@@ -6,6 +6,9 @@ import { CookiesProvider } from "react-cookie";
 import App from "./App.tsx";
 import RoomProvider from "./providers/room.tsx";
 import SettingsProvider from "./providers/settings.tsx";
+import "@matrix-org/olm";
+
+global.Olm = Olm;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <CookiesProvider>

@@ -10,6 +10,15 @@ import { SettingsContext } from "../providers/settings";
 import { ModalSelect, ModalInput } from "./ModalElements";
 import { getFlagEmoji } from "../lib/helpers";
 
+const PrivacyTab = () => {
+  const client = useContext(ClientContext);
+
+  return (
+    <div className="flex grow border-2 gap-2">
+    </div>
+  );
+}
+
 const AccountTab = () => {
   const client = useContext(ClientContext);
   const { settings, setSettings } = useContext(SettingsContext)!;
