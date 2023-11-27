@@ -21,10 +21,13 @@ const AccountTab = () => {
   const user = client.getUser(client.getUserId()!)!;
 
   const addEmail = async () => {
+    setNewEmail("");
     setRequested(true);
-    
+
+
     const resp = await client.requestAdd3pidEmailToken(newEmail, client.generateClientSecret(), 1);
-    console.log(resp);
+    // TODO:
+    setRequested(false);
   }
 
   return (
@@ -63,7 +66,7 @@ const AccountTab = () => {
             <p>{number}</p>
           ))}
           <div className="flex">
-            <ModalSelect>{countries.map(c => <option>{getFlagEmoji(c.code)} {c.dial_code}</option>)}</ModalSelect>
+            <ModalSelect options={countries.map(c => getFlagEmoji(c.code) + " " + c.dial_code)} />
             <ModalInput
               type="text"
               value={newNumber}
