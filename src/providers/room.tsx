@@ -14,7 +14,7 @@ export const RoomContext = createContext<RoomState | null>(null);
 
 // Map in javascript has O(n) access time but object is constant
 interface RoomState {
-  rooms: Room[];
+  rooms: Room[] | null;
   currentRoom: Room | null;
   roomEvents: Record<string, Record<string, MatrixEvent>>;
   annotations: Record<string, Record<string, MatrixEvent[]>>;
@@ -27,7 +27,8 @@ interface RoomState {
 const RoomProvider = (props: PropsWithChildren) => {
   const client = useContext(ClientContext);
 
-  const [rooms, setRooms] = useState<Room[]>([]);
+  // null because otherwise we can't distinguish between no rooms and not done preparing the store
+  const [rooms, setRooms] = useState<Room[] | null>(null);
   const [roomEvents, setRoomEvents] = useState<
     Record<string, Record<string, MatrixEvent>>
   >({});
@@ -54,7 +55,7 @@ const RoomProvider = (props: PropsWithChildren) => {
   }, []);
 
   useEffect(() => {
-    if (rooms.length > 0) {
+    if (rooms) {
       rooms.forEach((r) =>
         // allow setting limit later
         client.scrollback(r).then((scrollback) => {
@@ -72,10 +73,10 @@ const RoomProvider = (props: PropsWithChildren) => {
         }),
       );
     }
-  }, [rooms.length]);
+  }, [rooms ? rooms.length : null]);
 
   useEffect(() => {
-    if (client.getRooms().length === rooms.length) {
+    if (rooms && client.getRooms().length === rooms.length) {
       for (const events of Object.values(roomEvents)) {
         for (const event of Object.values(events)) {
           if (isAnnotation(event)) {
@@ -86,22 +87,22 @@ const RoomProvider = (props: PropsWithChildren) => {
         }
       }
 
-      const roomEventsWithoutAnnotations = Object.entries(roomEvents).reduce(
-        (obj, [roomId, events]) => ({
-          ...obj,
-          [roomId]: Object.values(events)
-            .filter((e) => !isAnnotation(e))
-            .reduce(
-              (init, e) => (e.getId() ? { ...init, [e.getId()!]: e } : init),
-              {} as Record<string, MatrixEvent>,
-            ),
-        }),
-        {} as Record<string, Record<string, MatrixEvent>>,
-      );
+      // const roomEventsWithoutAnnotations = Object.entries(roomEvents).reduce(
+      //   (obj, [roomId, events]) => ({
+      //     ...obj,
+      //     [roomId]: Object.values(events)
+      //       .filter((e) => !isAnnotation(e))
+      //       .reduce(
+      //         (init, e) => (e.getId() ? { ...init, [e.getId()!]: e } : init),
+      //         {} as Record<string, MatrixEvent>,
+      //       ),
+      //   }),
+      //   {} as Record<string, Record<string, MatrixEvent>>,
+      // );
 
-      setRoomEvents(roomEventsWithoutAnnotations);
+      setRoomEvents(roomEvents);
     }
-  }, [rooms.length, Object.entries(roomEvents).length]);
+  }, [rooms ? rooms.length : null, Object.entries(roomEvents).length]);
 
   client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
 

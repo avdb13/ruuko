@@ -36,6 +36,7 @@ export const ModalSelect = (props: SelectProps) => {
     >
       {props.options.map((option) => (
         <option
+          key={option}
           onClick={() => {
             console.log("clicked option", option);
             if (ref.current) {

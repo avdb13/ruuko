@@ -1,28 +1,41 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { RoomContext } from "../providers/room";
 
 const Spinner = () => {
+  const roomState = useContext(RoomContext);
+  const [content, setContent] = useState("");
+
   const divStyle =
     "absolute ring-[4px] ring-violet-500/100 rounded-full animate-ping";
-  const roomState = useContext(RoomContext);
-  const [roomEventsLength, roomLength] = roomState
-    ? [Object.entries(roomState.roomEvents).length, roomState.rooms.length]
-    : [null, null];
-  const content = roomState
-            ? roomLength === 0
-              ? "loading rooms ..."
-              : roomEventsLength !== roomLength
-              ? `loading messages ... ${roomEventsLength}/${roomLength}`
-              : "nearly done ..."
-            : "starting client ...";
+  const [roomEventsLength, roomLength] =
+    roomState && roomState.rooms
+      ? [Object.entries(roomState.roomEvents).length, roomState.rooms.length]
+      : [null, null];
 
-  // setTimeout(() => {
-  //   setTimeout(() => {
-  //       content.replace("...", ".. ");
-  //       content.replace(".. ", " ..");
-  //       content.replace(" ..", "...");
-  //   }, 500)
-  // }, 60*60)
+  // leave until later
+  useEffect(() => {
+    console.log(roomState, roomState?.rooms);
+    roomState && roomState.rooms
+      ? roomEventsLength && roomLength && roomEventsLength !== roomLength
+        ? setContent(`loading messages ... ${roomEventsLength}/${roomLength}`)
+        : setContent(`loading rooms ...`)
+      : setContent("starting client ...");
+  }, [content]);
+
+  // useEffect(() => {
+  //   const f = (content: string) =>
+  //         content.search("...")
+  //           ? content.replace("...", ".. ")
+  //           : content.search(".. ")
+  //           ? content.replace(".. ", " ..")
+  //           : content.replace(" ..", "...");
+
+  //     setTimeout(() => {
+  //       console.log("new timeout")
+  //       setContent(f(content));
+  //       setTimeout(() => setContent(f(content)));
+  //     }, 500);
+  // }, []);
 
   return (
     <div className="flex">

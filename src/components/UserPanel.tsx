@@ -134,7 +134,7 @@ const AccountTab = () => {
         <div>
           <p className="uppercase font-bold text-xs">email addresses</p>
           {settings.emails.map((email) => (
-            <p>{email}</p>
+            <p key={email}>{email}</p>
           ))}
           <div className="flex">
             <ModalInput
@@ -152,7 +152,7 @@ const AccountTab = () => {
         <div>
           <p className="uppercase font-bold text-xs">phone numbers</p>
           {settings.phoneNumbers.map((number) => (
-            <p>{number}</p>
+            <p key={number}>{number}</p>
           ))}
           <div className="flex">
             <ModalSelect
@@ -291,6 +291,7 @@ const Settings = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
       <ul className="flex flex-col justify-self-start gap-2 basis-1/4 bg-gray-100">
         {submenus.map((menu) => (
           <button
+            key={menu}
             onClick={() => setSelection(menu)}
             className="bg-gray-300 hover:bg-gray-400 duration-100 rounded-md text-center p-2"
           >
