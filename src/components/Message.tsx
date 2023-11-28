@@ -1,6 +1,6 @@
 import { IContent, MatrixEvent, MsgType, RoomMember } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
-import { useContext } from "react";
+import { useContext, useRef } from "react";
 import { ClientContext } from "../providers/client";
 import formatEvent, { findEventType } from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
@@ -10,18 +10,29 @@ import Avatar, { DirectAvatar } from "./Avatar";
 const replyToEvent = (body: string) => {
   const split = body.substring(2).split(" ");
   const message = split[1];
-  const sender = split[0] ? split[0].substring(1, split[0].length-1) : null;
+  const sender = split[0] ? split[0].substring(1, split[0].length - 1) : null;
 
   return [sender, message];
-}
+};
 
-const Reply = ({ message, member }: { message: string, member: RoomMember }) => {
+const Reply = ({
+  eventId,
+  message,
+  member,
+}: {
+  eventId: string;
+  message: string;
+  member: RoomMember;
+}) => {
+  const element = document.getElementById(eventId);
+
+  console.log(element, eventId);
   return (
-    <div className="flex border-l-4 px-2 border-black gap-1 items-center">
+    <button className="flex px-2 border-black gap-1 items-center ml-16 mb-2" onClick={() => element?.scrollIntoView({behavior: "smooth", block: "center"})}>
       <DirectAvatar url={member.getMxcAvatarUrl()!} size={8} />
       <p className="font-bold">{member.name}</p>
       <p>{message}</p>
-    </div>
+    </button>
   );
 };
 
@@ -87,6 +98,8 @@ const TextMessage = ({
   annotations: MatrixEvent[] | null;
 }) => {
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
+  // const replyRef = useRef<HTMLDivElement>();
+
   const content = event.getContent();
 
   const reply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
@@ -105,13 +118,16 @@ const TextMessage = ({
       )
     : null;
 
+  // figure out why this doesn't work later
   // const replyEvent = roomEvents[currentRoom?.roomId!]![content["m.relates_to"]?.["m.in_reply_to"]?.event_id!]!;
   // const replyEvent = currentRoom?.findEventById(content["m.relates_to"]?.["m.in_reply_to"]?.event_id!)!;
+
   const [sender, message] = replyToEvent(content.body.split("\n")[0]!);
   const replyMember = currentRoom?.getMember(sender!);
 
   return (
-    <div className="p-2 border-x-2 border-b-2 border-black">
+    <div className="p-2 border-x-2 border-b-2 border-black" id={event.getId()!}>
+      {reply ? <Reply eventId={event.getId()!} message={message!} member={replyMember!} /> : null}{" "}
       <div className="flex content-center gap-2">
         <Avatar id={event.getSender()!} type="user" size={16} />
         <div className="flex flex-col gap-2">
@@ -119,15 +135,11 @@ const TextMessage = ({
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
           </div>
           {reply ? (
-            <>
-              <Reply
-                message={message}
-                member={replyMember}
-              />
-              <p className="whitespace-normal break-all">{content.body.split("\n")[2]!}</p>
-            </>
+            <ContentFormatter
+              content={{ ...content, body: content.body.split("\n")[2]! }}
+            />
           ) : (
-            <ContentFormatter content={content.body} />
+            <ContentFormatter content={content} />
           )}
 
           <div className="flex gap-2">

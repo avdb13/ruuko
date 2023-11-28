@@ -14,10 +14,9 @@ const MessageWindow = () => {
   const roomAnnotations = annotations[currentRoom!.roomId] || {};
 
   const client = useContext(ClientContext);
-  const temporaryEvents = client.getRoom(currentRoom?.roomId)!.getLiveTimeline().getEvents().filter(isAnnotation);
 
   const events = useMemo(
-    () => roomEvents[currentRoom!.roomId] || [],
+    () => roomEvents[currentRoom!.roomId] || {},
     [currentRoom, roomEvents],
   );
 
@@ -43,7 +42,7 @@ const MessageWindow = () => {
       </div>
       <div className="overflow-y-auto">
         <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
-          <MessagesWithDayBreak events={temporaryEvents.reduce((init, e) => (e.getId() ? ({ ...init, [e.getId()!]: e }) : init), {} as Record<string, MatrixEvent>)} annotations={roomAnnotations} />
+          <MessagesWithDayBreak events={events} annotations={roomAnnotations} />
         </div>
         <InputBar roomId={currentRoom.roomId} />
         <div id="autoscroll-bottom" ref={bottomDivRef}></div>
