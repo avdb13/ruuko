@@ -104,7 +104,6 @@ const AccountTab = () => {
   const [newEmail, setNewEmail] = useState("");
   const [requested, setRequested] = useState(false);
 
-  console.log(client.getUserId()!);
   const user = client.getUser(client.getUserId()!)!;
 
   const addEmail = async () => {

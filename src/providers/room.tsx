@@ -55,8 +55,6 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   useEffect(() => {
     if (rooms.length > 0) {
-      console.log(rooms.length);
-
       rooms.forEach((r) =>
         // allow setting limit later
         client.scrollback(r).then((scrollback) => {
@@ -109,7 +107,7 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
     // weird bug that gets triggered the message twice
-    console.log(event.getContent());
+    // console.log(event.getContent());
 
     if (room) {
       const currentRoomEvents = roomEvents[room.roomId];

@@ -12,20 +12,21 @@ const App = () => {
   const _ = useContext(RoomContext);
 
   const rooms = client.getRooms().length;
-  // find out how we can make this more concise
-  console.log(rooms, Object.entries(roomState?.roomEvents).length);
-  if (!roomState || rooms === 0 || Object.entries(roomState.roomEvents).length !== rooms || roomState.rooms.length !== rooms) {
+
+  // find out how we can make this more concise, we need to check if the store is ready somehow
+  if (
+    !client.getSyncState() ||
+    !roomState ||
+    Object.entries(roomState.roomEvents).length !== rooms ||
+    roomState.rooms.length !== rooms
+  ) {
     return <Spinner />;
   }
 
   return (
     <div className="flex min-w-0">
       <Sidebar />
-      {roomState.currentRoom ? (
-        <MessageWindow />
-      ) : (
-        <p>welcome</p>
-      )}
+      {roomState.currentRoom ? <MessageWindow /> : <p>welcome</p>}
     </div>
   );
 };

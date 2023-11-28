@@ -98,9 +98,9 @@ const TextMessage = ({
       )
     : null;
 
-  if (content["m.relates_to"]) {
-    console.log(roomEvents[currentRoom?.roomId!]!, content, roomEvents[currentRoom?.roomId!]![content["m.relates_to"]["m.in_reply_to"]?.event_id!])
-  }
+  // if (content["m.relates_to"]) {
+  //   console.log(roomEvents[currentRoom?.roomId!]!, content, roomEvents[currentRoom?.roomId!]![content["m.relates_to"]["m.in_reply_to"]?.event_id!])
+  // }
 
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
