@@ -2,7 +2,7 @@ import { IPublicRoomsChunkRoom } from "matrix-js-sdk";
 import { useContext } from "react";
 import { ClientContext } from "../../providers/client";
 import { RoomContext } from "../../providers/room";
-import Avatar, { DirectAvatar } from "../Avatar";
+import { DirectAvatar } from "../Avatar";
 
 const RoomChip = ({
   room,

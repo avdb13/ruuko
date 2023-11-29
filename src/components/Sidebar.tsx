@@ -1,24 +1,15 @@
-import { IPublicRoomsChunkRoom, Room } from "matrix-js-sdk";
+import { Room } from "matrix-js-sdk";
 import {
   useState,
-  useRef,
-  PropsWithChildren,
-  Ref,
   useContext,
-  useEffect,
 } from "react";
-import Modal from "./Modal";
-import { ClientContext } from "../providers/client";
-import { DisplayedMember } from "./chips";
-import UserChip from "./chips/User";
-import RoomChip from "./chips/Room";
 import { RoomContext } from "../providers/room";
 import formatEvent from "../lib/eventFormatter";
 import Resizable from "./Resizable";
 import Scrollbar from "./Scrollbar";
 import UserPanel from "./UserPanel";
 import Avatar from "./Avatar";
-import { ModalInput } from "./ModalElements";
+import Togglable from "./Togglable";
 
 const sortRooms = (prev: Room, next: Room) => {
   const prevEvents = prev.getLiveTimeline().getEvents();
@@ -99,128 +90,6 @@ const RoomList = ({
   );
 };
 
-// temporary solution
-type ModalType = "friendModal" | "publicRoomModal";
-
-const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
-  const client = useContext(ClientContext);
-
-  const [term, setTerm] = useState("");
-  const [result, setResult] = useState<DisplayedMember[] | null>(null);
-
-  useEffect(() => {
-    if (term.length > 0) {
-      console.log("SEARCHING");
-      client
-        .searchUserDirectory({ term })
-        .then((resp) => setResult(resp.results));
-    }
-  }, [term]);
-
-  return (
-    <Modal ref={modalRef} title="Direct Messages">
-      <div className="flex items-center m-4 w-[80%]">
-        <ModalInput
-          placeholder="room"
-          className="border-2 basis-full p-4 mx-4 max-h-[40px] flex-1 focus:border-2"
-          type="text"
-          onChange={(e) => setTerm(e.target.value)}
-        />
-        <button className="rounded-md bg-zinc-100 p-[10px]">🔍</button>
-      </div>
-      {term.length > 0 ? (
-        <ul className="flex flex-col w-[80%] border-2">
-          {result
-            ? result.map((member) => (
-                <UserChip
-                  member={member}
-                  closeModal={() => modalRef.current?.toggleVisibility()}
-                />
-              ))
-            : null}
-        </ul>
-      ) : null}
-    </Modal>
-  );
-};
-
-const PublicRoomModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
-  const client = useContext(ClientContext);
-
-  const [term, setTerm] = useState("");
-  const [result, setResult] = useState<IPublicRoomsChunkRoom[] | null>(null);
-
-  useEffect(() => {
-    if (term.length > 0) {
-      console.log("SEARCHING");
-      client
-        .publicRooms({
-          // server: "https://matrix.org",
-          limit: 50,
-          filter: { generic_search_term: term },
-        })
-        .then((resp) => setResult(resp.chunk));
-    }
-  }, [term]);
-
-  return (
-    <Modal ref={modalRef} title="Public Rooms">
-      <div className="flex items-center m-4 w-[80%]">
-        <ModalInput
-          className="basis-full mx-4 max-h-[40px] flex-1"
-          type="text"
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-        />
-        <button className="rounded-md bg-zinc-100 p-[10px]">🔍</button>
-      </div>
-      {term.length > 0 ? (
-        <ul className="flex flex-col w-[80%] border-2">
-          {result
-            ? result.map((room) => (
-                <RoomChip
-                  room={room}
-                  closeModal={() => modalRef.current?.toggleVisibility()}
-                />
-              ))
-            : null}
-        </ul>
-      ) : null}
-    </Modal>
-  );
-};
-
-const Togglable = (
-  props: PropsWithChildren<{ title: string; modalType: ModalType }>,
-) => {
-  const [toggled, setToggled] = useState(true);
-  const degrees = toggled ? "rotate-90" : "rotate-270";
-  const friendModalRef = useRef<ModalProps>(null);
-  const publicRoomModalRef = useRef<ModalProps>(null);
-
-  return (
-    <div>
-      {props.modalType === "friendModal" ? (
-        <FriendModal modalRef={friendModalRef} />
-      ) : (
-        <PublicRoomModal modalRef={publicRoomModalRef} />
-      )}
-      <div className="flex justify-between">
-        <div className="flex gap-2">
-          <button className={degrees} onClick={() => setToggled(!toggled)}>
-            {">"}
-          </button>
-          <p>{props.title}</p>
-        </div>
-    <button onClick={() => props.modalType === "friendModal" ? friendModalRef.current?.toggleVisibility() : publicRoomModalRef.current?.toggleVisibility()}>
-          {"+"}
-        </button>
-      </div>
-      {toggled ? <>{props.children}</> : null}
-    </div>
-  );
-};
-
 const Sidebar = () => {
   const { rooms } = useContext(RoomContext)!;
   const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
@@ -229,36 +98,18 @@ const Sidebar = () => {
   return (
     <Resizable width={sidebarWidth} setWidth={setSidebarWidth}>
       <Scrollbar>
-        <Togglable
-          title={sidebarWidth < 120 ? "" : "people"}
-          modalType="friendModal"
+        <Togglable modal={(ref) => <FriendModal modalRef={ref} />}
+          title="friends"
+          sidebarWidth={sidebarWidth}
         >
           <RoomList
             rooms={sortedRooms.filter((r) => r.getMembers().length <= 2)}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
-        <Togglable
-          title={sidebarWidth < 120 ? "" : "public rooms"}
-          modalType="publicRoomModal"
-        >
-          <RoomList
-            rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
-            sidebarWidth={sidebarWidth}
-          />
-        </Togglable>
-        <Togglable
-          title={sidebarWidth < 120 ? "" : "people"}
-          modalType="friendModal"
-        >
-          <RoomList
-            rooms={sortedRooms.filter((r) => r.getMembers().length <= 2)}
-            sidebarWidth={sidebarWidth}
-          />
-        </Togglable>
-        <Togglable
-          title={sidebarWidth < 120 ? "" : "public rooms"}
-          modalType="publicRoomModal"
+        <Togglable modal={(ref) => <PublicRoomModal modalRef={ref} />}
+          title="public rooms"
+          sidebarWidth={sidebarWidth}
         >
           <RoomList
             rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
@@ -272,3 +123,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+

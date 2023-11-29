@@ -33,7 +33,7 @@ export const DirectAvatar = ({
   size,
   className,
 }: {
-  url: string;
+  url?: string;
   size: number;
   className?: string;
 }) => {
@@ -42,8 +42,8 @@ export const DirectAvatar = ({
   return (
     <img
       src={
-        client.mxcUrlToHttp(url, 120, 120, "scale", true) ||
-        "/public/anonymous.jpg"
+        url ? client.mxcUrlToHttp(url, 120, 120, "scale", true) ||
+        "/public/anonymous.jpg" : "/public/anonymous.jpg"
       }
       className={
         `object-cover self-start rounded-full border-4` + " " + className

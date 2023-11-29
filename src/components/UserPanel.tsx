@@ -14,7 +14,6 @@ import Modal from "./Modal";
 import Exit from "./icons/Exit";
 import Pencil from "./icons/Pencil";
 import { SettingsContext } from "../providers/settings";
-import { ModalSelect, ModalInput } from "./ModalElements";
 import { getFlagEmoji } from "../lib/helpers";
 import PasswordIcon from "./icons/Password";
 import KeyIcon from "./icons/Key";
@@ -50,7 +49,7 @@ const PrivacyTab = () => {
 
     if (backupMethod === "password") {
       client.keyBackupKeyFromPassword(backupRef.current?.value);
-      client.sendKeyBackup
+      client.sendKeyBackup;
     } else {
       client.keyBackupKeyFromRecoveryKey();
     }
@@ -141,7 +140,7 @@ const AccountTab = () => {
             <p key={email}>{email}</p>
           ))}
           <div className="flex">
-            <ModalInput
+            <input
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
@@ -159,12 +158,12 @@ const AccountTab = () => {
             <p key={number}>{number}</p>
           ))}
           <div className="flex">
-            <ModalSelect
-              options={countries.map(
-                (c) => getFlagEmoji(c.code) + " " + c.dial_code,
-              )}
-            />
-            <ModalInput
+            <select>
+              {countries.map((c) => (
+                <option>{getFlagEmoji(c.code) + " " + c.dial_code}</option>
+              ))}
+            </select>
+            <input
               type="text"
               value={newNumber}
               onChange={(e) => setNewNumber(e.target.value)}

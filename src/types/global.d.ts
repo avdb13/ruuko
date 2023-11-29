@@ -14,4 +14,11 @@ declare global {
   interface ModalProps {
     toggleVisibility: () => void;
   }
+
+  interface Metadata {
+    name?: string;
+    topic?: string;
+    id: string;
+    avatar_url?: string;
+  }
 }
