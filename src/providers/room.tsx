@@ -17,11 +17,11 @@ interface RoomState {
   rooms: Room[] | null;
   currentRoom: Room | null;
   roomEvents: Record<string, Record<string, MatrixEvent>>;
-  annotations: Record<string, Record<string, MatrixEvent[]>>;
+  annotations: Record<string, Record<string, Record<string, string[]>>>;
   setRooms: (_: Room[]) => void;
   setCurrentRoom: (_: Room) => void;
   setRoomEvents: (_: Record<string, Record<string, MatrixEvent>>) => void;
-  setAnnotations: (_: Record<string, Record<string, MatrixEvent[]>>) => void;
+  setAnnotations: (_: Record<string, Record<string, Record<string, string[]>>>) => void;
 }
 
 const RoomProvider = (props: PropsWithChildren) => {
@@ -34,7 +34,7 @@ const RoomProvider = (props: PropsWithChildren) => {
   >({});
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [annotations, setAnnotations] = useState<
-    Record<string, Record<string, MatrixEvent[]>>
+    Record<string, Record<string, Record<string, string[]>>>
   >({});
 
   const roomState: RoomState = {

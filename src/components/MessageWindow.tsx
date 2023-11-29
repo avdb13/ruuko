@@ -4,6 +4,22 @@ import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef } from "react";
 import { RoomContext } from "../providers/room";
 
+const groupAnnotations = () => {
+//   const groupedAnnotations = annotations
+//     ? annotations.reduce(
+//         (record, a) => {
+//           const key = a.getContent()["m.relates_to"]?.key;
+//           const sender = a.getSender();
+//           const eventId = a.getId();
+//           return key && sender && eventId
+//             ? { ...record, [key]: [...(record[key] || []), [sender, eventId]] }
+//             : record;
+//         },
+//         {} as Record<string, string[][]>,
+//       )
+//     : null;
+}
+
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
   const { currentRoom, roomEvents } = useContext(RoomContext)!;

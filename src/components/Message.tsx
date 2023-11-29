@@ -100,60 +100,6 @@ const StateMessage = ({ event }: { event: MatrixEvent }) => {
   );
 };
 
-// const TextMessage = ({
-//   event,
-//   annotations,
-// }: {
-//   event: MatrixEvent;
-//   annotations: MatrixEvent[] | null;
-// }) => {
-//   const { currentRoom, roomEvents } = useContext(RoomContext)!;
-
-//   const content = event.getContent();
-
-//   const isReply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
-
-//   const groupedAnnotations = annotations
-//     ? annotations.reduce(
-//         (record, a) => {
-//           const key = a.getContent()["m.relates_to"]?.key;
-//           const sender = a.getSender();
-//           const eventId = a.getId();
-//           return key && sender && eventId
-//             ? { ...record, [key]: [...(record[key] || []), [sender, eventId]] }
-//             : record;
-//         },
-//         {} as Record<string, string[][]>,
-//       )
-//     : null;
-
-//   // figure out why this doesn't work later
-//   // const replyEvent = roomEvents[currentRoom?.roomId!]![content["m.relates_to"]?.["m.in_reply_to"]?.event_id!]!;
-//   // const replyEvent = currentRoom?.findEventById(content["m.relates_to"]?.["m.in_reply_to"]?.event_id!)!;
-
-//   const [sender, message] = replyToEvent(content.body.split("\n")[0]!);
-//   const replyMember = currentRoom?.getMember(sender!);
-
-//   return (
-//     <div className="p-2 border-x-2 border-b-2 border-black" id={event.getId()!}>
-//       <div className="flex content-center gap-2">
-//         <Avatar id={event.getSender()!} type="user" size={16} />
-//         <div className="flex flex-col gap-2">
-//           <div className="flex gap-4">
-//             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
-//           </div>
-//           <Paragraph
-//             eventId={event.getId()!}
-//             content={content}
-//             isReply={isReply}
-//             groupedAnnotations={groupedAnnotations!}
-//           />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
 export const DateMessage = ({ date }: { date: Date }) => {
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
@@ -273,13 +219,13 @@ const MessageWithMetadata = ({
       <div className="flex gap-2 flex-wrap">
         {annotations
           ? Object.entries(annotations).map(
-              ([key, annotators]) => (
-                <Annotation
-                  key={key}
+              ([annotation, annotators]) => {
+                return <Annotation
+                  annotation={annotation}
                   annotators={annotators}
                   eventId={event.getId()!}
                 />
-              ),
+              },
             )
           : null}
       </div>
