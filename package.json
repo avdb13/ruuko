@@ -12,6 +12,7 @@
   "dependencies": {
     "@matrix-org/olm": "^3.2.15",
     "axios": "^1.6.2",
+    "emoji-picker-react": "^4.5.16",
     "highlight.js": "^11.9.0",
     "matrix-js-sdk": "^29.1.0",
     "parse-url": "^8.1.0",
