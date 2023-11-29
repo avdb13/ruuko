@@ -28,7 +28,9 @@ const MessageDecorator = (props: PropsWithChildren<MessageFrameProps>) => (
         <div className="flex gap-4">
           <p className="whitespace-normal break-all">{new Date(props.firstEvent.getTs()).toLocaleString("en-US")}</p>
         </div>
-        {props.children}
+        <div>
+          {props.children}
+        </div>
       </div>
     </div>
   </div>
@@ -241,6 +243,7 @@ const Message = ({
   annotations: Record<string, Record<string, string[]>>;
 }) => {
   if (events instanceof MatrixEvent) {
+    console.log(events.getContent());
     const eventType = events.getType();
 
     switch (eventType) {
@@ -257,6 +260,7 @@ const Message = ({
         return <StateMessage event={events} />;
     }
   } else {
+    console.log(events.map(e => e.getContent()));
     return <TextMessage events={events} annotations={annotations} />
   }
 };

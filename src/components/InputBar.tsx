@@ -1,16 +1,63 @@
-import { SyntheticEvent, useContext, useState } from "react";
+import { SyntheticEvent, useContext, useEffect, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 import FileIcon from "./icons/File";
-const InputBar = ({ roomId }: {roomId: string }) => {
+
+const FilePicker = ({ setFiles, inputRef }: { setFiles: (_: File[] | null) => void, inputRef: Ref<HTMLInputElement> }) => {
+  // useEffect(() => {
+  //   if (inputRef.current) {
+  //     inputRef.current.fil
+  //   }
+  // }, [files])
+
+  useEffect(() => {
+    // set file previews
+  }, []);
+
+  const handleChange = (e: SyntheticEvent) => {
+    const files = (e.target as HTMLInputElement).files;
+    if (files) {
+      setFiles(Array.from(files));
+    }
+  };
+
+  return (
+    <>
+      <input
+        className="basis-8 invisible"
+        type="file"
+        onChange={handleChange}
+        ref={inputRef}
+      />
+      <button className="w-8 h-8 my-2 absolute rounded-md border-2" onClick={() => inputRef.current ? inputRef.current.click() : null} >
+        <FileIcon />
+      </button>
+    </>
+  );
+};
+
+const InputBar = ({ roomId }: { roomId: string }) => {
   const client = useContext(ClientContext);
   const [message, setMessage] = useState("");
+  const [files, setFiles] = useState<File[] | null>();
+  const inputRef = useRef<HTMLInputElement>();
 
-  const handleSubmit = (e: SyntheticEvent) => {
+  const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
 
-    client.sendImageMessage();
-    client.sendTextMessage(roomId, message);
+    if (files) {
+      const result = await Promise.all([
+        ...files.map((f) => client.uploadContent(f)),
+      ]);
+
+      for (let resp of result) {
+        // support adding messages later
+        await client.sendImageMessage(roomId, resp.content_uri);
+      }
+    } else {
+      client.sendTextMessage(roomId, message);
+    }
     setMessage("");
+    setFiles(null);
   };
 
   return (
@@ -18,8 +65,7 @@ const InputBar = ({ roomId }: {roomId: string }) => {
       onSubmit={handleSubmit}
       className="relative flex gap-2 sticky h-12 ml-2"
     >
-      <input className="basis-8 rounded-md my-2 opacity-0" type="file" />
-      <FileIcon className="basis-8 w-8 h-8 my-2 absolute rounded-md border-2" />
+      <FilePicker setFiles={setFiles} inputRef={inputRef} />
       <input
         id="input-panel"
         className="flex bg-green-200 grow p-1 rounded-md my-2"
@@ -27,7 +73,7 @@ const InputBar = ({ roomId }: {roomId: string }) => {
         onChange={(e) => setMessage(e.target.value)}
         value={message}
       />
-      <button type="submit" style={{visibility: "hidden"}}></button>
+      <button type="submit" style={{ visibility: "hidden" }}></button>
     </form>
   );
 };
