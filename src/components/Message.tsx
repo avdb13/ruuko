@@ -1,11 +1,38 @@
 import { IContent, MatrixEvent, MsgType, RoomMember } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
-import { useContext, useRef } from "react";
+import { PropsWithChildren, useContext } from "react";
 import { ClientContext } from "../providers/client";
-import formatEvent, { findEventType } from "../lib/eventFormatter";
+import formatEvent from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
 import Avatar, { DirectAvatar } from "./Avatar";
+
+interface MessageFrameProps {
+  firstEvent: MatrixEvent;
+  sender: string;
+}
+
+const TextMessage = ({events, annotations} : { events: MatrixEvent[], annotations: Record<string, Record<string, string[]>> }) => {
+  return (
+    <MessageDecorator firstEvent={events[0]!} sender={events[0]!.getSender()!}>
+      {events.map(event => <MessageWithMetadata event={event} annotations={annotations[event.getId()!]!} />)}
+    </MessageDecorator>
+  )
+}
+
+const MessageDecorator = (props: PropsWithChildren<MessageFrameProps>) => (
+  <div className="p-2 border-x-2 border-b-2 border-black">
+    <div className="flex content-center gap-2">
+      <Avatar id={props.sender} type="user" size={16} />
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-4">
+          <p className="whitespace-normal break-all">{new Date(props.firstEvent.getTs()).toLocaleString("en-US")}</p>
+        </div>
+        {props.children}
+      </div>
+    </div>
+  </div>
+);
 
 const replyToEvent = (body: string) => {
   const split = body.substring(2).split(" ");
@@ -39,36 +66,10 @@ const Reply = ({
       onClick={handleClick}
     >
       <DirectAvatar url={member.getMxcAvatarUrl()!} size={8} />
-      <p className="font-bold">{member.name}</p>
-      <p>{message}</p>
+      <p className="whitespace-normal break-all font-bold">{member.name}</p>
+      <p className="whitespace-normal break-all">{message}</p>
     </button>
   );
-};
-
-const Message = ({
-  events,
-  annotations,
-}: {
-  events: MatrixEvent[];
-  annotations: Record<string, MatrixEvent[]>;
-}) => {
-  const eventType = findEventType(event);
-
-  switch (eventType) {
-    case "text":
-      return <TextMessage event={event} annotations={annotations} />;
-    case "annotation":
-    case "join":
-    case "leave":
-    case "invite":
-    case "displayNameChange":
-    case "avatarChange":
-    case "reply":
-    case "edit":
-    case "redaction":
-    case "unimplemented":
-      return <StateMessage event={event} />;
-  }
 };
 
 const StateMessage = ({ event }: { event: MatrixEvent }) => {
@@ -91,7 +92,7 @@ const StateMessage = ({ event }: { event: MatrixEvent }) => {
           }
           className="object-cover h-8 w-8 rounded-full self-center border-2"
         />
-        <p className="italic break-all">
+        <p className="italic whitespace-normal break-all">
           {formatEvent(event, currentRoom!.getMembers().length)}
         </p>
       </li>
@@ -99,54 +100,59 @@ const StateMessage = ({ event }: { event: MatrixEvent }) => {
   );
 };
 
-const TextMessage = ({
-  event,
-  annotations,
-}: {
-  event: MatrixEvent;
-  annotations: MatrixEvent[] | null;
-}) => {
-  const { currentRoom, roomEvents } = useContext(RoomContext)!;
+// const TextMessage = ({
+//   event,
+//   annotations,
+// }: {
+//   event: MatrixEvent;
+//   annotations: MatrixEvent[] | null;
+// }) => {
+//   const { currentRoom, roomEvents } = useContext(RoomContext)!;
 
-  const content = event.getContent();
+//   const content = event.getContent();
 
-  const isReply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
+//   const isReply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
 
-  const groupedAnnotations = annotations
-    ? annotations.reduce(
-        (record, a) => {
-          const key = a.getContent()["m.relates_to"]?.key;
-          const sender = a.getSender();
-          const eventId = a.getId();
-          return key && sender && eventId
-            ? { ...record, [key]: [...(record[key] || []), [sender, eventId]] }
-            : record;
-        },
-        {} as Record<string, string[][]>,
-      )
-    : null;
+//   const groupedAnnotations = annotations
+//     ? annotations.reduce(
+//         (record, a) => {
+//           const key = a.getContent()["m.relates_to"]?.key;
+//           const sender = a.getSender();
+//           const eventId = a.getId();
+//           return key && sender && eventId
+//             ? { ...record, [key]: [...(record[key] || []), [sender, eventId]] }
+//             : record;
+//         },
+//         {} as Record<string, string[][]>,
+//       )
+//     : null;
 
-  // figure out why this doesn't work later
-  // const replyEvent = roomEvents[currentRoom?.roomId!]![content["m.relates_to"]?.["m.in_reply_to"]?.event_id!]!;
-  // const replyEvent = currentRoom?.findEventById(content["m.relates_to"]?.["m.in_reply_to"]?.event_id!)!;
+//   // figure out why this doesn't work later
+//   // const replyEvent = roomEvents[currentRoom?.roomId!]![content["m.relates_to"]?.["m.in_reply_to"]?.event_id!]!;
+//   // const replyEvent = currentRoom?.findEventById(content["m.relates_to"]?.["m.in_reply_to"]?.event_id!)!;
 
-  const [sender, message] = replyToEvent(content.body.split("\n")[0]!);
-  const replyMember = currentRoom?.getMember(sender!);
+//   const [sender, message] = replyToEvent(content.body.split("\n")[0]!);
+//   const replyMember = currentRoom?.getMember(sender!);
 
-  return (
-    <div className="p-2 border-x-2 border-b-2 border-black" id={event.getId()!}>
-      <div className="flex content-center gap-2">
-        <Avatar id={event.getSender()!} type="user" size={16} />
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-4">
-            <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
-          </div>
-          <Paragraph eventId={event.getId()!} content={content} isReply={isReply} groupedAnnotations={groupedAnnotations!} />
-        </div>
-      </div>
-    </div>
-  );
-};
+//   return (
+//     <div className="p-2 border-x-2 border-b-2 border-black" id={event.getId()!}>
+//       <div className="flex content-center gap-2">
+//         <Avatar id={event.getSender()!} type="user" size={16} />
+//         <div className="flex flex-col gap-2">
+//           <div className="flex gap-4">
+//             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
+//           </div>
+//           <Paragraph
+//             eventId={event.getId()!}
+//             content={content}
+//             isReply={isReply}
+//             groupedAnnotations={groupedAnnotations!}
+//           />
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 export const DateMessage = ({ date }: { date: Date }) => {
   return (
@@ -245,39 +251,33 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
   }
 };
 
-const Paragraph = ({
-  eventId,
-  replyId,
-  content,
-  isReply,
-  groupedAnnotations,
+const MessageWithMetadata = ({
+  event,
+  annotations,
 }: {
-  eventId: string;
-  replyId?: string;
-  content: IContent;
-  isReply: boolean;
-  groupedAnnotations: Record<string, string[][]>;
+  event: MatrixEvent;
+  annotations: Record<string, string[]>;
 }) => {
+  const content = event.getContent();
+  const isReply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
+
   return (
     <>
       {isReply ? (
-        <>
-        <ContentFormatter
-          content={{ ...content, body: content.body.split("\n")[2]! }}
-        />
-        </>
+          <ContentFormatter
+            content={{ ...content, body: content.body.split("\n")[2]! }}
+          />
       ) : (
         <ContentFormatter content={content} />
       )}
-
-      <div className="flex gap-2">
-        {groupedAnnotations
-          ? Object.entries(groupedAnnotations).map(
-              ([annotation, annotators]) => (
+      <div className="flex gap-2 flex-wrap">
+        {annotations
+          ? Object.entries(annotations).map(
+              ([key, annotators]) => (
                 <Annotation
-                  annotation={annotation}
+                  key={key}
                   annotators={annotators}
-                  eventId={eventId}
+                  eventId={event.getId()!}
                 />
               ),
             )
@@ -286,5 +286,34 @@ const Paragraph = ({
     </>
   );
 };
+
+const Message = ({
+  events,
+  annotations,
+}: {
+  events: MatrixEvent | MatrixEvent[];
+  annotations: Record<string, Record<string, string[]>>;
+}) => {
+  if (events instanceof MatrixEvent) {
+    const eventType = events.getType();
+
+    switch (eventType) {
+      case "annotation":
+      case "join":
+      case "leave":
+      case "invite":
+      case "displayNameChange":
+      case "avatarChange":
+      case "reply":
+      case "edit":
+      case "redaction":
+      case "unimplemented":
+        return <StateMessage event={events} />;
+    }
+  } else {
+    return <TextMessage events={events} annotations={annotations} />
+  }
+};
+
 
 export default Message;

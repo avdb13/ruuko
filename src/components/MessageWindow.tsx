@@ -34,7 +34,7 @@ const MessageWindow = () => {
   return (
     <div className="flex flex-col max-h-screen basis-1/2 justify-between grow">
       <div className="bg-slate-600" id="header">
-        <p className="flex justify-center">{currentRoom.name}</p>
+        <p className="flex flex-nowrap whitespace-normal break-all justify-center">{currentRoom.name}</p>
       </div>
       <div className="overflow-y-auto">
         <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
@@ -52,7 +52,7 @@ export const MessagesWithDayBreak = ({
   annotations,
 }: {
   events: Record<string, MatrixEvent>;
-  annotations: Record<string, MatrixEvent[]>;
+  annotations: Record<string, Record<string, string[]>>;
 }) => {
   const eventEntries = Object.entries(events);
 
@@ -72,16 +72,10 @@ export const MessagesWithDayBreak = ({
   );
 
   return eventsGroupedByTime.map((events, i) => {
-      const newAnnotations = eventEntries.reduce((init, [_, event]) => {
-        const eventId = event.getId()!;
-
-        return annotations[eventId] ? ({...init, [eventId]: annotations[eventId]! }) : init;
-      }, {} as Record<string, MatrixEvent[]>)
-
       if (i === 0) {
-        return <Message events={Object.values(events)} key={i} annotations={newAnnotations} />;
+        return <Message events={Object.values(events)} key={i} annotations={annotations} />;
       } else {
-        return <Message events={Object.values(events)} key={i} annotations={newAnnotations} />
+        return <Message events={Object.values(events)} key={i} annotations={annotations} />
         // const [messageTs, prevMessageTs] = [
         //   new Date(eventEntries[eventEntries.length-1]![1].getTs()),
         //   new Date(eventEntries[0]![1].getTs()),

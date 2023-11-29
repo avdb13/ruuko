@@ -1,32 +1,26 @@
-import {
-  EventType,
-  IContent,
-  RelationType,
-} from "matrix-js-sdk";
+import { EventType, IContent, RelationType } from "matrix-js-sdk";
 import { useContext } from "react";
 import { ClientContext } from "../../providers/client";
 import { RoomContext } from "../../providers/room";
 import { formatAnnotators } from "../../lib/eventFormatter";
 
 const Annotation = ({
-  annotation,
+  key,
   annotators,
   eventId,
 }: {
-  annotation: string;
-  annotators: string[][];
+  key: string;
+  annotators: string[];
   eventId: string;
 }) => {
   const client = useContext(ClientContext);
   const { currentRoom } = useContext(RoomContext)!;
 
-  const src = client.mxcUrlToHttp(annotation, 40, 40, "scale", true);
+  const src = client.mxcUrlToHttp(key, 40, 40, "scale", true);
 
   const handleClick = () => {
     const myId = client.getUserId()!;
-    const myAnnotation = annotators.find(
-      ([sender, _eventId]) => sender === myId,
-    );
+    const myAnnotation = annotators.find((sender) => sender === myId);
 
     if (myAnnotation) {
       client.redactEvent(currentRoom!.roomId!, myAnnotation[1]!);
@@ -34,7 +28,7 @@ const Annotation = ({
       const content: IContent = {
         "m.relates_to": {
           event_id: eventId,
-          key: annotation,
+          key,
           rel_type: RelationType.Annotation,
         },
       };
@@ -45,13 +39,13 @@ const Annotation = ({
   return (
     <div className="relative flex justify-center items-center gap-1">
       <button
-        className="flex justify-center items-center gap-1 peer z-0 w-[50px] h-[30px] rounded-xl bg-gray-50 hover:bg-gray-100 transition-all text-gray-600 rounded-md border-2"
+        className="flex justify-center items-center gap-1 peer z-0 w-[50px] h-[30px] rounded-xl bg-gray-50 hover:bg-gray-100 transition-all text-gray-600 rounded-md border-2 "
         onClick={handleClick}
       >
-        {annotation?.startsWith("mxc") ? (
-          <img src={src} className="h-5" alt={annotation} />
+        {key?.startsWith("mxc") ? (
+          <img src={src!} className="h-5" alt={key} />
         ) : (
-          annotation
+          key
         )}
         <p className="font-bold">{annotators.length}</p>
       </button>
@@ -60,11 +54,7 @@ const Annotation = ({
         style={{ transition: "all 0.2s ease-in-out" }}
         id="annotation-button"
       >
-        <p className="text-center">
-          {formatAnnotators(
-            annotators.map(([annotator, _eventId]) => annotator!),
-          )}
-        </p>
+        <p className="text-center">{formatAnnotators(annotators)}</p>
       </div>
     </div>
   );
