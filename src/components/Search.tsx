@@ -2,29 +2,14 @@ import { useContext, useState, useEffect } from "react";
 import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
 import { DirectAvatar } from "./Avatar";
-import Modal from "./Modal";
 import { Room } from "matrix-js-sdk";
-
-const SearchUserModal = () => {
-  return (
-    <Modal title="find user">
-      <SearchUserForm />
-    </Modal>
-  );
-};
-
-const SearchRoomModal = () => {
-  return (
-    <Modal title="find public room">
-      <SearchRoomForm />
-    </Modal>
-  );
-};
 
 const SearchForm = ({
   search,
+  joinRoom,
 }: {
   search: (_: string) => Promise<Metadata[]>;
+  joinRoom: (_: string) => Promise<Room>;
 }) => {
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<Metadata[] | null>(null);
@@ -50,7 +35,7 @@ const SearchForm = ({
         <ul className="flex flex-col w-[80%] border-2">
           {result
             ? result.map((metadata) => (
-                <SearchResult metadata={metadata} onClick={} />
+                <SearchResult metadata={metadata} joinRoom={joinRoom} />
               ))
             : null}
         </ul>
@@ -61,6 +46,7 @@ const SearchForm = ({
 
 const SearchUserForm = () => {
   const client = useContext(ClientContext);
+
   const search = (term: string) =>
     client
       .searchUserDirectory({ term })
@@ -72,11 +58,20 @@ const SearchUserForm = () => {
         })),
       );
 
-  return <SearchForm search={search} />;
+  const joinRoom = (id: string) => {
+    return client
+      .createRoom({ is_direct: true, invite: [id] })
+      .then(({ room_id }) =>
+          client.getRooms().find((room) => room.roomId === room_id)!,
+      );
+  };
+
+  return <SearchForm search={search} joinRoom={joinRoom} />;
 };
 
 const SearchRoomForm = () => {
   const client = useContext(ClientContext);
+
   const search = (term: string) =>
     client
       .publicRooms({
@@ -93,7 +88,15 @@ const SearchRoomForm = () => {
         })),
       );
 
-  return <SearchForm search={search} />;
+  const joinRoom = (id: string) => {
+    return client
+      .joinRoom(id)
+      .then(({ roomId }) =>
+          client.getRooms().find((room) => room.roomId === roomId)!,
+      );
+  };
+
+  return <SearchForm search={search} joinRoom={joinRoom} />;
 };
 
 const SearchResult = ({
@@ -101,7 +104,7 @@ const SearchResult = ({
   joinRoom,
 }: {
   metadata: Metadata;
-  joinRoom: () => Promise<Room>;
+  joinRoom: (_: string) => Promise<Room>;
 }) => {
   const { setCurrentRoom } = useContext(RoomContext)!;
 
@@ -109,7 +112,7 @@ const SearchResult = ({
     <button
       className="flex border-2 p-2 items-center gap-2"
       key={metadata.id}
-      onClick={() => joinRoom().then(r => setCurrentRoom(r))}
+      onClick={() => joinRoom(metadata.id).then(r => setCurrentRoom(r))}
     >
       <DirectAvatar url={metadata.avatar_url} size={8} />
       <div className="flex flex-col min-w-0 items-start">
@@ -122,46 +125,4 @@ const SearchResult = ({
   );
 };
 
-const SearchUserResult = ({
-  metadata,
-  closeModal,
-}: {
-  metadata: Metadata;
-  closeModal: () => void;
-}) => {
-  const client = useContext(ClientContext);
-
-  const joinRoom = () => {
-    closeModal();
-    return client
-      .createRoom({ is_direct: true, invite: [metadata.id] })
-      .then(({ room_id }) =>
-          client.getRooms().find((room) => room.roomId === room_id)!,
-      );
-  };
-
-  return <SearchResult metadata={metadata} joinRoom={joinRoom} />;
-};
-
-const SearchRoomResult = ({
-  metadata,
-  closeModal,
-}: {
-  metadata: Metadata;
-  closeModal: () => void;
-}) => {
-  const client = useContext(ClientContext);
-
-  const joinRoom = () => {
-    closeModal();
-    return client
-      .joinRoom(metadata.id)
-      .then(({ roomId }) =>
-          client.getRooms().find((room) => room.roomId === roomId)!,
-      );
-  };
-
-  return <SearchResult metadata={metadata} joinRoom={joinRoom} />;
-};
-
-export default { SearchRoomModal, SearchUserModal };
+export { SearchUserForm, SearchRoomForm };

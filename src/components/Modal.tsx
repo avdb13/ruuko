@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 
-const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string, className?: string}>>((props, ref) => {
+const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string}>>((props, ref) => {
   const modalRef = useRef<HTMLDialogElement>(null);
   const [visible, setVisible] = useState(false);
 

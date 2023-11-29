@@ -10,6 +10,7 @@ import Scrollbar from "./Scrollbar";
 import UserPanel from "./UserPanel";
 import Avatar from "./Avatar";
 import Togglable from "./Togglable";
+import { SearchRoomForm, SearchUserForm } from "./Search";
 
 const sortRooms = (prev: Room, next: Room) => {
   const prevEvents = prev.getLiveTimeline().getEvents();
@@ -98,7 +99,7 @@ const Sidebar = () => {
   return (
     <Resizable width={sidebarWidth} setWidth={setSidebarWidth}>
       <Scrollbar>
-        <Togglable modal={(ref) => <FriendModal modalRef={ref} />}
+        <Togglable modal={<SearchUserForm />}
           title="friends"
           sidebarWidth={sidebarWidth}
         >
@@ -107,7 +108,7 @@ const Sidebar = () => {
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
-        <Togglable modal={(ref) => <PublicRoomModal modalRef={ref} />}
+        <Togglable modal={<SearchRoomForm />}
           title="public rooms"
           sidebarWidth={sidebarWidth}
         >
