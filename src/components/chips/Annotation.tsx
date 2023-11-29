@@ -40,7 +40,7 @@ const Annotation = ({
   return (
     <div className="relative flex justify-center items-center gap-1">
       <button
-        className="flex justify-center items-center gap-1 peer z-0 w-[50px] h-[30px] rounded-xl bg-gray-50 hover:bg-gray-100 transition-all text-gray-600 rounded-md border-2 "
+        className="flex justify-center items-center gap-1 peer w-[50px] h-[30px] rounded-xl bg-gray-50 hover:bg-gray-100 transition-all text-gray-600 rounded-md border-2 "
         onClick={handleClick}
       >
         {annotation.startsWith("mxc") ? (
@@ -51,7 +51,7 @@ const Annotation = ({
         <p className="font-bold">{annotators.length}</p>
       </button>
       <div
-        className="absolute z-1 p-1 w-[200px] bottom-[45px] peer-hover:bottom-[35px] peer-hover:opacity-100 transition-opacity shadow-sm shadow-black opacity-0 bg-black text-white font-bold rounded-md"
+        className="absolute p-1 w-[200px] bottom-[45px] peer-hover:bottom-[35px] peer-hover:opacity-100 transition-opacity shadow-sm shadow-black opacity-0 bg-black text-white font-bold rounded-md"
         style={{ transition: "all 0.2s ease-in-out" }}
         id="annotation-button"
       >

@@ -27,6 +27,7 @@ const SearchForm = ({
           placeholder="room"
           className="border-2 basis-full p-4 mx-4 max-h-[40px] flex-1 focus:border-2"
           type="text"
+          autoFocus
           onChange={(e) => setTerm(e.target.value)}
         />
         <button className="rounded-md bg-zinc-100 p-[10px]">🔍</button>

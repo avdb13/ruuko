@@ -30,6 +30,13 @@
     animation: ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
   }
 
+  .ripple {
+    position: fixed;
+    top:-100%; right:-100%; left:-100%; bottom:-100%;
+    margin:auto;
+    z-index:0;
+  }
+
   @keyframes ripple {
     0% {
       top: 36px;

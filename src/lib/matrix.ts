@@ -1,13 +1,11 @@
 import * as sdk from "matrix-js-sdk";
-import parseUrl from "parse-url";
 
 
 const login = async (baseUrl: string, username: string, password: string) => {
   // TODO: support all login types
-  const parsed = parseUrl(baseUrl, true);
 
   const client = sdk.createClient({
-    baseUrl: `https://${parsed.resource}`,
+    baseUrl,
   });
 
   const resp = await client.login("m.login.password", {
@@ -17,7 +15,7 @@ const login = async (baseUrl: string, username: string, password: string) => {
   });
 
   const session: Session = {
-    baseUrl: resp.well_known?.["m.homeserver"]?.base_url || `https://${parsed.resource}`,
+    baseUrl: resp.well_known?.["m.homeserver"]?.base_url || baseUrl,
     device: resp.device_id,
     user: resp.user_id,
     accessToken: resp.access_token,

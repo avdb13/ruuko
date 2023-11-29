@@ -18,7 +18,6 @@ const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string}>>((props,
       if (visible) {
         modal.close();
         modal.showModal();
-        modal.focus();
       } else {
         modal.close();
       }
@@ -32,15 +31,17 @@ const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string}>>((props,
   useImperativeHandle(ref, () => ({ toggleVisibility }));
 
   return (
-    <dialog ref={modalRef} id="modal" className="relative w-[600px] h-[400px] open:animate-modal z-10">
+    <dialog ref={modalRef} id="modal" className="open:animate-modal close:animate-hide pointer-events-auto">
+      <div className="relative w-[600px] h-[400px]">
       <div className="flex flex-col">
         <div className="flex justify-between m-4 items-center">
           <h1 className="bg-zinc-100 rounded-md py-1 font-bold text-xl">{props.title}</h1>
           <button className="m-4 border-2 border-black w-8 h-8" onClick={toggleVisibility}>{"x"}</button>
         </div>
-        <div className={props.className || "flex flex-col items-center gap-4"}>
+        <div className="flex flex-col items-center gap-4">
           {props.children}
         </div>
+      </div>
       </div>
     </dialog>
   );

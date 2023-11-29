@@ -38,13 +38,13 @@ const Spinner = () => {
   // }, []);
 
   return (
-    <div className="flex">
-      <div className="relative flex flex-col justify-center items-center h-screen w-screen translate-x-[-36px] translate-y-[-36px]">
-        <div className="relative inline-block w-[72px] h-[72px] ripple">
+    <div className="">
+      <div className="relative flex flex-col justify-center items-center h-screen w-screen">
+        <div className="inline-block w-[72px] h-[72px] ripple">
           <div className={divStyle}></div>
           <div className={divStyle}></div>
         </div>
-        <p className="absolute top-[60%] text-transparent bg-clip-text bg-gradient-to-b from-slate-600 to-slate-800 font-bold">
+        <p className="text-transparent bg-clip-text bg-gradient-to-b from-slate-600 to-slate-800 font-bold">
           {content}
         </p>
       </div>

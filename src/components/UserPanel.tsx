@@ -123,7 +123,7 @@ const AccountTab = () => {
   };
 
   return (
-    <div className="flex grow border-2 gap-2">
+    <div className="flex grow border-2 gap-2 basis-4">
       <EditableAvatar />
       <div className="flex flex-col gap-2">
         <div>
@@ -265,7 +265,7 @@ const UserPanel = () => {
   const userId = client.getUserId();
 
   return (
-    <div className="flex justify-between h-[300px] bg-cyan-100 gap-2 p-2">
+    <div className="flex justify-between basis-12 bg-cyan-100 gap-2 p-2">
       <Settings modalRef={modalRef} />
       <Avatar id={userId!} type="user" size={16} />
       <div className="flex flex-col justify-center min-w-0">
