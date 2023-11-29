@@ -16,7 +16,8 @@ import Pencil from "./icons/Pencil";
 import { SettingsContext } from "../providers/settings";
 import { ModalSelect, ModalInput } from "./ModalElements";
 import { getFlagEmoji } from "../lib/helpers";
-import { EventType } from "matrix-js-sdk";
+import PasswordIcon from "./icons/Password";
+import KeyIcon from "./icons/Key";
 
 const DevicesTab = () => {
   return <div></div>;
@@ -58,31 +59,33 @@ const PrivacyTab = () => {
     <div className="flex grow border-2 gap-2">
       <div>
         <p className="uppercase font-bold text-xs">encryption</p>
-        <div className="group">
-          <label>
+        <div className="grid gap-2 grid-cols-2 group">
+          <label className="flex col-span-1 justify-center border-2 p-2 rounded-md peer-checked:text-red-100">
+            <PasswordIcon />
             <input
-              className="invisible peer -mr-4"
+              className="invisible peer"
               type="radio"
               name="radio"
               onClick={() => {
                 setBackupMethod("password");
               }}
             />
-            <span className="border-2 p-2 rounded-md peer-checked:text-red-100">password</span>
+            <span>password</span>
           </label>
-          <label>
+          <label className="flex col-span-1 justify-center border-2 p-2 rounded-md peer-checked:text-red-100">
+            <KeyIcon />
             <input
-              className="invisible peer -mr-4"
+              className="invisible peer"
               type="radio"
               name="radio"
               onClick={() => {
                 setBackupMethod("recoveryKey");
               }}
             />
-            <span className="border-2 p-2 rounded-md peer-checked:text-red-100">recovery key</span>
+            <span>recovery key</span>
           </label>
           <button
-            className="pointer-events-none [.group:has(:checked)_&]:pointer-events-auto [.group:has(:checked)_&]:bg-green-200 bg-gray-200 rounded-md p-2"
+            className="col-span-2 pointer-events-none [.group:has(:checked)_&]:pointer-events-auto [.group:has(:checked)_&]:bg-green-200 bg-gray-200 rounded-md p-2"
             onClick={generateBackupKey}
           >
             reset backup

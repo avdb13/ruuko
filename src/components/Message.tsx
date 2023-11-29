@@ -260,7 +260,7 @@ const Message = ({
         return <StateMessage event={events} />;
     }
   } else {
-    console.log(events.map(e => e.getContent()));
+    // console.log(events.map(e => e.getContent()));
     return <TextMessage events={events} annotations={annotations} />
   }
 };
