@@ -26,9 +26,18 @@ const Reply = ({
 }) => {
   const element = document.getElementById(eventId);
 
-  console.log(element, eventId);
+  const handleClick = () => {
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      // flash the message
+    }
+  };
+
   return (
-    <button className="flex px-2 border-black gap-1 items-center ml-16 mb-2" onClick={() => element?.scrollIntoView({behavior: "smooth", block: "center"})}>
+    <button
+      className="flex px-2 border-black gap-1 items-center ml-16 mb-2"
+      onClick={handleClick}
+    >
       <DirectAvatar url={member.getMxcAvatarUrl()!} size={8} />
       <p className="font-bold">{member.name}</p>
       <p>{message}</p>
@@ -37,11 +46,11 @@ const Reply = ({
 };
 
 const Message = ({
-  event,
+  events,
   annotations,
 }: {
-  event: MatrixEvent;
-  annotations: MatrixEvent[] | null;
+  events: MatrixEvent[];
+  annotations: Record<string, MatrixEvent[]>;
 }) => {
   const eventType = findEventType(event);
 
@@ -98,11 +107,10 @@ const TextMessage = ({
   annotations: MatrixEvent[] | null;
 }) => {
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
-  // const replyRef = useRef<HTMLDivElement>();
 
   const content = event.getContent();
 
-  const reply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
+  const isReply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
 
   const groupedAnnotations = annotations
     ? annotations.reduce(
@@ -127,34 +135,13 @@ const TextMessage = ({
 
   return (
     <div className="p-2 border-x-2 border-b-2 border-black" id={event.getId()!}>
-      {reply ? <Reply eventId={event.getId()!} message={message!} member={replyMember!} /> : null}{" "}
       <div className="flex content-center gap-2">
         <Avatar id={event.getSender()!} type="user" size={16} />
         <div className="flex flex-col gap-2">
           <div className="flex gap-4">
             <p>{new Date(event.getTs()).toLocaleString("en-US")}</p>
           </div>
-          {reply ? (
-            <ContentFormatter
-              content={{ ...content, body: content.body.split("\n")[2]! }}
-            />
-          ) : (
-            <ContentFormatter content={content} />
-          )}
-
-          <div className="flex gap-2">
-            {groupedAnnotations
-              ? Object.entries(groupedAnnotations).map(
-                  ([annotation, annotators]) => (
-                    <Annotation
-                      annotation={annotation}
-                      annotators={annotators}
-                      eventId={event.getId()!}
-                    />
-                  ),
-                )
-              : null}
-          </div>
+          <Paragraph eventId={event.getId()!} content={content} isReply={isReply} groupedAnnotations={groupedAnnotations!} />
         </div>
       </div>
     </div>
@@ -256,6 +243,48 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
         </p>
       );
   }
+};
+
+const Paragraph = ({
+  eventId,
+  replyId,
+  content,
+  isReply,
+  groupedAnnotations,
+}: {
+  eventId: string;
+  replyId?: string;
+  content: IContent;
+  isReply: boolean;
+  groupedAnnotations: Record<string, string[][]>;
+}) => {
+  return (
+    <>
+      {isReply ? (
+        <>
+        <ContentFormatter
+          content={{ ...content, body: content.body.split("\n")[2]! }}
+        />
+        </>
+      ) : (
+        <ContentFormatter content={content} />
+      )}
+
+      <div className="flex gap-2">
+        {groupedAnnotations
+          ? Object.entries(groupedAnnotations).map(
+              ([annotation, annotators]) => (
+                <Annotation
+                  annotation={annotation}
+                  annotators={annotators}
+                  eventId={eventId}
+                />
+              ),
+            )
+          : null}
+      </div>
+    </>
+  );
 };
 
 export default Message;
