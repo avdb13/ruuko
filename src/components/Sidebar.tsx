@@ -122,7 +122,7 @@ const FriendModal = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
       <div className="flex items-center m-4 w-[80%]">
         <ModalInput
           placeholder="room"
-          className="basis-full p-4 mx-4 max-h-[40px] flex-1 focus:border-2"
+          className="border-2 basis-full p-4 mx-4 max-h-[40px] flex-1 focus:border-2"
           type="text"
           onChange={(e) => setTerm(e.target.value)}
         />
@@ -195,14 +195,15 @@ const Togglable = (
 ) => {
   const [toggled, setToggled] = useState(true);
   const degrees = toggled ? "rotate-90" : "rotate-270";
-  const modalRef = useRef<ModalProps>(null);
+  const friendModalRef = useRef<ModalProps>(null);
+  const publicRoomModalRef = useRef<ModalProps>(null);
 
   return (
     <div>
       {props.modalType === "friendModal" ? (
-        <FriendModal modalRef={modalRef} />
+        <FriendModal modalRef={friendModalRef} />
       ) : (
-        <PublicRoomModal modalRef={modalRef} />
+        <PublicRoomModal modalRef={publicRoomModalRef} />
       )}
       <div className="flex justify-between">
         <div className="flex gap-2">
@@ -211,7 +212,7 @@ const Togglable = (
           </button>
           <p>{props.title}</p>
         </div>
-        <button onClick={() => modalRef.current?.toggleVisibility()}>
+    <button onClick={() => props.modalType === "friendModal" ? friendModalRef.current?.toggleVisibility() : publicRoomModalRef.current?.toggleVisibility()}>
           {"+"}
         </button>
       </div>

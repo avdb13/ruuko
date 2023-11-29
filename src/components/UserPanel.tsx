@@ -50,6 +50,7 @@ const PrivacyTab = () => {
 
     if (backupMethod === "password") {
       client.keyBackupKeyFromPassword(backupRef.current?.value);
+      client.sendKeyBackup
     } else {
       client.keyBackupKeyFromRecoveryKey();
     }

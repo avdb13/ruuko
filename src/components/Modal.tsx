@@ -18,6 +18,7 @@ const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string, className
       if (visible) {
         modal.close();
         modal.showModal();
+        modal.focus();
       } else {
         modal.close();
       }
@@ -31,7 +32,7 @@ const Modal = forwardRef<ModalProps, PropsWithChildren<{title: string, className
   useImperativeHandle(ref, () => ({ toggleVisibility }));
 
   return (
-    <dialog ref={modalRef} id="modal" className="w-[600px] h-[400px] open:animate-modal">
+    <dialog ref={modalRef} id="modal" className="relative w-[600px] h-[400px] open:animate-modal z-10">
       <div className="flex flex-col">
         <div className="flex justify-between m-4 items-center">
           <h1 className="bg-zinc-100 rounded-md py-1 font-bold text-xl">{props.title}</h1>
