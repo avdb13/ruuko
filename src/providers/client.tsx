@@ -27,6 +27,7 @@ const initClient = (session: Session) => {
 
   const { accessToken, baseUrl, user } = session;
   // is deviceId correct here?
+  console.log(baseUrl);
   return createClient({ accessToken, baseUrl, userId: user, deviceId: "Ruuko", store });
 };
 

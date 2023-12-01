@@ -36,14 +36,11 @@ const FinalForm = ({
         e.preventDefault();
         e.stopPropagation();
         if (passwordRef.current && usernameRef.current) {
-          setCredentials({
-            ...credentials,
+          matrix.login({
+            baseUrl: credentials.baseUrl,
             password: passwordRef.current.value,
             username: usernameRef.current.value,
-          });
-
-          const session = matrix.login(credentials);
-          setCookie("session", session, { path: "/" });
+          }).then(session => setCookie("session", session, { path: "/" }));
         }
       }}
       className={`basis-72 flex flex-col justify-center items-center gap-1 h-screen w-screen opacity-0 -delay-500 duration-300 transition-all ${

@@ -3,6 +3,10 @@ import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef } from "react";
 import { RoomContext } from "../providers/room";
+import MembersIcon from "./icons/Members";
+import MemberList from "./MemberList";
+import Avatar from "./Avatar";
+import { ClientContext } from "../providers/client";
 
 const groupAnnotations = () => {
 //   const groupedAnnotations = annotations
@@ -46,18 +50,38 @@ const MessageWindow = () => {
   if (!events || !currentRoom) {
     return <div></div>;
   }
+  currentRoom.loadMembersIfNeeded();
+  const client = useContext(ClientContext);
 
   return (
     <div className="flex flex-col max-h-screen basis-1/2 justify-between grow">
-      <div className="bg-slate-600" id="header">
-        <p className="flex flex-nowrap whitespace-normal break-all justify-center">{currentRoom.name}</p>
-      </div>
-      <div className="overflow-y-auto">
-        <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
-          <MessagesWithDayBreak events={events} annotations={roomAnnotations} />
+      <div className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4" id="header">
+        <p className="whitespace-normal break-all">{currentRoom.name}</p>
+        <div>
+          <button className="invert" onClick={() => {}}><MembersIcon /></button>
         </div>
-        <InputBar roomId={currentRoom.roomId} />
-        <div id="autoscroll-bottom" ref={bottomDivRef}></div>
+      </div>
+      <div className="flex max-h-screen">
+        <div className="overflow-y-auto">
+          <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
+            <MessagesWithDayBreak events={events} annotations={roomAnnotations} />
+          </div>
+          <InputBar roomId={currentRoom.roomId} />
+          <div id="autoscroll-bottom" ref={bottomDivRef}></div>
+        </div>
+        <div className="basis-1/4">
+          <ul className="flex flex-col">
+            <button className="basis-8">invite</button>
+            {currentRoom.getMembers().map(m => <li className="border-2">
+            <div className="flex items-center">
+              <Avatar id={m.userId} type="user" size={16} />
+              <div>
+                <p>{m.name}</p>
+                <p>{client.getPresence(m.userId).then(x => x.presence)}</p>
+              </div>
+            </div>
+            </li>)}</ul>
+        </div>
       </div>
     </div>
   );
