@@ -112,7 +112,8 @@ const ServerForm = ({
   };
 
   useEffect(() => {
-    if (baseUrl.indexOf(".") > 0 && tldExists(baseUrl)) {
+    const split = baseUrl.split(".");
+    if (split[1] && split[1].length > 1 && tldExists(baseUrl)) {
       setState("loading");
 
       testServer().then((status) => {
