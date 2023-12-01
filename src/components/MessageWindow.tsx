@@ -7,6 +7,7 @@ import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
 import Avatar from "./Avatar";
 import { ClientContext } from "../providers/client";
+import Resizable from "./Resizable";
 
 const groupAnnotations = () => {
 //   const groupedAnnotations = annotations
@@ -31,6 +32,8 @@ const MessageWindow = () => {
   const { annotations } = useContext(RoomContext)!;
   const roomAnnotations = annotations[currentRoom!.roomId] || {};
   const [presences, setPresences] = useState<Record<string, IStatusResponse>>({});
+  const [showMembers, setShowMembers] = useState(false);
+  const [memberListWidth, setMemberListWidth] = useState(300);
   
   console.log(presences);
   useEffect(() => {
@@ -74,7 +77,7 @@ const MessageWindow = () => {
       <div className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4" id="header">
         <p className="whitespace-normal break-all">{currentRoom.name}</p>
         <div>
-          <button className="invert" onClick={() => {}}><MembersIcon /></button>
+          <button className="invert" onClick={() => setShowMembers(!showMembers)}><MembersIcon /></button>
         </div>
       </div>
       <div className="flex max-h-screen">
@@ -85,24 +88,25 @@ const MessageWindow = () => {
           <InputBar roomId={currentRoom.roomId} />
           <div id="autoscroll-bottom" ref={bottomDivRef}></div>
         </div>
-        <div className="basis-1/4">
-          <ul className="flex flex-col">
-            <button className="basis-8">invite</button>
-            {currentRoom.getMembers().filter(m => !!presences[m.userId]).map(m => <li className="border-2">
-            <div className="flex items-center">
-              <div className="relative">
-                <Avatar id={m.userId} type="user" size={16} className="z-0" />
-                <div className="z-10 absolute w-16 h-16 rotate-180">
-                  <div className="relative w-4 h-4 bg-red-400 rounded-full"></div>
+    {showMembers ? (
+        <Resizable width={memberListWidth} setWidth={setMemberListWidth} side="left">
+          <div className="basis-1/4">
+            <ul className="flex flex-col">
+              <button className="basis-8">invite</button>
+              {currentRoom.getMembers().filter(m => !!presences[m.userId]).map(m => <li className="border-2">
+              <div className="flex gap-4 items-center">
+                <div className="relative">
+                  <Avatar id={m.userId} type="user" size={16} className="z-0" />
+                </div>
+                <div>
+                  <p>{m.name}</p>
+                  <p>{presences[m.userId] ? presences[m.userId].presence : null}</p>
                 </div>
               </div>
-              <div>
-                <p>{m.name}</p>
-                <p>{presences[m.userId] ? presences[m.userId].presence : null}</p>
-              </div>
-            </div>
-            </li>)}</ul>
-        </div>
+              </li>)}</ul>
+          </div>
+        </Resizable>
+    ) : null}
       </div>
     </div>
   );

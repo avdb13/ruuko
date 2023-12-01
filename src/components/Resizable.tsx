@@ -3,6 +3,7 @@ import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "rea
 interface ResizableProps {
   width: number;
   setWidth: (_: number) => void;
+  side: "left" | "right";
 }
 
 const Resizable = (props: PropsWithChildren<ResizableProps>) => {
@@ -20,7 +21,7 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
   const resize = useCallback(
     (mouseMoveEvent: MouseEvent) => {
       if (isResizing) {
-        setSidebarWidth(mouseMoveEvent.clientX);
+        setSidebarWidth(props.side === "right" ? mouseMoveEvent.clientX : window.outerWidth - sidebarWidth - mouseMoveEvent.clientX);
         if (mouseMoveEvent.clientX < 120) {
           setSidebarWidth(60);
         }
@@ -37,9 +38,8 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
       window.removeEventListener("mouseup", stopResizing);
     };
   }, [resize, stopResizing]);
-
-  return (
-    <>
+  
+  const children = (
       <div
         className="flex flex-col shrink-0 grow-0 basis-1/2 bg-green-100 h-screen overflow-y-auto scrollbar px-2 w-min-0"
         onMouseDown={(e) => e.preventDefault()}
@@ -48,11 +48,25 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
       >
         {props.children}
       </div>
+  )
+
+  return props.side === "right" ? (
+    <>
+      {children}
       <div
         className="p-1 cursor-col-resize resize-x bg-green-50"
         onMouseDown={startResizing}
       ></div>
     </>
+  ) : (
+    <>
+      <div
+        className="p-1 cursor-col-resize resize-x bg-green-50"
+        onMouseDown={startResizing}
+      ></div>
+      {children}
+    </>
+
   );
 };
 
