@@ -1,8 +1,15 @@
 import * as sdk from "matrix-js-sdk";
 
+export type Credentials = {
+  baseUrl: string;
+  username: string;
+  password: string;
+};
 
-const login = async (baseUrl: string, username: string, password: string) => {
+const login = async (credentials: Credentials) => {
   // TODO: support all login types
+  const { baseUrl, username, password } = credentials;
+  console.log(credentials);
 
   const client = sdk.createClient({
     baseUrl,
@@ -23,11 +30,5 @@ const login = async (baseUrl: string, username: string, password: string) => {
 
   return session
 };
-
-// const healthCheck = async (baseUrl: string) => {
-//   const resp = await axios.get(`${baseUrl}/_matrix/client/v3/login`)
-
-//   return resp.status === 200;
-// }
 
 export default { login };
