@@ -1,7 +1,7 @@
-import { EventType, MatrixEvent } from "matrix-js-sdk";
+import { EventType, IStatusResponse, MatrixEvent } from "matrix-js-sdk";
 import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
@@ -30,6 +30,23 @@ const MessageWindow = () => {
   const bottomDivRef = useRef<HTMLDivElement>(null);
   const { annotations } = useContext(RoomContext)!;
   const roomAnnotations = annotations[currentRoom!.roomId] || {};
+  const [presences, setPresences] = useState<Record<string, IStatusResponse>>({});
+  
+  console.log(presences);
+  useEffect(() => {
+    if (currentRoom) {
+      currentRoom.loadMembersIfNeeded();
+    }
+  }, [currentRoom])
+
+  useEffect(() => {
+    if (currentRoom) {
+      const users = currentRoom.getMembers().map(m => m.userId);
+      for (let user of users) {
+        client.getPresence(user).then(resp => setPresences({...presences, [user]: resp}));
+      }
+    }
+  }, [!!currentRoom]);
 
   const events = useMemo(
     () => roomEvents[currentRoom!.roomId] || {},
@@ -50,7 +67,6 @@ const MessageWindow = () => {
   if (!events || !currentRoom) {
     return <div></div>;
   }
-  currentRoom.loadMembersIfNeeded();
   const client = useContext(ClientContext);
 
   return (
@@ -72,12 +88,17 @@ const MessageWindow = () => {
         <div className="basis-1/4">
           <ul className="flex flex-col">
             <button className="basis-8">invite</button>
-            {currentRoom.getMembers().map(m => <li className="border-2">
+            {currentRoom.getMembers().filter(m => !!presences[m.userId]).map(m => <li className="border-2">
             <div className="flex items-center">
-              <Avatar id={m.userId} type="user" size={16} />
+              <div className="relative">
+                <Avatar id={m.userId} type="user" size={16} className="z-0" />
+                <div className="z-10 absolute w-16 h-16 rotate-180">
+                  <div className="relative w-4 h-4 bg-red-400 rounded-full"></div>
+                </div>
+              </div>
               <div>
                 <p>{m.name}</p>
-                <p>{client.getPresence(m.userId).then(x => x.presence)}</p>
+                <p>{presences[m.userId] ? presences[m.userId].presence : null}</p>
               </div>
             </div>
             </li>)}</ul>
