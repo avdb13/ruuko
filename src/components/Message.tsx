@@ -20,41 +20,54 @@ interface MessageFrameProps {
 
 const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
   const { roomEvents, currentRoom } = useContext(RoomContext)!;
+  const eventIds = events.map((e) => e.getId()!);
 
   const toAnnotation = (e: MatrixEvent) => {
     const relation = e.getContent()["m.relates_to"];
-    const inReplyTo = relation?.["m.in_reply_to"]?.event_id;
+    const sender = e.getSender();
+    const inReplyTo = eventIds.find((id) => id === relation?.event_id);
     const key = relation?.key;
 
-    return relation && inReplyTo && key ? [inReplyTo, key] || null : null;
+    return relation && sender && inReplyTo && key
+      ? { inReplyTo, key, sender }
+      : null;
   };
 
   const allEvents = roomEvents[currentRoom!.roomId]!;
-  const reactions = allEvents[EventType.Reaction] ? Object.values(
-    allEvents[EventType.Reaction]
-  ) : null;
+  const reactions = allEvents[EventType.Reaction]
+    ? Object.values(allEvents[EventType.Reaction])
+    : [];
 
+  const annotations = reactions.reduce(
+    (init, e) => {
+      const annotation = toAnnotation(e);
 
-  const annotations = reactions ? reactions.reduce(
-    (init, e) =>
-      toAnnotation(e)
-        ? {
-            ...init,
-            [toAnnotation(e)![0]!]: [
-              ...(init[toAnnotation(e)![0]!] || []),
-              toAnnotation(e)![1]!,
-            ],
+      if (!annotation) {
+        return init;
+      }
+
+      const { inReplyTo, key, sender } = annotation;
+
+      return {
+        ...init,
+        [inReplyTo]: {
+          ...init[inReplyTo],
+          [key]: {
+          ...(init[inReplyTo] && init[inReplyTo][key]) || [],
+          sender
           }
-        : init,
-    {} as Record<string, string[]>,
-  ) : null;
+        },
+      };
+    },
+    {} as Record<string, Record<string, string[]>>,
+  );
 
-  console.log(reactions?.map(e => e.getContent()), annotations);
+  console.log(annotations);
 
   return (
     <MessageDecorator firstEvent={events[0]!} sender={events[0]!.getSender()!}>
       {events.map((event) => (
-        <MessageWithMetadata event={event} annotations={annotations} />
+        <MessageWithMetadata event={event} annotations={annotations[event.getId()!]} />
       ))}
     </MessageDecorator>
   );
