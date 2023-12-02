@@ -43,7 +43,7 @@ const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
 
       const diff = event.getTs() - parseInt(previousTimestamp);
 
-      return diff < 60 * 1000 && getSender(previousEvent) === event.getSender()
+      return diff < 60 * 1000 && getSender(previousEvent) === event.getSender() && event.getType() === EventType.RoomMessage
         ? ({
             ...init,
             [previousTimestamp]: ({
@@ -51,7 +51,7 @@ const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
               [eventId]: event,
             }),
           })
-        : ({ ...init, [event.getTs()]: ({ [eventId]: event }) });
+        : ({ ...init, [event.getTs()]:  event });
     },
     {} as Record<number, Record<string, MatrixEvent> | MatrixEvent>,
   );
@@ -89,13 +89,13 @@ const MessageWindow = () => {
         if (currentRoom.membersLoaded() && ok) {
           const users = currentRoom.getMembers().map((m) => m.userId);
 
-          for (let user of users) {
-            console.log("presence", Object.values(presences).length);
-            client
-              .getPresence(user)
-              .then((resp) => setPresences({ ...presences, [user]: resp }))
-              .catch(() => setPresences({ ...presences, [user]: null }));
-          }
+          // for (let user of users) {
+          //   console.log("presence", Object.values(presences).length);
+          //   client
+          //     .getPresence(user)
+          //     .then((resp) => setPresences({ ...presences, [user]: resp }))
+          //     .catch(() => setPresences({ ...presences, [user]: null }));
+          // }
         }
       });
     }
@@ -152,7 +152,7 @@ export const MessagesWithDayBreak = ({
   events: Record<EventType, Record<string, MatrixEvent>>;
 }) => {
   console.log(events);
-  const newEvents = groupEventsByTs(events[EventType.RoomMessage]);
+  const newEvents = groupEventsByTs(Object.values(events).reduce((init, x) => ({...init, ...x}), {}));
 
   return Object.entries(newEvents).map(([timestamp, groupEvents], i) => {
     if (i === 0) {

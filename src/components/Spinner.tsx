@@ -40,11 +40,11 @@ const Spinner = () => {
   return (
     <div className="">
       <div className="relative flex flex-col justify-center items-center h-screen w-screen">
-        <div className="inline-block w-[72px] h-[72px] ripple">
+        <div className="inline-block w-[108px] h-[108px] ripple">
           <div className={divStyle}></div>
           <div className={divStyle}></div>
         </div>
-        <p className="z-10 text-black text-center bg-white h-4 w-full font-bold">
+        <p className="z-10 text-black text-center bg-white h-8 w-full font-bold">
           {content}
         </p>
       </div>

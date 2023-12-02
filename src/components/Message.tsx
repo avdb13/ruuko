@@ -49,7 +49,7 @@ const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
     {} as Record<string, string[]>,
   ) : null;
 
-  console.log(events.map(e => e.getContent()));
+  console.log(events.map(e => [e.getType(), e.getContent()]));
 
   return (
     <MessageDecorator firstEvent={events[0]!} sender={events[0]!.getSender()!}>
@@ -155,7 +155,7 @@ export const DateMessage = ({ date }: { date: Date }) => {
   );
 };
 
-export const JoinMessage = ({ event }: { event: MatrixEvent }) => {
+export const MemberMessage = ({ event }: { event: MatrixEvent }) => {
   const client = useContext(ClientContext);
 
   const content = event.getPrevContent().displayname
@@ -167,19 +167,7 @@ export const JoinMessage = ({ event }: { event: MatrixEvent }) => {
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
       <li className="flex content-center gap-2">
-        <img
-          src={
-            event.sender!.getAvatarUrl(
-              client.baseUrl,
-              80,
-              80,
-              "scale",
-              true,
-              true,
-            ) || "/public/anonymous.jpg"
-          }
-          className="object-cover h-16 w-16 rounded-full self-center border-2"
-        />
+        <Avatar id={event.getSender()!} size={8} type="user" />
         <p className="flex flex-col justify-center whitespace-normal break-all">
           {content}
         </p>
@@ -285,16 +273,22 @@ const Message = ({
 }) => {
   if (events instanceof MatrixEvent) {
     switch (events.getType()) {
-      case "annotation":
-      case "join":
-      case "leave":
-      case "invite":
-      case "displayNameChange":
-      case "avatarChange":
-      case "reply":
-      case "edit":
-      case "redaction":
-      case "unimplemented":
+      case EventType.RoomMember:
+        return <MemberMessage event={events} />;
+      case EventType.Reaction:
+        console.log(events, events.getContent());
+        break;
+      // case "member":
+      //   break;
+      // case "join":
+      // case "leave":
+      // case "invite":
+      // case "displayNameChange":
+      // case "avatarChange":
+      // case "reply":
+      // case "edit":
+      // case "redaction":
+      default:
         return <StateMessage event={events} />;
     }
   } else {
