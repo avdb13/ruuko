@@ -186,16 +186,25 @@ export const DateMessage = ({ date }: { date: Date }) => {
   );
 };
 
-export const MemberMessage = ({ event }: { event: MatrixEvent }) => (
-    <div className="p-2 border-x-2 border-b-2 border-black">
+export const MemberMessage = ({ event }: { event: MatrixEvent }) => {
+  const content = formatMembership(event);
+
+  if (!content) {
+    console.log(event.getContent(), event.getPrevContent())
+    // return null;
+  }
+
+  return (
+    <div className="p-2 border-x-2 border-b-2 border-black pl-6">
       <li className="flex content-center gap-2">
         <Avatar id={event.getSender()!} size={8} type="user" />
         <p className="flex flex-col justify-center whitespace-normal break-all">
-          {formatMembership(event)}
+          {content}
         </p>
       </li>
     </div>
-);
+  )
+};
 
 export enum Membership {
   Invite = "invite",
@@ -218,15 +227,23 @@ const formatMembership = (event: MatrixEvent) => {
   const isValid = (s: string) =>
     Object.values(Membership).some((m) => (m as string) === s);
 
-  if (
-    !(
-      previousMembership &&
-      membership &&
-      isValid(previousMembership) &&
-      isValid(membership)
-    )
-  ) {
+  if (!membership) {
     return null;
+  }
+
+  if (!previousMembership && membership && isValid(membership)) {
+    switch (membership as Membership) {
+      case Membership.Invite:
+        return `${sender} invited ${stateKey}`;
+      case Membership.Join:
+        return `${sender} joined the room`;
+      case Membership.Leave:
+        return null;
+      case Membership.Ban:
+        return `${sender} got banned`;
+      case Membership.Knock:
+        return `${sender} requested permission to participate`;
+    }
   }
 
   // hack because we can't switch on tuples
