@@ -1,4 +1,4 @@
-import { ClientEvent, MatrixEvent, Room, RoomEvent } from "matrix-js-sdk";
+import { ClientEvent, EventType, MatrixEvent, RelationType, Room, RoomEvent } from "matrix-js-sdk";
 import {
   PropsWithChildren,
   createContext,
@@ -83,6 +83,22 @@ const RoomProvider = (props: PropsWithChildren) => {
         // || currentRoomEvents[Object.values(currentRoomEvents).length - 1] === event
       ) {
         return;
+      }
+
+      if (event.getType() === EventType.RoomMessage) {
+        const relation = event.getRelation();
+        if (relation?.rel_type === RelationType.Replace ?? null) {
+          const oldId = relation?.event_id!;
+
+          setRoomEvents({
+            ...roomEvents,
+            [room.roomId]: {
+              ...roomEvents[room.roomId],
+                [oldId]: event,
+              },
+          });
+          return;
+        }
       }
 
       // check behavior later

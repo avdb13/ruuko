@@ -21,4 +21,7 @@ declare global {
     id: string;
     avatar_url?: string;
   }
+
+  interface EventRelations {
+  }
 }

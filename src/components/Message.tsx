@@ -75,7 +75,7 @@ const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
 };
 
 const MessageDecorator = (props: PropsWithChildren<MessageFrameProps>) => (
-  <div className="p-2 border-x-2 border-b-2 border-black">
+  <div className="p-2 border-x-2 border-b-2 border-black w-full">
     <div className="flex content-center gap-2">
       <Avatar id={props.sender} type="user" size={16} />
       <div className="flex flex-col gap-2">
@@ -190,7 +190,7 @@ export const MemberMessage = ({ event }: { event: MatrixEvent }) => {
   );
 };
 
-const ContentFormatter = ({ content }: { content: IContent }) => {
+const ContentFormatter = ({ content, previousContent }: { content: IContent, previousContent?: IContent[] }) => {
   const client = useContext(ClientContext);
   const extractedAttributes = content.body
     ? extractAttributes(content.body, ["src", "alt"])
@@ -225,6 +225,13 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
           alt={content.body}
         />
       );
+    case MsgType.Emote:
+    case MsgType.Notice:
+    case MsgType.File:
+    case MsgType.Audio:
+    case MsgType.Location:
+    case MsgType.Video:
+    case MsgType.KeyVerificationRequest:
     default:
       return content.url ? (
         <img
@@ -252,6 +259,7 @@ const MessageWithMetadata = ({
 
   return (
     <>
+      <button onClick={() => console.log([event.getType(), event.getContent(), event.getId(), event.getRelation()])}>
       {isReply ? (
         <ContentFormatter
           content={{ ...content, body: content.body.split("\n")[2]! }}
@@ -259,6 +267,7 @@ const MessageWithMetadata = ({
       ) : (
         <ContentFormatter content={content} />
       )}
+    </button>
       <div className="flex gap-2 flex-wrap">
         {annotations
           ? Object.entries(annotations).map(([annotation, annotators]) => {
