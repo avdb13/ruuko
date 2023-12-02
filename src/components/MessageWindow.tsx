@@ -1,66 +1,45 @@
-import { EventType, IStatusResponse, MatrixEvent } from "matrix-js-sdk";
+import { EventType, IStatusResponse, MatrixEvent, RelationType } from "matrix-js-sdk";
 import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
-import { ClientContext } from "../providers/client";
 
-const getSender = (event: MatrixEvent | Record<string, MatrixEvent>) => {
-  // better type guarding tomorrow
-  if (event instanceof MatrixEvent) {
-    return event.getSender();
-  } else {
-    return Object.entries(event)[0]![1].getSender();
-  }
-};
-
-const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
-  Object.entries(events || {}).reduce(
-    (init, [eventId, event], i) => {
+const groupEventsByTs = (events: MatrixEvent[]) =>
+  events.reduce(
+    (init, event, i) => {
       if (i === 0) {
-        return { [event.getTs()]: event };
+        return { [event.getTs()]: [event] };
       }
 
-      const initEntries = Object.entries(init);
-      const [previousTimestamp, previousEvent] =
-        initEntries[initEntries.length - 1]!;
+      const initArr = Object.entries(init);
+
+      const [previousTimestamp, previousEvents] =
+        initArr[initArr.length - 1]!;
       const diff = event.getTs() - parseInt(previousTimestamp);
 
-      if (
+      console.log(previousEvents);
+
+      return (
         diff < 60 * 1000 &&
-        getSender(previousEvent) === event.getSender() &&
-        event.getType() === EventType.RoomMessage
-      ) {
-        if (previousEvent instanceof MatrixEvent) {
-          return {
+        previousEvents[0]!.getSender() === event.getSender()
+        // && event.getType() === EventType.RoomMessage
+      ) ? {
             ...init,
-            [previousTimestamp]: {
-              [previousEvent.getId()!]: previousEvent,
-              [eventId]: event,
-            },
-          };
-        } else {
-          return {
-            ...init,
-            [previousTimestamp]: {
-              ...(previousEvent || {}),
-              [eventId]: event,
-            },
-          };
-        }
-      } else {
-        return { ...init, [event.getTs()]: event };
-      }
+            [previousTimestamp]: [
+              ...init[previousTimestamp] ?? [],
+              event
+            ],
+      } :
+        { ...init, [event.getTs()]: [event] }
     },
-    {} as Record<number, Record<string, MatrixEvent> | MatrixEvent>,
+    {} as Record<string, MatrixEvent[]>,
   );
 
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
-  const client = useContext(ClientContext);
 
   const bottomDivRef = useRef<HTMLDivElement>(null);
   const [presences, setPresences] = useState<
@@ -106,6 +85,7 @@ const MessageWindow = () => {
     return <div></div>;
   }
 
+
   return (
     <div className="basis-1/2 justify-between grow">
       <div className="flex">
@@ -119,7 +99,7 @@ const MessageWindow = () => {
             ref={bottomDivRef}
             className="overflow-y-auto bg-green-100 scrollbar"
           >
-            <MessagesWithDayBreak events={events} />
+            <MessagesWithDayBreak events={Object.values(events)} />
           </div>
           <InputBar roomId={currentRoom.roomId} />
         </div>
@@ -138,7 +118,7 @@ const MessageWindow = () => {
 export const MessagesWithDayBreak = ({
   events,
 }: {
-  events: Record<string, MatrixEvent>;
+  events: MatrixEvent[];
 }) => {
   const groupedEvents = Object.entries(groupEventsByTs(events));
   const getPrevious = (i: number) => groupedEvents[i - 1]!;

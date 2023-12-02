@@ -6,92 +6,118 @@ import {
   RoomMember,
 } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
-import { PropsWithChildren, useContext } from "react";
+import { useContext } from "react";
 import { ClientContext } from "../providers/client";
 import formatEvent from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
 import Avatar, { DirectAvatar } from "./Avatar";
 
-interface MessageFrameProps {
-  firstEvent: MatrixEvent;
-  sender: string;
-}
+const Message = ({
+  events,
+}: {
+  events: MatrixEvent[];
+  annotations?: Record<string, Record<string, string[]>>;
+  replacements?: Record<string, IContent[]>;
+}) => {
+  if (events.length === 1) {
+    const event = events[0]!;
 
-const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
-  const { roomEvents, currentRoom } = useContext(RoomContext)!;
-  const eventIds = events.map((e) => e.getId()!);
-
-  const toAnnotation = (e: MatrixEvent) => {
-    const relation = e.getContent()["m.relates_to"];
-    const sender = e.getSender();
-    const inReplyTo = eventIds.find((id) => id === relation?.event_id);
-    const key = relation?.key;
-
-    return relation && sender && inReplyTo && key
-      ? { inReplyTo, key, sender }
-      : null;
-  };
-
-  const allEvents = roomEvents[currentRoom!.roomId]!;
-  const reactions = allEvents[EventType.Reaction]
-    ? Object.values(allEvents[EventType.Reaction])
-    : [];
-
-  const annotations = reactions.reduce(
-    (init, e) => {
-      const annotation = toAnnotation(e);
-
-      if (!annotation) {
-        return init;
-      }
-
-      const { inReplyTo, key, sender } = annotation;
-
-      return {
-        ...init,
-        [inReplyTo]: {
-          ...init[inReplyTo],
-          [key]: {
-            ...((init[inReplyTo] && init[inReplyTo][key]) || []),
-            sender,
-          },
-        },
-      };
-    },
-    {} as Record<string, Record<string, string[]>>,
-  );
-
-  return (
-    <MessageDecorator firstEvent={events[0]!} sender={events[0]!.getSender()!}>
-      {events.map((event) => (
-        <MessageWithMetadata
-          event={event}
-          annotations={annotations[event.getId()!]}
-        />
-      ))}
-    </MessageDecorator>
-  );
+    switch (event.getType()) {
+      case EventType.RoomMember:
+        return <MemberMessage event={event} />;
+      case EventType.Reaction:
+        break;
+      case EventType.RoomMessage:
+        return <RoomMessage events={[event]} />;
+      case EventType.RoomRedaction:
+      case EventType.RoomMessageEncrypted:
+      case EventType.Sticker:
+      case EventType.CallInvite:
+      case EventType.CallCandidates:
+      case EventType.CallAnswer:
+      case EventType.CallHangup:
+      case EventType.CallReject:
+      case EventType.CallSelectAnswer:
+      case EventType.CallNegotiate:
+      case EventType.CallSDPStreamMetadataChanged:
+      case EventType.CallSDPStreamMetadataChangedPrefix:
+      case EventType.CallReplaces:
+      case EventType.CallAssertedIdentity:
+      case EventType.CallAssertedIdentityPrefix:
+      case EventType.KeyVerificationRequest:
+      case EventType.KeyVerificationStart:
+      case EventType.KeyVerificationCancel:
+      case EventType.KeyVerificationMac:
+      case EventType.KeyVerificationDone:
+      case EventType.KeyVerificationKey:
+      case EventType.KeyVerificationAccept:
+      // Not used directly - see READY_TYPE in VerificationRequest.
+      case EventType.KeyVerificationReady:
+      // use of this is discouraged https://matrix.org/docs/spec/client_server/r0.6.1#m-room-message-feedback
+      case EventType.RoomMessageFeedback:
+      case EventType.Reaction:
+      case EventType.PollStart:
+      default:
+        return <StateMessage event={event} />;
+    }
+  } else {
+    return <RoomMessage events={events} />;
+  }
 };
 
-const MessageDecorator = (props: PropsWithChildren<MessageFrameProps>) => (
-  <div className="p-2 border-x-2 border-b-2 border-black w-full">
-    <div className="flex content-center gap-2">
-      <Avatar id={props.sender} type="user" size={16} />
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-2">
-          <p className="whitespace-normal break-all font-bold">
-            {props.firstEvent.getContent().displayname || props.sender}
-          </p>
-          <p className="whitespace-normal break-all">
-            {new Date(props.firstEvent.getTs()).toLocaleString("en-US")}
-          </p>
+const RoomMessage = ({
+  events,
+  annotations,
+  replacements,
+}: {
+  events: MatrixEvent[];
+  annotations?: Record<string, Record<string, string[]>>;
+  replacements?: Record<string, IContent[]>;
+}) => {
+  return <MessageFrame events={events} />;
+};
+
+const MessageFrame = ({
+  events,
+  annotations,
+  replacements,
+}: {
+  events: MatrixEvent[];
+  annotations?: Record<string, Record<string, string[]>>;
+  replacements?: Record<string, MatrixEvent[]>;
+}) => {
+  const firstEvent = events[0]!;
+  const timestamp = firstEvent.getTs();
+  const userId = firstEvent.getSender()!;
+  const displayName = firstEvent.getContent().displayname;
+
+  const children = events.map((event) => (
+    <MessageWithMetadata
+      event={event}
+      annotations={(annotations && annotations[event.getId()!]) || {}}
+    />
+  ));
+
+  return (
+    <div className="p-2 border-x-2 border-b-2 border-black w-full">
+      <div className="flex content-center gap-2">
+        <Avatar id={userId} type="user" size={16} />
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <p className="whitespace-normal break-all font-bold">
+              {displayName || userId}
+            </p>
+            <p className="whitespace-normal break-all">
+              {new Date(timestamp).toLocaleString("en-US")}
+            </p>
+          </div>
+          <div>{children}</div>
         </div>
-        <div>{props.children}</div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const replyToEvent = (body: string) => {
   const split = body.substring(2).split(" ");
@@ -190,8 +216,15 @@ export const MemberMessage = ({ event }: { event: MatrixEvent }) => {
   );
 };
 
-const ContentFormatter = ({ content, previousContent }: { content: IContent, previousContent?: IContent[] }) => {
+const ContentFormatter = ({
+  content,
+  previousContent,
+}: {
+  content: IContent;
+  previousContent?: IContent[];
+}) => {
   const client = useContext(ClientContext);
+
   const extractedAttributes = content.body
     ? extractAttributes(content.body, ["src", "alt"])
     : null;
@@ -206,14 +239,12 @@ const ContentFormatter = ({ content, previousContent }: { content: IContent, pre
               body: extractedAttributes.get("alt"),
             }}
           />
+        ) : content.body ? (
+          (content.body as string)
+            .split("\n")
+            .map((s) => <p className="whitespace-normal break-all">{s}</p>)
         ) : (
-          content.body ? (
-            (content.body as string)
-              .split("\n")
-              .map((s) => <p className="whitespace-normal break-all">{s}</p>)
-          ) : (
-            `unsupported: ${content}`
-          )
+          `unsupported: ${content}`
         );
       }
       return <p className="whitespace-normal break-all">{content.body}</p>;
@@ -259,15 +290,24 @@ const MessageWithMetadata = ({
 
   return (
     <>
-      <button onClick={() => console.log([event.getType(), event.getContent(), event.getId(), event.getRelation()])}>
-      {isReply ? (
-        <ContentFormatter
-          content={{ ...content, body: content.body.split("\n")[2]! }}
-        />
-      ) : (
-        <ContentFormatter content={content} />
-      )}
-    </button>
+      <button
+        onClick={() =>
+          console.log([
+            event.getType(),
+            event.getContent(),
+            event.getId(),
+            event.getRelation(),
+          ])
+        }
+      >
+        {isReply ? (
+          <ContentFormatter
+            content={{ ...content, body: content.body.split("\n")[2]! }}
+          />
+        ) : (
+          <ContentFormatter content={content} />
+        )}
+      </button>
       <div className="flex gap-2 flex-wrap">
         {annotations
           ? Object.entries(annotations).map(([annotation, annotators]) => {
@@ -283,56 +323,6 @@ const MessageWithMetadata = ({
       </div>
     </>
   );
-};
-
-const Message = ({
-  events,
-}: {
-  events: MatrixEvent | Record<string, MatrixEvent>;
-}) => {
-  if (events instanceof MatrixEvent) {
-    switch (events.getType()) {
-      case EventType.RoomMember:
-        return <MemberMessage event={events} />;
-      case EventType.Reaction:
-        break;
-      case EventType.RoomMessage:
-        return <TextMessage events={[events]} />;
-      case EventType.RoomRedaction:
-      case EventType.RoomMessage:
-      case EventType.RoomMessageEncrypted:
-      case EventType.Sticker:
-      case EventType.CallInvite:
-      case EventType.CallCandidates:
-      case EventType.CallAnswer:
-      case EventType.CallHangup:
-      case EventType.CallReject:
-      case EventType.CallSelectAnswer:
-      case EventType.CallNegotiate:
-      case EventType.CallSDPStreamMetadataChanged:
-      case EventType.CallSDPStreamMetadataChangedPrefix:
-      case EventType.CallReplaces:
-      case EventType.CallAssertedIdentity:
-      case EventType.CallAssertedIdentityPrefix:
-      case EventType.KeyVerificationRequest:
-      case EventType.KeyVerificationStart:
-      case EventType.KeyVerificationCancel:
-      case EventType.KeyVerificationMac:
-      case EventType.KeyVerificationDone:
-      case EventType.KeyVerificationKey:
-      case EventType.KeyVerificationAccept:
-      // Not used directly - see READY_TYPE in VerificationRequest.
-      case EventType.KeyVerificationReady:
-      // use of this is discouraged https://matrix.org/docs/spec/client_server/r0.6.1#m-room-message-feedback
-      case EventType.RoomMessageFeedback:
-      case EventType.Reaction:
-      case EventType.PollStart:
-      default:
-        return <StateMessage event={events} />;
-    }
-  } else {
-    return <TextMessage events={Object.values(events)} />;
-  }
 };
 
 export default Message;

@@ -1,4 +1,10 @@
-import { MatrixClient, MatrixEvent, RelationType } from "matrix-js-sdk";
+import {
+  EventType,
+  IContent,
+  MatrixClient,
+  MatrixEvent,
+  RelationType,
+} from "matrix-js-sdk";
 import { AvatarType } from "../components/Avatar";
 
 export const extractAttributes = (
@@ -12,49 +18,6 @@ export const extractAttributes = (
   });
 
   return matches.every((m) => !!m) ? new Map(matches) : null;
-};
-
-interface TagContents {
-  in_reply_to: string;
-  message: string;
-}
-
-export const addAnnotation = (
-  annotations: Record<string, Record<string, Record<string, string[]>>>,
-  event: MatrixEvent,
-) => {
-  const roomId = event.getRoomId();
-  const msgId = event.getContent()["m.relates_to"]?.event_id;
-  const relation = event.getRelation();
-  const key = event.getContent()["m.relates_to"]?.key!;
-  const newAnnotator = event.getSender();
-
-  if (
-    !(
-      roomId &&
-      msgId &&
-      relation &&
-      relation.rel_type === RelationType.Annotation
-    )
-  ) {
-    return annotations;
-  }
-
-  const roomAnnotations = annotations[roomId] || {};
-  const messageAnnotations = roomAnnotations[msgId!] || {};
-  const annotators = messageAnnotations[key] || [];
-
-  return {
-    ...annotations,
-    // shouldn't be filtering here, something else is wrong
-    [roomId]: {
-      ...roomAnnotations,
-      [msgId]: {
-        ...messageAnnotations,
-        [key]: annotators.find(s => s === newAnnotator) ? annotators : [...annotators, newAnnotator],
-      },
-    },
-  };
 };
 
 export const getAvatarUrl = (
@@ -99,3 +62,80 @@ export const getFlagEmoji = (countryCode: string) => {
     .map((char) => 127397 + char.charCodeAt(0));
   return String.fromCodePoint(...codePoints);
 };
+
+const toAnnotation = (e: MatrixEvent) => {
+  const relation = e.getContent()["m.relates_to"];
+  const sender = e.getSender();
+  const inReplyTo = relation?.event_id;
+  const key = relation?.key;
+
+  return relation && sender && inReplyTo && key
+    ? { inReplyTo, key, sender }
+    : null;
+};
+
+const toReplacement = (e: MatrixEvent) => {
+  const relation = e.getRelation();
+  const toReplace = relation?.event_id;
+  const newContent = e.getContent()["m.new_content"] as IContent;
+
+  return relation && toReplace && newContent ? { toReplace, newContent } : null;
+};
+
+export const getAnnotations = (events: MatrixEvent[]) => {
+  const reactions = events.filter((e) => e.getType() === EventType.Reaction);
+
+  reactions.reduce(
+    (init, e) => {
+      const annotation = toAnnotation(e);
+
+      if (!annotation) {
+        return init;
+      }
+
+      const { inReplyTo, key, sender } = annotation;
+
+      return {
+        ...init,
+        [inReplyTo]: {
+          ...init[inReplyTo],
+          [key]: {
+            ...(init[inReplyTo]?.[key] ?? []),
+            sender,
+          },
+        },
+      };
+    },
+    {} as Record<string, Record<string, string[]>>,
+  );
+};
+
+export const getReplacements = (events: MatrixEvent[]) => {
+  const replacements = events.filter(
+    (e) => e.getRelation()?.rel_type === RelationType.Replace ?? false,
+  );
+
+  replacements.reduce(
+    (init, e) => {
+      const replacement = toReplacement(e);
+
+      if (!replacement) {
+        return init;
+      }
+
+      const { toReplace, newContent } = replacement;
+
+      return {
+        ...init,
+        [toReplace]: [...(init[toReplace] ?? []), newContent],
+      };
+    },
+    {} as Record<string, IContent[]>,
+  );
+};
+
+const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
+  ids.reduce(
+    (init, id) => ({ ...init, [id]: record[id] ?? null }),
+    {} as Record<string, T | null>,
+  );
