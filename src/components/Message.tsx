@@ -25,7 +25,8 @@ const MessageDecorator = (props: PropsWithChildren<MessageFrameProps>) => (
     <div className="flex content-center gap-2">
       <Avatar id={props.sender} type="user" size={16} />
       <div className="flex flex-col gap-2">
-        <div className="flex gap-4">
+        <div className="flex gap-2">
+          <p className="whitespace-normal break-all font-bold">{props.firstEvent.getContent().displayname || props.sender}</p>
           <p className="whitespace-normal break-all">{new Date(props.firstEvent.getTs()).toLocaleString("en-US")}</p>
         </div>
         <div>

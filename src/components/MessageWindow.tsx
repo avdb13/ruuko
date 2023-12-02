@@ -5,9 +5,32 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
-import Avatar from "./Avatar";
 import { ClientContext } from "../providers/client";
-import Resizable from "./Resizable";
+
+const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
+  Object.entries(events).reduce(
+    (init, [eventId, event], i) => {
+      if (i === 0) {
+        return { [event.getTs()]: { [event.getId()!]: event } };
+      }
+
+      const diff = event.getTs() - Object.entries(events)[i - 1]![1].getTs();
+      const isSameSender =
+        event.getSender() === Object.entries(events)[i - 1]![1].getSender();
+
+      const initEntries = Object.entries(init);
+      return diff < 60 * 1000 && isSameSender
+        ? {
+            ...init,
+            [initEntries[length - 1]![0]]: {
+              ...initEntries[length - 1]!,
+              [eventId]: event,
+            },
+          }
+        : { ...init, [event.getTs()]: { [eventId]: event } };
+    },
+    {} as Record<number, Record<string, MatrixEvent>>,
+  );
 
 const groupAnnotations = () => {
   //   const groupedAnnotations = annotations
@@ -29,8 +52,6 @@ const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
   const bottomDivRef = useRef<HTMLDivElement>(null);
-  const { annotations } = useContext(RoomContext)!;
-  const roomAnnotations = annotations[currentRoom!.roomId] || {};
   const [presences, setPresences] = useState<
     Record<string, IStatusResponse | null>
   >({});
@@ -56,7 +77,7 @@ const MessageWindow = () => {
   }, []);
 
   const events = useMemo(
-    () => roomEvents[currentRoom!.roomId] || {},
+    () => roomEvents[currentRoom!.roomId],
     [currentRoom, roomEvents],
   );
 
@@ -80,12 +101,13 @@ const MessageWindow = () => {
     <div className="basis-1/2 justify-between grow">
       <div className="flex">
         <div className="flex flex-col max-h-screen">
-          <TitleBar showMembers={showMembers} setShowMembers={setShowMembers} roomName={currentRoom.name} />
+          <TitleBar
+            showMembers={showMembers}
+            setShowMembers={setShowMembers}
+            roomName={currentRoom.name}
+          />
           <div className="overflow-y-auto bg-green-100 scrollbar ">
-            <MessagesWithDayBreak
-              events={events}
-              annotations={roomAnnotations}
-            />
+            <MessagesWithDayBreak events={events} />
           </div>
           <InputBar roomId={currentRoom.roomId} />
           <div id="autoscroll-bottom" ref={bottomDivRef}></div>
@@ -104,66 +126,35 @@ const MessageWindow = () => {
 
 export const MessagesWithDayBreak = ({
   events,
-  annotations,
 }: {
-  events: Record<string, MatrixEvent>;
-  annotations: Record<string, Record<string, string[]>>;
+  events: Record<EventType, Record<string, MatrixEvent>>;
 }) => {
-  const eventEntries = Object.entries(events);
+  const newEvents = groupEventsByTs(events[EventType.RoomMessage]);
 
-  const eventsGroupedByTime = eventEntries.reduce(
-    (init, [k, v], i) => {
-      if (i === 0) {
-        return [{ [k]: v } as Record<string, MatrixEvent>];
-      }
-
-      const diff = v.getTs() - eventEntries[i - 1]![1].getTs();
-      const sameSender = v.getSender() === eventEntries[i - 1]![1].getSender();
-
-      const res =
-        diff < 60 * 1000 && sameSender && v.getType() == EventType.RoomMessage
-          ? [
-              ...init.splice(0, init.length - 1),
-              { ...init[init.length - 1], [k]: v },
-            ]
-          : [...init, { [k]: v }];
-
-      return res;
-    },
-    [] as Record<string, MatrixEvent>[],
-  );
-
-  return eventsGroupedByTime.map((events, i) => {
+  return Object.entries(newEvents).map(([timestamp, groupEvents], i) => {
     if (i === 0) {
       return (
         <Message
-          events={Object.values(events)}
+          // events={groupEvents}
           key={i}
-          annotations={annotations}
         />
       );
-    } else {
-      return (
-        <Message
-          events={Object.values(events)}
-          key={i}
-          annotations={annotations}
-        />
-      );
-      // const [messageTs, prevMessageTs] = [
-      //   new Date(eventEntries[eventEntries.length-1]![1].getTs()),
-      //   new Date(eventEntries[0]![1].getTs()),
-      // ];
-
-      // return prevMessageTs.getDate() === messageTs.getDate() ? (
-      //   <Message event={event} key={i} annotations={eventAnnotations} />
-      // ) : (
-      //   <>
-      //     <DateMessage date={messageTs} />
-      //     <Message event={event} key={i} annotations={eventAnnotations} />
-      //   </>
-      // );
     }
+
+    const date = new Date(parseInt(timestamp));
+
+    const previousEvent =
+      Object.entries(newEvents)[Object.entries(events).length - 1]!;
+    const previousDate = new Date(parseInt(previousEvent[0]));
+
+    return new previousDate.getDate() === date.getDate() ? (
+      <Message events={groupEvents} key={i} />
+    ) : (
+      <>
+        <DateMessage date={previousDate} />
+        <Message events={groupEvents} key={i} />
+      </>
+    );
   });
 };
 
@@ -177,18 +168,18 @@ const TitleBar = ({
   setShowMembers: (_: boolean) => void;
 }) => {
   return (
-  <div
-    className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4"
-    id="header"
-  >
-    <p className="whitespace-normal break-all">{roomName}</p>
-    <div>
-      <button className="invert" onClick={() => setShowMembers(!showMembers)}>
-        <MembersIcon />
-      </button>
+    <div
+      className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4"
+      id="header"
+    >
+      <p className="whitespace-normal break-all">{roomName}</p>
+      <div>
+        <button className="invert" onClick={() => setShowMembers(!showMembers)}>
+          <MembersIcon />
+        </button>
+      </div>
     </div>
-  </div>
-  )
+  );
 };
 
 export default MessageWindow;

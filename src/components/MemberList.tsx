@@ -23,7 +23,7 @@ const MemberList = ({
   setShowMembers,
 }: {
   room: Room;
-  presences: Record<string, IStatusResponse> | null;
+  presences: Record<string, IStatusResponse | null>;
   setShowMembers: (_: boolean) => void;
 }) => {
   const [memberListWidth, setMemberListWidth] = useState(300);
