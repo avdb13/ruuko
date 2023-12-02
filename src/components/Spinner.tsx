@@ -14,12 +14,6 @@ const Spinner = () => {
 
   // leave until later
   useEffect(() => {
-    console.log(
-      !!roomState,
-      roomState?.rooms?.length,
-      roomEventsLength,
-      roomLength,
-    );
     roomState && roomState.rooms
       ? roomEventsLength && roomLength
         ? roomEventsLength !== roomLength

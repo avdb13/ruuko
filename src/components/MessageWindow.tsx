@@ -8,28 +8,13 @@ import MemberList from "./MemberList";
 import { ClientContext } from "../providers/client";
 
 const getSender = (event: MatrixEvent | Record<string, MatrixEvent>) => {
-  if (!!event.localTimestamp) {
-    const e = event as MatrixEvent;
-
-    return e.getSender();
+  // better type guarding tomorrow
+  if (event instanceof MatrixEvent) {
+    return event.getSender();
   } else {
-    const e = event as Record<string, MatrixEvent>;
-
-    return Object.entries(e)[0]![1].getSender();
+    return Object.entries(event)[0]![1].getSender();
   }
-}
-
-const toRecord = (event: MatrixEvent | Record<string, MatrixEvent>) => {
-  if (!!event.localTimestamp) {
-    const e = event as MatrixEvent;
-
-    return e.getSender();
-  } else {
-    const e = event as Record<string, MatrixEvent>;
-
-    return Object.entries(e)[0]![1].getSender();
-  }
-}
+};
 
 const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
   Object.entries(events || {}).reduce(
@@ -39,19 +24,35 @@ const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
       }
 
       const initEntries = Object.entries(init);
-      const [previousTimestamp, previousEvent] = initEntries[initEntries.length - 1]!;
-
+      const [previousTimestamp, previousEvent] =
+        initEntries[initEntries.length - 1]!;
       const diff = event.getTs() - parseInt(previousTimestamp);
 
-      return diff < 60 * 1000 && getSender(previousEvent) === event.getSender() && event.getType() === EventType.RoomMessage
-        ? ({
+      if (
+        diff < 60 * 1000 &&
+        getSender(previousEvent) === event.getSender() &&
+        event.getType() === EventType.RoomMessage
+      ) {
+        if (previousEvent instanceof MatrixEvent) {
+          return {
             ...init,
-            [previousTimestamp]: ({
-              ...previousEvent || {},
+            [previousTimestamp]: {
+              [previousEvent.getId()!]: previousEvent,
               [eventId]: event,
-            }),
-          })
-        : ({ ...init, [event.getTs()]:  event });
+            },
+          };
+        } else {
+          return {
+            ...init,
+            [previousTimestamp]: {
+              ...(previousEvent || {}),
+              [eventId]: event,
+            },
+          };
+        }
+      } else {
+        return { ...init, [event.getTs()]: event };
+      }
     },
     {} as Record<number, Record<string, MatrixEvent> | MatrixEvent>,
   );
@@ -109,9 +110,9 @@ const MessageWindow = () => {
   useEffect(() => {
     if (events) {
       if (bottomDivRef.current) {
-        const scroll = bottomDivRef.current.scrollHeight - bottomDivRef.current.clientHeight;
-        bottomDivRef.current.scrollTo(0, scroll)
-        console.log(scroll);
+        const scroll =
+          bottomDivRef.current.scrollHeight - bottomDivRef.current.clientHeight;
+        bottomDivRef.current.scrollTo(0, scroll);
       }
     }
   }, [Object.values(events || {}).length, bottomDivRef]);
@@ -129,7 +130,10 @@ const MessageWindow = () => {
             setShowMembers={setShowMembers}
             roomName={currentRoom.name}
           />
-          <div ref={bottomDivRef} className="overflow-y-auto bg-green-100 scrollbar">
+          <div
+            ref={bottomDivRef}
+            className="overflow-y-auto bg-green-100 scrollbar"
+          >
             <MessagesWithDayBreak events={events} />
           </div>
           <InputBar roomId={currentRoom.roomId} />
@@ -151,17 +155,13 @@ export const MessagesWithDayBreak = ({
 }: {
   events: Record<EventType, Record<string, MatrixEvent>>;
 }) => {
-  console.log(events);
-  const newEvents = groupEventsByTs(Object.values(events).reduce((init, x) => ({...init, ...x}), {}));
+  const newEvents = groupEventsByTs(
+    Object.values(events).reduce((init, x) => ({ ...init, ...x }), {}),
+  );
 
   return Object.entries(newEvents).map(([timestamp, groupEvents], i) => {
     if (i === 0) {
-      return (
-        <Message
-          events={groupEvents}
-          key={i}
-        />
-      );
+      return <Message events={groupEvents} key={i} />;
     }
 
     const date = new Date(parseInt(timestamp));
@@ -169,8 +169,6 @@ export const MessagesWithDayBreak = ({
     const previousEvent =
       Object.entries(newEvents)[Object.entries(events).length - 1]!;
     const previousDate = new Date(parseInt(previousEvent[0]));
-
-    console.log(timestamp, previousEvent[0]);
 
     return previousDate.getDate() === date.getDate() ? (
       <Message events={groupEvents} key={i} />

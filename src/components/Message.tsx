@@ -49,7 +49,7 @@ const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
     {} as Record<string, string[]>,
   ) : null;
 
-  console.log(events.map(e => [e.getType(), e.getContent()]));
+  console.log(reactions?.map(e => e.getContent()), annotations);
 
   return (
     <MessageDecorator firstEvent={events[0]!} sender={events[0]!.getSender()!}>
