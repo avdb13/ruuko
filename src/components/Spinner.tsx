@@ -44,7 +44,7 @@ const Spinner = () => {
           <div className={divStyle}></div>
           <div className={divStyle}></div>
         </div>
-        <p className="text-transparent bg-clip-text bg-gradient-to-b from-slate-600 to-slate-800 font-bold">
+        <p className="z-10 text-black text-center bg-white h-4 w-full font-bold">
           {content}
         </p>
       </div>

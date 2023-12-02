@@ -32,14 +32,14 @@ const toRecord = (event: MatrixEvent | Record<string, MatrixEvent>) => {
 }
 
 const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
-  Object.entries(events).reduce(
+  Object.entries(events || {}).reduce(
     (init, [eventId, event], i) => {
       if (i === 0) {
         return { [event.getTs()]: event };
       }
 
       const initEntries = Object.entries(init);
-      const [previousTimestamp, previousEvent] = initEntries[length - 1]!;
+      const [previousTimestamp, previousEvent] = initEntries[initEntries.length - 1]!;
 
       const diff = event.getTs() - parseInt(previousTimestamp);
 
@@ -47,7 +47,7 @@ const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
         ? ({
             ...init,
             [previousTimestamp]: ({
-              ...previousEvent,
+              ...previousEvent || {},
               [eventId]: event,
             }),
           })
@@ -75,6 +75,8 @@ const groupAnnotations = () => {
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
+  const client = useContext(ClientContext);
+
   const bottomDivRef = useRef<HTMLDivElement>(null);
   const [presences, setPresences] = useState<
     Record<string, IStatusResponse | null>
@@ -86,7 +88,6 @@ const MessageWindow = () => {
       currentRoom.loadMembersIfNeeded().then((ok) => {
         if (currentRoom.membersLoaded() && ok) {
           const users = currentRoom.getMembers().map((m) => m.userId);
-          console.log(users.length);
 
           for (let user of users) {
             console.log("presence", Object.values(presences).length);
@@ -107,34 +108,31 @@ const MessageWindow = () => {
 
   useEffect(() => {
     if (events) {
-      if (bottomDivRef) {
-        bottomDivRef.current.scrollIntoView({
-          behavior: "instant",
-          block: "end",
-        });
+      if (bottomDivRef.current) {
+        const scroll = bottomDivRef.current.scrollHeight - bottomDivRef.current.clientHeight;
+        bottomDivRef.current.scrollTo(0, scroll)
+        console.log(scroll);
       }
     }
-  }, [events, bottomDivRef]);
+  }, [Object.values(events || {}).length, bottomDivRef]);
 
   if (!events || !currentRoom) {
     return <div></div>;
   }
-  const client = useContext(ClientContext);
 
   return (
     <div className="basis-1/2 justify-between grow">
       <div className="flex">
-        <div className="flex flex-col max-h-screen">
+        <div className="flex flex-col max-h-screen grow">
           <TitleBar
             showMembers={showMembers}
             setShowMembers={setShowMembers}
             roomName={currentRoom.name}
           />
-          <div className="overflow-y-auto bg-green-100 scrollbar ">
+          <div ref={bottomDivRef} className="overflow-y-auto bg-green-100 scrollbar">
             <MessagesWithDayBreak events={events} />
           </div>
           <InputBar roomId={currentRoom.roomId} />
-          <div id="autoscroll-bottom" ref={bottomDivRef}></div>
         </div>
         {showMembers ? (
           <MemberList
@@ -153,6 +151,7 @@ export const MessagesWithDayBreak = ({
 }: {
   events: Record<EventType, Record<string, MatrixEvent>>;
 }) => {
+  console.log(events);
   const newEvents = groupEventsByTs(events[EventType.RoomMessage]);
 
   return Object.entries(newEvents).map(([timestamp, groupEvents], i) => {

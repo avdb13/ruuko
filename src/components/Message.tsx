@@ -19,7 +19,7 @@ interface MessageFrameProps {
 }
 
 const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
-  const { roomEvents } = useContext(RoomContext)!;
+  const { roomEvents, currentRoom } = useContext(RoomContext)!;
 
   const toAnnotation = (e: MatrixEvent) => {
     const relation = e.getContent()["m.relates_to"];
@@ -29,10 +29,13 @@ const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
     return relation && inReplyTo && key ? [inReplyTo, key] || null : null;
   };
 
-  const reactions = Object.values(
-    roomEvents[events[0]!.getRoomId()!]![EventType.Reaction],
-  );
-  const annotations = reactions.reduce(
+  const allEvents = roomEvents[currentRoom!.roomId]!;
+  const reactions = allEvents[EventType.Reaction] ? Object.values(
+    allEvents[EventType.Reaction]
+  ) : null;
+
+
+  const annotations = reactions ? reactions.reduce(
     (init, e) =>
       toAnnotation(e)
         ? {
@@ -44,7 +47,9 @@ const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
           }
         : init,
     {} as Record<string, string[]>,
-  );
+  ) : null;
+
+  console.log(events.map(e => e.getContent()));
 
   return (
     <MessageDecorator firstEvent={events[0]!} sender={events[0]!.getSender()!}>
@@ -242,7 +247,7 @@ const MessageWithMetadata = ({
   annotations,
 }: {
   event: MatrixEvent;
-  annotations: Record<string, string[]>;
+  annotations?: Record<string, string[]>;
 }) => {
   const content = event.getContent();
   const isReply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
@@ -293,7 +298,7 @@ const Message = ({
         return <StateMessage event={events} />;
     }
   } else {
-    return <TextMessage events={events} />;
+    return <TextMessage events={Object.values(events)} />;
   }
 };
 
