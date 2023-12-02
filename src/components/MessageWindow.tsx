@@ -77,24 +77,11 @@ const MessageWindow = () => {
   const client = useContext(ClientContext);
 
   return (
-    <div className="flex flex-col max-h-screen basis-1/2 justify-between grow">
-      <div
-        className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4"
-        id="header"
-      >
-        <p className="whitespace-normal break-all">{currentRoom.name}</p>
-        <div>
-          <button
-            className="invert"
-            onClick={() => setShowMembers(!showMembers)}
-          >
-            <MembersIcon />
-          </button>
-        </div>
-      </div>
+    <div className="basis-1/2 justify-between grow">
       <div className="flex max-h-screen">
-        <div className="overflow-y-auto">
-          <div className="flex flex-col overflow-y-auto bg-green-100 scrollbar">
+        <div className="flex flex-col">
+          <TitleBar showMembers={showMembers} setShowMembers={setShowMembers} roomName={currentRoom.name} />
+          <div className="overflow-y-auto bg-green-100 scrollbar">
             <MessagesWithDayBreak
               events={events}
               annotations={roomAnnotations}
@@ -178,6 +165,30 @@ export const MessagesWithDayBreak = ({
       // );
     }
   });
+};
+
+const TitleBar = ({
+  roomName,
+  showMembers,
+  setShowMembers,
+}: {
+  roomName: string;
+  showMembers: boolean;
+  setShowMembers: (_: boolean) => void;
+}) => {
+  return (
+  <div
+    className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4"
+    id="header"
+  >
+    <p className="whitespace-normal break-all">{roomName}</p>
+    <div>
+      <button className="invert" onClick={() => setShowMembers(!showMembers)}>
+        <MembersIcon />
+      </button>
+    </div>
+  </div>
+  )
 };
 
 export default MessageWindow;

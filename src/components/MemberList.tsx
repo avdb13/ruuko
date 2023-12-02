@@ -32,7 +32,7 @@ const MemberList = ({ room, presences, setShowMembers }: { room: Room, presences
       className="content-center"
     >
       <Scrollbar>
-      <div className="flex flex-col gap-2 items-center py-2">
+      <div className="flex flex-col gap-2 items-center py-2 max-h-screen">
         <button className="self-end" onClick={() => setShowMembers(false)}><CrossIcon /></button>
         <Avatar id={room.roomId} type="room" size={32} className="self-center" />
         <div className="flex gap-2">
@@ -41,6 +41,7 @@ const MemberList = ({ room, presences, setShowMembers }: { room: Room, presences
         </div>
         <h1 className="text-xl font-bold">{room.name}</h1>
         <h2>{room.getDefaultRoomName()}</h2>
+        <p>created by {room.getCreator()}</p>
       </div>
       <div className="basis-1/4">
         <ul className="flex flex-col">
