@@ -170,6 +170,8 @@ export const MessagesWithDayBreak = ({
       Object.entries(newEvents)[Object.entries(events).length - 1]!;
     const previousDate = new Date(parseInt(previousEvent[0]));
 
+    console.log(timestamp, previousEvent[0]);
+
     return previousDate.getDate() === date.getDate() ? (
       <Message events={groupEvents} key={i} />
     ) : (

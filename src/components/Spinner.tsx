@@ -14,10 +14,17 @@ const Spinner = () => {
 
   // leave until later
   useEffect(() => {
-    console.log(roomState, roomState?.rooms);
+    console.log(
+      !!roomState,
+      roomState?.rooms?.length,
+      roomEventsLength,
+      roomLength,
+    );
     roomState && roomState.rooms
-      ? roomEventsLength && roomLength && roomEventsLength !== roomLength
-        ? setContent(`loading messages ... ${roomEventsLength}/${roomLength}`)
+      ? roomEventsLength && roomLength
+        ? roomEventsLength !== roomLength
+          ? setContent(`loading messages ... ${roomEventsLength}/${roomLength}`)
+          : setContent(`nearly done ...`)
         : setContent(`loading rooms ...`)
       : setContent("starting client ...");
   }, [content]);
@@ -40,11 +47,14 @@ const Spinner = () => {
   return (
     <div className="">
       <div className="relative flex flex-col justify-center items-center h-screen w-screen">
-        <div className="inline-block w-[108px] h-[108px] ripple">
+        <div className="w-[108px] h-[108px] ripple">
           <div className={divStyle}></div>
           <div className={divStyle}></div>
         </div>
-        <p className="z-10 text-black text-center bg-white h-8 w-full font-bold">
+        <p
+          className="z-10 text-zinc-600 duration-500 text-center bg-white py-12 w-full font-bold"
+          style={{ background: "linear-gradient(#FFF0, #FFFF, #FFFF, #FFF0)" }}
+        >
           {content}
         </p>
       </div>
