@@ -26,12 +26,17 @@ const Message = ({
 
     switch (event.getType()) {
       case EventType.RoomMember:
-        console.log(formatMembership(event));
         return <MemberMessage event={event} />;
       case EventType.Reaction:
         break;
       case EventType.RoomMessage:
-        return <RoomMessage events={[event]} annotations={annotations} replacements={replacements} />;
+        return (
+          <RoomMessage
+            events={[event]}
+            annotations={annotations}
+            replacements={replacements}
+          />
+        );
       case EventType.RoomRedaction:
       case EventType.RoomMessageEncrypted:
       case EventType.Sticker:
@@ -61,10 +66,21 @@ const Message = ({
       case EventType.Reaction:
       case EventType.PollStart:
       default:
-        return <p>unsupported: ${event.getType()} ${JSON.stringify(event.getContent())}</p>
+        return (
+          <p>
+            unsupported: ${event.getType()} $
+            {JSON.stringify(event.getContent())}
+          </p>
+        );
     }
   } else {
-    return <RoomMessage events={events} annotations={annotations} replacements={replacements} />;
+    return (
+      <RoomMessage
+        events={events}
+        annotations={annotations}
+        replacements={replacements}
+      />
+    );
   }
 };
 
@@ -168,9 +184,7 @@ const StateMessage = ({ event }: { event: MatrixEvent }) => {
           }
           className="object-cover h-8 w-8 rounded-full self-center border-2"
         />
-        <p className="italic whitespace-normal break-all">
-          {}
-        </p>
+        <p className="italic whitespace-normal break-all">{}</p>
       </li>
     </div>
   );
@@ -190,8 +204,7 @@ export const MemberMessage = ({ event }: { event: MatrixEvent }) => {
   const content = formatMembership(event);
 
   if (!content) {
-    console.log(event.getContent(), event.getPrevContent())
-    // return null;
+    return null;
   }
 
   return (
@@ -203,7 +216,7 @@ export const MemberMessage = ({ event }: { event: MatrixEvent }) => {
         </p>
       </li>
     </div>
-  )
+  );
 };
 
 export enum Membership {
@@ -247,13 +260,17 @@ const formatMembership = (event: MatrixEvent) => {
   }
 
   // hack because we can't switch on tuples
-  switch ([previousMembership as Membership, membership as Membership].join(" ")) {
+  switch (
+    [previousMembership as Membership, membership as Membership].join(" ")
+  ) {
     case [Membership.Invite, Membership.Invite].join(" "):
       return null;
     case [Membership.Invite, Membership.Join].join(" "):
       return `${sender} joined the room`;
     case [Membership.Invite, Membership.Leave].join(" "):
-      return stateKey === sender ? `${sender} rejected the invite` : null;
+      return stateKey === event.getSender()
+        ? `${sender} rejected the invite`
+        : null;
     case [Membership.Invite, Membership.Ban].join(" "):
       return `${sender} was banned`;
     case [Membership.Invite, Membership.Knock].join(" "):
@@ -263,7 +280,11 @@ const formatMembership = (event: MatrixEvent) => {
       return null;
     case [Membership.Join, Membership.Join].join(" "):
       return content.avatar_url !== previousContent.avatar_url
-        ? content.avatar_url ?  `${sender} changed their avatar` : `${sender} removed their avatar`
+        ? content.avatar_url && previousContent.avatar_url
+          ? `${sender} changed their avatar`
+          : previousContent.avatar_url
+          ? `${sender} removed their avatar`
+          : `${sender} set an avatar`
         : content.displayname !== previousContent.displayname
         ? content.displayname
           ? `${
@@ -272,7 +293,7 @@ const formatMembership = (event: MatrixEvent) => {
           : `${previousContent.displayname} removed their display name`
         : null;
     case [Membership.Join, Membership.Leave].join(" "):
-      return stateKey === sender
+      return stateKey === event.getSender()
         ? `${sender} left the room`
         : `${sender} got kicked`;
     case [Membership.Join, Membership.Ban].join(" "):
@@ -307,9 +328,9 @@ const formatMembership = (event: MatrixEvent) => {
     case [Membership.Knock, Membership.Join].join(" "):
       return null;
     case [Membership.Knock, Membership.Leave].join(" "):
-      return stateKey !== sender
-        ? `${sender} had their participation request denied`
-        : null;
+      return stateKey === event.getSender()
+        ? null
+        : `${sender} had their participation request denied`;
     case [Membership.Knock, Membership.Ban].join(" "):
       return `${sender} was banned`;
     case [Membership.Knock, Membership.Knock].join(" "):
@@ -389,7 +410,7 @@ const Content = ({
 }: {
   event: MatrixEvent;
   annotations?: Record<string, string[]>;
-  replacements?: Record<string, IContent[]>;
+  replacements?: IContent[];
 }) => {
   const content = event.getContent();
   const isReply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
