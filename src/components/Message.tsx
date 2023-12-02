@@ -53,21 +53,22 @@ const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
         [inReplyTo]: {
           ...init[inReplyTo],
           [key]: {
-          ...(init[inReplyTo] && init[inReplyTo][key]) || [],
-          sender
-          }
+            ...((init[inReplyTo] && init[inReplyTo][key]) || []),
+            sender,
+          },
         },
       };
     },
     {} as Record<string, Record<string, string[]>>,
   );
 
-  console.log(annotations);
-
   return (
     <MessageDecorator firstEvent={events[0]!} sender={events[0]!.getSender()!}>
       {events.map((event) => (
-        <MessageWithMetadata event={event} annotations={annotations[event.getId()!]} />
+        <MessageWithMetadata
+          event={event}
+          annotations={annotations[event.getId()!]}
+        />
       ))}
     </MessageDecorator>
   );
@@ -289,18 +290,37 @@ const Message = ({
       case EventType.RoomMember:
         return <MemberMessage event={events} />;
       case EventType.Reaction:
-        console.log(events, events.getContent());
         break;
-      // case "member":
-      //   break;
-      // case "join":
-      // case "leave":
-      // case "invite":
-      // case "displayNameChange":
-      // case "avatarChange":
-      // case "reply":
-      // case "edit":
-      // case "redaction":
+      case EventType.RoomMessage:
+      case EventType.RoomRedaction:
+      case EventType.RoomMessage:
+      case EventType.RoomMessageEncrypted:
+      case EventType.Sticker:
+      case EventType.CallInvite:
+      case EventType.CallCandidates:
+      case EventType.CallAnswer:
+      case EventType.CallHangup:
+      case EventType.CallReject:
+      case EventType.CallSelectAnswer:
+      case EventType.CallNegotiate:
+      case EventType.CallSDPStreamMetadataChanged:
+      case EventType.CallSDPStreamMetadataChangedPrefix:
+      case EventType.CallReplaces:
+      case EventType.CallAssertedIdentity:
+      case EventType.CallAssertedIdentityPrefix:
+      case EventType.KeyVerificationRequest:
+      case EventType.KeyVerificationStart:
+      case EventType.KeyVerificationCancel:
+      case EventType.KeyVerificationMac:
+      case EventType.KeyVerificationDone:
+      case EventType.KeyVerificationKey:
+      case EventType.KeyVerificationAccept:
+      // Not used directly - see READY_TYPE in VerificationRequest.
+      case EventType.KeyVerificationReady:
+      // use of this is discouraged https://matrix.org/docs/spec/client_server/r0.6.1#m-room-message-feedback
+      case EventType.RoomMessageFeedback:
+      case EventType.Reaction:
+      case EventType.PollStart:
       default:
         return <StateMessage event={events} />;
     }

@@ -57,22 +57,6 @@ const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
     {} as Record<number, Record<string, MatrixEvent> | MatrixEvent>,
   );
 
-const groupAnnotations = () => {
-  //   const groupedAnnotations = annotations
-  //     ? annotations.reduce(
-  //         (record, a) => {
-  //           const key = a.getContent()["m.relates_to"]?.key;
-  //           const sender = a.getSender();
-  //           const eventId = a.getId();
-  //           return key && sender && eventId
-  //             ? { ...record, [key]: [...(record[key] || []), [sender, eventId]] }
-  //             : record;
-  //         },
-  //         {} as Record<string, string[][]>,
-  //       )
-  //     : null;
-};
-
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
@@ -153,29 +137,28 @@ const MessageWindow = () => {
 export const MessagesWithDayBreak = ({
   events,
 }: {
-  events: Record<EventType, Record<string, MatrixEvent>>;
+  events: Record<string, MatrixEvent>;
 }) => {
-  const newEvents = groupEventsByTs(
-    Object.values(events).reduce((init, x) => ({ ...init, ...x }), {}),
-  );
+  const groupedEvents = Object.entries(groupEventsByTs(events));
+  const getPrevious = (i: number) => groupedEvents[i - 1]!;
 
-  return Object.entries(newEvents).map(([timestamp, groupEvents], i) => {
+  return groupedEvents.map(([timestamp, events], i) => {
     if (i === 0) {
-      return <Message events={groupEvents} key={i} />;
+      return <Message events={events} key={i} />;
     }
 
+    const [previousTimestamp, _] = getPrevious(i);
     const date = new Date(parseInt(timestamp));
+    const previousDate = new Date(parseInt(previousTimestamp));
 
-    const previousEvent =
-      Object.entries(newEvents)[Object.entries(events).length - 1]!;
-    const previousDate = new Date(parseInt(previousEvent[0]));
+    const sameDay = date.getDate() === previousDate.getDate();
 
-    return previousDate.getDate() === date.getDate() ? (
-      <Message events={groupEvents} key={i} />
+    return sameDay ? (
+      <Message events={events} key={i} />
     ) : (
       <>
-        <DateMessage date={previousDate} />
-        <Message events={groupEvents} key={i} />
+        <DateMessage date={date} />
+        <Message events={events} key={i} />
       </>
     );
   });
