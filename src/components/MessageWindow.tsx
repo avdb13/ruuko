@@ -92,6 +92,7 @@ const MessageWindow = () => {
   );
 
   useEffect(() => {
+    console.log("scroll to bottom " + currentRoom?.name);
     if (events) {
       if (bottomDivRef.current) {
         const scroll =
@@ -99,7 +100,7 @@ const MessageWindow = () => {
         bottomDivRef.current.scrollTo(0, scroll);
       }
     }
-  }, [Object.values(events || {}).length, bottomDivRef]);
+  }, [currentRoom, bottomDivRef]);
 
   if (!events || !currentRoom) {
     return <div></div>;

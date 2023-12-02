@@ -207,17 +207,13 @@ const ContentFormatter = ({ content }: { content: IContent }) => {
             }}
           />
         ) : (
-          // ) : reply ? (
-          //   <>
-          //     <p className="border-l-2 border-slate-400 px-1 whitespace-normal break-all">
-          //       {reply.in_reply_to}
-          //     </p>
-          //     <p className="whitespace-normal break-all">{reply.message}</p>
-          //   </>
-          // can contain newline
-          (content.body as string)
-            .split("\n")
-            .map((s) => <p className="whitespace-normal break-all">{s}</p>)
+          content.body ? (
+            (content.body as string)
+              .split("\n")
+              .map((s) => <p className="whitespace-normal break-all">{s}</p>)
+          ) : (
+            `unsupported: ${content}`
+          )
         );
       }
       return <p className="whitespace-normal break-all">{content.body}</p>;
@@ -292,6 +288,7 @@ const Message = ({
       case EventType.Reaction:
         break;
       case EventType.RoomMessage:
+        return <TextMessage events={[events]} />;
       case EventType.RoomRedaction:
       case EventType.RoomMessage:
       case EventType.RoomMessageEncrypted:
