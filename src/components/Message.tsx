@@ -1,4 +1,10 @@
-import { IContent, MatrixEvent, MsgType, RoomMember } from "matrix-js-sdk";
+import {
+  EventType,
+  IContent,
+  MatrixEvent,
+  MsgType,
+  RoomMember,
+} from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
 import { PropsWithChildren, useContext } from "react";
 import { ClientContext } from "../providers/client";
@@ -12,13 +18,42 @@ interface MessageFrameProps {
   sender: string;
 }
 
-const TextMessage = ({events, annotations} : { events: MatrixEvent[], annotations: Record<string, Record<string, string[]>> }) => {
+const TextMessage = ({ events }: { events: MatrixEvent[] }) => {
+  const { roomEvents } = useContext(RoomContext)!;
+
+  const toAnnotation = (e: MatrixEvent) => {
+    const relation = e.getContent()["m.relates_to"];
+    const inReplyTo = relation?.["m.in_reply_to"]?.event_id;
+    const key = relation?.key;
+
+    return relation && inReplyTo && key ? [inReplyTo, key] || null : null;
+  };
+
+  const reactions = Object.values(
+    roomEvents[events[0]!.getRoomId()!]![EventType.Reaction],
+  );
+  const annotations = reactions.reduce(
+    (init, e) =>
+      toAnnotation(e)
+        ? {
+            ...init,
+            [toAnnotation(e)![0]!]: [
+              ...(init[toAnnotation(e)![0]!] || []),
+              toAnnotation(e)![1]!,
+            ],
+          }
+        : init,
+    {} as Record<string, string[]>,
+  );
+
   return (
     <MessageDecorator firstEvent={events[0]!} sender={events[0]!.getSender()!}>
-      {events.map(event => <MessageWithMetadata event={event} annotations={annotations[event.getId()!]!} />)}
+      {events.map((event) => (
+        <MessageWithMetadata event={event} annotations={annotations} />
+      ))}
     </MessageDecorator>
-  )
-}
+  );
+};
 
 const MessageDecorator = (props: PropsWithChildren<MessageFrameProps>) => (
   <div className="p-2 border-x-2 border-b-2 border-black">
@@ -26,12 +61,14 @@ const MessageDecorator = (props: PropsWithChildren<MessageFrameProps>) => (
       <Avatar id={props.sender} type="user" size={16} />
       <div className="flex flex-col gap-2">
         <div className="flex gap-2">
-          <p className="whitespace-normal break-all font-bold">{props.firstEvent.getContent().displayname || props.sender}</p>
-          <p className="whitespace-normal break-all">{new Date(props.firstEvent.getTs()).toLocaleString("en-US")}</p>
+          <p className="whitespace-normal break-all font-bold">
+            {props.firstEvent.getContent().displayname || props.sender}
+          </p>
+          <p className="whitespace-normal break-all">
+            {new Date(props.firstEvent.getTs()).toLocaleString("en-US")}
+          </p>
         </div>
-        <div>
-          {props.children}
-        </div>
+        <div>{props.children}</div>
       </div>
     </div>
   </div>
@@ -213,23 +250,23 @@ const MessageWithMetadata = ({
   return (
     <>
       {isReply ? (
-          <ContentFormatter
-            content={{ ...content, body: content.body.split("\n")[2]! }}
-          />
+        <ContentFormatter
+          content={{ ...content, body: content.body.split("\n")[2]! }}
+        />
       ) : (
         <ContentFormatter content={content} />
       )}
       <div className="flex gap-2 flex-wrap">
         {annotations
-          ? Object.entries(annotations).map(
-              ([annotation, annotators]) => {
-                return <Annotation
+          ? Object.entries(annotations).map(([annotation, annotators]) => {
+              return (
+                <Annotation
                   annotation={annotation}
                   annotators={annotators}
                   eventId={event.getId()!}
                 />
-              },
-            )
+              );
+            })
           : null}
       </div>
     </>
@@ -238,16 +275,11 @@ const MessageWithMetadata = ({
 
 const Message = ({
   events,
-  annotations,
 }: {
-  events: MatrixEvent | MatrixEvent[];
-  annotations: Record<string, Record<string, string[]>>;
+  events: MatrixEvent | Record<string, MatrixEvent>;
 }) => {
   if (events instanceof MatrixEvent) {
-    console.log(events.getContent());
-    const eventType = events.getType();
-
-    switch (eventType) {
+    switch (events.getType()) {
       case "annotation":
       case "join":
       case "leave":
@@ -261,10 +293,8 @@ const Message = ({
         return <StateMessage event={events} />;
     }
   } else {
-    // console.log(events.map(e => e.getContent()));
-    return <TextMessage events={events} annotations={annotations} />
+    return <TextMessage events={events} />;
   }
 };
-
 
 export default Message;

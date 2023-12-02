@@ -19,7 +19,7 @@ const getSender = (event: MatrixEvent | Record<string, MatrixEvent>) => {
   }
 }
 
-const toArray = (event: MatrixEvent | Record<string, MatrixEvent>) => {
+const toRecord = (event: MatrixEvent | Record<string, MatrixEvent>) => {
   if (!!event.localTimestamp) {
     const e = event as MatrixEvent;
 
@@ -159,7 +159,7 @@ export const MessagesWithDayBreak = ({
     if (i === 0) {
       return (
         <Message
-          // events={groupEvents}
+          events={groupEvents}
           key={i}
         />
       );
@@ -171,7 +171,7 @@ export const MessagesWithDayBreak = ({
       Object.entries(newEvents)[Object.entries(events).length - 1]!;
     const previousDate = new Date(parseInt(previousEvent[0]));
 
-    return new previousDate.getDate() === date.getDate() ? (
+    return previousDate.getDate() === date.getDate() ? (
       <Message events={groupEvents} key={i} />
     ) : (
       <>
