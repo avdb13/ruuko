@@ -7,29 +7,53 @@ import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
 import { ClientContext } from "../providers/client";
 
+const getSender = (event: MatrixEvent | Record<string, MatrixEvent>) => {
+  if (!!event.localTimestamp) {
+    const e = event as MatrixEvent;
+
+    return e.getSender();
+  } else {
+    const e = event as Record<string, MatrixEvent>;
+
+    return Object.entries(e)[0]![1].getSender();
+  }
+}
+
+const toArray = (event: MatrixEvent | Record<string, MatrixEvent>) => {
+  if (!!event.localTimestamp) {
+    const e = event as MatrixEvent;
+
+    return e.getSender();
+  } else {
+    const e = event as Record<string, MatrixEvent>;
+
+    return Object.entries(e)[0]![1].getSender();
+  }
+}
+
 const groupEventsByTs = (events: Record<string, MatrixEvent>) =>
   Object.entries(events).reduce(
     (init, [eventId, event], i) => {
       if (i === 0) {
-        return { [event.getTs()]: { [event.getId()!]: event } };
+        return { [event.getTs()]: event };
       }
 
-      const diff = event.getTs() - Object.entries(events)[i - 1]![1].getTs();
-      const isSameSender =
-        event.getSender() === Object.entries(events)[i - 1]![1].getSender();
-
       const initEntries = Object.entries(init);
-      return diff < 60 * 1000 && isSameSender
-        ? {
+      const [previousTimestamp, previousEvent] = initEntries[length - 1]!;
+
+      const diff = event.getTs() - parseInt(previousTimestamp);
+
+      return diff < 60 * 1000 && getSender(previousEvent) === event.getSender()
+        ? ({
             ...init,
-            [initEntries[length - 1]![0]]: {
-              ...initEntries[length - 1]!,
+            [previousTimestamp]: ({
+              ...previousEvent,
               [eventId]: event,
-            },
-          }
-        : { ...init, [event.getTs()]: { [eventId]: event } };
+            }),
+          })
+        : ({ ...init, [event.getTs()]: ({ [eventId]: event }) });
     },
-    {} as Record<number, Record<string, MatrixEvent>>,
+    {} as Record<number, Record<string, MatrixEvent> | MatrixEvent>,
   );
 
 const groupAnnotations = () => {
