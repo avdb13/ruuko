@@ -29,7 +29,7 @@ const formatAnnotation = (event: MatrixEvent) =>
 const isJoin = (event: MatrixEvent) =>
   event.getContent().membership === "join" && Object.keys(event.getPrevContent()).length === 0
 
-export const formatJoin = (event: MatrixEvent) => `${event.getSender()} joined the room`
+const formatJoin = (event: MatrixEvent) => `${event.getSender()} joined the room`
 
 const isLeave = (event: MatrixEvent) => event.getContent().membership === "leave"
 

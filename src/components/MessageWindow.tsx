@@ -1,10 +1,15 @@
-import { EventType, IStatusResponse, MatrixEvent, RelationType } from "matrix-js-sdk";
+import {
+  EventType,
+  IStatusResponse,
+  MatrixEvent,
+} from "matrix-js-sdk";
 import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
+import { filterRecord, getAnnotations, getReplacements } from "../lib/helpers";
 
 const groupEventsByTs = (events: MatrixEvent[]) =>
   events.reduce(
@@ -15,24 +20,17 @@ const groupEventsByTs = (events: MatrixEvent[]) =>
 
       const initArr = Object.entries(init);
 
-      const [previousTimestamp, previousEvents] =
-        initArr[initArr.length - 1]!;
+      const [previousTimestamp, previousEvents] = initArr[initArr.length - 1]!;
       const diff = event.getTs() - parseInt(previousTimestamp);
 
-      console.log(previousEvents);
-
-      return (
-        diff < 60 * 1000 &&
-        previousEvents[0]!.getSender() === event.getSender()
-        // && event.getType() === EventType.RoomMessage
-      ) ? {
+      return diff < 60 * 1000 &&
+        previousEvents[0]!.getSender() === event.getSender() &&
+        event.getType() === EventType.RoomMessage
+        ? {
             ...init,
-            [previousTimestamp]: [
-              ...init[previousTimestamp] ?? [],
-              event
-            ],
-      } :
-        { ...init, [event.getTs()]: [event] }
+            [previousTimestamp]: [...(init[previousTimestamp] ?? []), event],
+          }
+        : { ...init, [event.getTs()]: [event] };
     },
     {} as Record<string, MatrixEvent[]>,
   );
@@ -85,7 +83,6 @@ const MessageWindow = () => {
     return <div></div>;
   }
 
-
   return (
     <div className="basis-1/2 justify-between grow">
       <div className="flex">
@@ -115,17 +112,27 @@ const MessageWindow = () => {
   );
 };
 
-export const MessagesWithDayBreak = ({
-  events,
-}: {
-  events: MatrixEvent[];
-}) => {
+export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
+  const allAnnotations = getAnnotations(events);
+  const allReplacements = getReplacements(events);
+
   const groupedEvents = Object.entries(groupEventsByTs(events));
   const getPrevious = (i: number) => groupedEvents[i - 1]!;
 
   return groupedEvents.map(([timestamp, events], i) => {
+    const ids = events.map((e) => e.getId()!);
+    const annotations = filterRecord(ids, allAnnotations);
+    const replacements = filterRecord(ids, allReplacements);
+
     if (i === 0) {
-      return <Message events={events} key={i} />;
+      return (
+        <Message
+          events={events}
+          annotations={annotations}
+          replacements={replacements}
+          key={i}
+        />
+      );
     }
 
     const [previousTimestamp, _] = getPrevious(i);
@@ -135,11 +142,11 @@ export const MessagesWithDayBreak = ({
     const sameDay = date.getDate() === previousDate.getDate();
 
     return sameDay ? (
-      <Message events={events} key={i} />
+      <Message events={events} replacements={replacements} key={i} />
     ) : (
       <>
         <DateMessage date={date} />
-        <Message events={events} key={i} />
+        <Message events={events} replacements={replacements} key={i} />
       </>
     );
   });

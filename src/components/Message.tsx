@@ -8,13 +8,14 @@ import {
 import { extractAttributes } from "../lib/helpers";
 import { useContext } from "react";
 import { ClientContext } from "../providers/client";
-import formatEvent from "../lib/eventFormatter";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
 import Avatar, { DirectAvatar } from "./Avatar";
 
 const Message = ({
   events,
+  annotations,
+  replacements,
 }: {
   events: MatrixEvent[];
   annotations?: Record<string, Record<string, string[]>>;
@@ -29,7 +30,7 @@ const Message = ({
       case EventType.Reaction:
         break;
       case EventType.RoomMessage:
-        return <RoomMessage events={[event]} />;
+        return <RoomMessage events={[event]} annotations={annotations} replacements={replacements} />;
       case EventType.RoomRedaction:
       case EventType.RoomMessageEncrypted:
       case EventType.Sticker:
@@ -59,10 +60,10 @@ const Message = ({
       case EventType.Reaction:
       case EventType.PollStart:
       default:
-        return <StateMessage event={event} />;
+        return <p>unsupported: ${event.getType()} ${JSON.stringify(event.getContent())}</p>
     }
   } else {
-    return <RoomMessage events={events} />;
+    return <RoomMessage events={events} annotations={annotations} replacements={replacements} />;
   }
 };
 
@@ -75,29 +76,10 @@ const RoomMessage = ({
   annotations?: Record<string, Record<string, string[]>>;
   replacements?: Record<string, IContent[]>;
 }) => {
-  return <MessageFrame events={events} />;
-};
-
-const MessageFrame = ({
-  events,
-  annotations,
-  replacements,
-}: {
-  events: MatrixEvent[];
-  annotations?: Record<string, Record<string, string[]>>;
-  replacements?: Record<string, MatrixEvent[]>;
-}) => {
   const firstEvent = events[0]!;
   const timestamp = firstEvent.getTs();
   const userId = firstEvent.getSender()!;
   const displayName = firstEvent.getContent().displayname;
-
-  const children = events.map((event) => (
-    <MessageWithMetadata
-      event={event}
-      annotations={(annotations && annotations[event.getId()!]) || {}}
-    />
-  ));
 
   return (
     <div className="p-2 border-x-2 border-b-2 border-black w-full">
@@ -112,7 +94,15 @@ const MessageFrame = ({
               {new Date(timestamp).toLocaleString("en-US")}
             </p>
           </div>
-          <div>{children}</div>
+          <div>
+            {events.map((event) => (
+              <Content
+                event={event}
+                annotations={annotations && annotations[event.getId()!]}
+                replacements={replacements && replacements[event.getId()!]}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -178,7 +168,7 @@ const StateMessage = ({ event }: { event: MatrixEvent }) => {
           className="object-cover h-8 w-8 rounded-full self-center border-2"
         />
         <p className="italic whitespace-normal break-all">
-          {formatEvent(event, currentRoom!.getMembers().length)}
+          {}
         </p>
       </li>
     </div>
@@ -195,25 +185,120 @@ export const DateMessage = ({ date }: { date: Date }) => {
   );
 };
 
-export const MemberMessage = ({ event }: { event: MatrixEvent }) => {
-  const client = useContext(ClientContext);
-
-  const content = event.getPrevContent().displayname
-    ? `${event.getPrevContent().displayname} changed their display name to ${
-        event.getContent().displayname
-      }`
-    : `${event.getContent().displayname} joined the room`;
-
-  return (
+export const MemberMessage = ({ event }: { event: MatrixEvent }) => (
     <div className="p-2 border-x-2 border-b-2 border-black">
       <li className="flex content-center gap-2">
         <Avatar id={event.getSender()!} size={8} type="user" />
         <p className="flex flex-col justify-center whitespace-normal break-all">
-          {content}
+          {formatMembership(event)}
         </p>
       </li>
     </div>
-  );
+);
+
+export enum Membership {
+  Invite = "invite",
+  Join = "join",
+  Leave = "leave",
+  Ban = "ban",
+  Knock = "knock",
+}
+
+const formatMembership = (event: MatrixEvent) => {
+  let content = event.getContent();
+  let previousContent = event.getPrevContent();
+
+  let membership = content.membership;
+  let previousMembership = previousContent.membership;
+
+  const stateKey = event.getStateKey();
+  const sender = content.displayname || event.getSender();
+
+  const isValid = (s: string) =>
+    Object.values(Membership).some((m) => (m as string) === s);
+
+  if (
+    !(
+      previousMembership &&
+      membership &&
+      isValid(previousMembership) &&
+      isValid(membership)
+    )
+  ) {
+    return null;
+  }
+
+  switch ([previousMembership as Membership, membership as Membership]) {
+    case [Membership.Invite, Membership.Invite]:
+      return null;
+    case [Membership.Invite, Membership.Join]:
+      return `${sender} joined the room`;
+    case [Membership.Invite, Membership.Leave]:
+      return stateKey === sender ? `${sender} rejected the invite` : null;
+    case [Membership.Invite, Membership.Ban]:
+      return `${sender} was banned`;
+    case [Membership.Invite, Membership.Knock]:
+      return `${sender} requested permission to participate`;
+
+    case [Membership.Join, Membership.Invite]:
+      return null;
+    case [Membership.Join, Membership.Join]:
+      return content.avatar_url !== previousContent.avatar_url
+        ? content.avatar_url ?  `${sender} changed their avatar` : `${sender} removed their avatar`
+        : content.displayname !== previousContent.displayname
+        ? content.displayname
+          ? `${
+              previousContent.displayname || sender
+            } changed their display name to ${content.displayname}`
+          : `${previousContent.displayname} removed their display name`
+        : null;
+    case [Membership.Join, Membership.Leave]:
+      return stateKey === sender
+        ? `${sender} left the room`
+        : `${sender} got kicked`;
+    case [Membership.Join, Membership.Ban]:
+      return `${sender} was kicked and banned`;
+    case [Membership.Invite, Membership.Knock]:
+      return null;
+
+    case [Membership.Leave, Membership.Invite]:
+      return null;
+    case [Membership.Leave, Membership.Join]:
+      return `${sender} joined the room`;
+    case [Membership.Leave, Membership.Leave]:
+      return null;
+    case [Membership.Leave, Membership.Ban]:
+      return `${sender} was banned`;
+    case [Membership.Leave, Membership.Knock]:
+      return `${sender} requested permission to participate`;
+
+    case [Membership.Ban, Membership.Invite]:
+      return null;
+    case [Membership.Ban, Membership.Join]:
+      return null;
+    case [Membership.Ban, Membership.Leave]:
+      return `${sender} was unbanned`;
+    case [Membership.Ban, Membership.Ban]:
+      return null;
+    case [Membership.Ban, Membership.Knock]:
+      return null;
+
+    case [Membership.Knock, Membership.Invite]:
+      return `${sender} join the room`;
+    case [Membership.Knock, Membership.Join]:
+      return null;
+    case [Membership.Knock, Membership.Leave]:
+      return stateKey !== sender
+        ? `${sender} had their participation request denied`
+        : null;
+    case [Membership.Knock, Membership.Ban]:
+      return `${sender} was banned`;
+    case [Membership.Knock, Membership.Knock]:
+      return null;
+
+    default:
+      return null;
+  }
 };
 
 const ContentFormatter = ({
@@ -278,28 +363,21 @@ const ContentFormatter = ({
   }
 };
 
-const MessageWithMetadata = ({
+const Content = ({
   event,
   annotations,
+  replacements,
 }: {
   event: MatrixEvent;
   annotations?: Record<string, string[]>;
+  replacements?: Record<string, IContent[]>;
 }) => {
   const content = event.getContent();
   const isReply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
 
   return (
     <>
-      <button
-        onClick={() =>
-          console.log([
-            event.getType(),
-            event.getContent(),
-            event.getId(),
-            event.getRelation(),
-          ])
-        }
-      >
+      <button onClick={() => console.log(event.getType(), event, content)}>
         {isReply ? (
           <ContentFormatter
             content={{ ...content, body: content.body.split("\n")[2]! }}

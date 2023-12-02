@@ -85,7 +85,7 @@ const toReplacement = (e: MatrixEvent) => {
 export const getAnnotations = (events: MatrixEvent[]) => {
   const reactions = events.filter((e) => e.getType() === EventType.Reaction);
 
-  reactions.reduce(
+  return reactions.reduce(
     (init, e) => {
       const annotation = toAnnotation(e);
 
@@ -115,7 +115,7 @@ export const getReplacements = (events: MatrixEvent[]) => {
     (e) => e.getRelation()?.rel_type === RelationType.Replace ?? false,
   );
 
-  replacements.reduce(
+  return replacements.reduce(
     (init, e) => {
       const replacement = toReplacement(e);
 
@@ -134,8 +134,8 @@ export const getReplacements = (events: MatrixEvent[]) => {
   );
 };
 
-const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
+export const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
   ids.reduce(
-    (init, id) => ({ ...init, [id]: record[id] ?? null }),
-    {} as Record<string, T | null>,
+    (init, id) => record[id] ? ({ ...init, [id]: record[id]! }) : init,
+    {} as Record<string, T>,
   );
