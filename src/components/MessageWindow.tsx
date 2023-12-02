@@ -78,10 +78,10 @@ const MessageWindow = () => {
 
   return (
     <div className="basis-1/2 justify-between grow">
-      <div className="flex max-h-screen">
-        <div className="flex flex-col">
+      <div className="flex">
+        <div className="flex flex-col max-h-screen">
           <TitleBar showMembers={showMembers} setShowMembers={setShowMembers} roomName={currentRoom.name} />
-          <div className="overflow-y-auto bg-green-100 scrollbar">
+          <div className="overflow-y-auto bg-green-100 scrollbar ">
             <MessagesWithDayBreak
               events={events}
               annotations={roomAnnotations}
