@@ -120,6 +120,8 @@ export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
   const groupedEvents = Object.entries(groupEventsByTs(events));
   const getPrevious = (i: number) => groupedEvents[i - 1]!;
 
+  console.log(allReplacements);
+
   return groupedEvents.map(([timestamp, events], i) => {
     const ids = events.map((e) => e.getId()!);
     const annotations = filterRecord(ids, allAnnotations);

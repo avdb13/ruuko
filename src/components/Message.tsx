@@ -372,7 +372,7 @@ const ContentFormatter = ({
           `unsupported: ${content}`
         );
       }
-      return <p className="whitespace-normal break-all">{content.body}</p>;
+      return <span className="whitespace-normal break-all">{content.body} {previousContent ? "(edited)" : null}</span>;
     }
     case MsgType.Image:
       return (
@@ -417,13 +417,13 @@ const Content = ({
 
   return (
     <>
-      <button onClick={() => console.log(event.getType(), event, content)}>
+      <button onClick={() => console.log(event.getType(), event, content, event.getRelation())}>
         {isReply ? (
-          <ContentFormatter
+          <ContentFormatter previousContent={replacements}
             content={{ ...content, body: content.body.split("\n")[2]! }}
           />
         ) : (
-          <ContentFormatter content={content} />
+          <ContentFormatter content={content} previousContent={replacements} />
         )}
       </button>
       <div className="flex gap-2 flex-wrap">
