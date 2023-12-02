@@ -25,7 +25,8 @@ const groupEventsByTs = (events: MatrixEvent[]) =>
 
       return diff < 60 * 1000 &&
         previousEvents[0]!.getSender() === event.getSender() &&
-        event.getType() === EventType.RoomMessage
+        event.getType() === EventType.RoomMessage &&
+        previousEvents[0]!.getType() === EventType.RoomMessage
         ? {
             ...init,
             [previousTimestamp]: [...(init[previousTimestamp] ?? []), event],

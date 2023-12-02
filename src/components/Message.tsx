@@ -26,6 +26,7 @@ const Message = ({
 
     switch (event.getType()) {
       case EventType.RoomMember:
+        console.log(formatMembership(event));
         return <MemberMessage event={event} />;
       case EventType.Reaction:
         break;
@@ -228,21 +229,22 @@ const formatMembership = (event: MatrixEvent) => {
     return null;
   }
 
-  switch ([previousMembership as Membership, membership as Membership]) {
-    case [Membership.Invite, Membership.Invite]:
+  // hack because we can't switch on tuples
+  switch ([previousMembership as Membership, membership as Membership].join(" ")) {
+    case [Membership.Invite, Membership.Invite].join(" "):
       return null;
-    case [Membership.Invite, Membership.Join]:
+    case [Membership.Invite, Membership.Join].join(" "):
       return `${sender} joined the room`;
-    case [Membership.Invite, Membership.Leave]:
+    case [Membership.Invite, Membership.Leave].join(" "):
       return stateKey === sender ? `${sender} rejected the invite` : null;
-    case [Membership.Invite, Membership.Ban]:
+    case [Membership.Invite, Membership.Ban].join(" "):
       return `${sender} was banned`;
-    case [Membership.Invite, Membership.Knock]:
+    case [Membership.Invite, Membership.Knock].join(" "):
       return `${sender} requested permission to participate`;
 
-    case [Membership.Join, Membership.Invite]:
+    case [Membership.Join, Membership.Invite].join(" "):
       return null;
-    case [Membership.Join, Membership.Join]:
+    case [Membership.Join, Membership.Join].join(" "):
       return content.avatar_url !== previousContent.avatar_url
         ? content.avatar_url ?  `${sender} changed their avatar` : `${sender} removed their avatar`
         : content.displayname !== previousContent.displayname
@@ -252,48 +254,48 @@ const formatMembership = (event: MatrixEvent) => {
             } changed their display name to ${content.displayname}`
           : `${previousContent.displayname} removed their display name`
         : null;
-    case [Membership.Join, Membership.Leave]:
+    case [Membership.Join, Membership.Leave].join(" "):
       return stateKey === sender
         ? `${sender} left the room`
         : `${sender} got kicked`;
-    case [Membership.Join, Membership.Ban]:
+    case [Membership.Join, Membership.Ban].join(" "):
       return `${sender} was kicked and banned`;
-    case [Membership.Invite, Membership.Knock]:
+    case [Membership.Invite, Membership.Knock].join(" "):
       return null;
 
-    case [Membership.Leave, Membership.Invite]:
+    case [Membership.Leave, Membership.Invite].join(" "):
       return null;
-    case [Membership.Leave, Membership.Join]:
+    case [Membership.Leave, Membership.Join].join(" "):
       return `${sender} joined the room`;
-    case [Membership.Leave, Membership.Leave]:
+    case [Membership.Leave, Membership.Leave].join(" "):
       return null;
-    case [Membership.Leave, Membership.Ban]:
+    case [Membership.Leave, Membership.Ban].join(" "):
       return `${sender} was banned`;
-    case [Membership.Leave, Membership.Knock]:
+    case [Membership.Leave, Membership.Knock].join(" "):
       return `${sender} requested permission to participate`;
 
-    case [Membership.Ban, Membership.Invite]:
+    case [Membership.Ban, Membership.Invite].join(" "):
       return null;
-    case [Membership.Ban, Membership.Join]:
+    case [Membership.Ban, Membership.Join].join(" "):
       return null;
-    case [Membership.Ban, Membership.Leave]:
+    case [Membership.Ban, Membership.Leave].join(" "):
       return `${sender} was unbanned`;
-    case [Membership.Ban, Membership.Ban]:
+    case [Membership.Ban, Membership.Ban].join(" "):
       return null;
-    case [Membership.Ban, Membership.Knock]:
+    case [Membership.Ban, Membership.Knock].join(" "):
       return null;
 
-    case [Membership.Knock, Membership.Invite]:
+    case [Membership.Knock, Membership.Invite].join(" "):
       return `${sender} join the room`;
-    case [Membership.Knock, Membership.Join]:
+    case [Membership.Knock, Membership.Join].join(" "):
       return null;
-    case [Membership.Knock, Membership.Leave]:
+    case [Membership.Knock, Membership.Leave].join(" "):
       return stateKey !== sender
         ? `${sender} had their participation request denied`
         : null;
-    case [Membership.Knock, Membership.Ban]:
+    case [Membership.Knock, Membership.Ban].join(" "):
       return `${sender} was banned`;
-    case [Membership.Knock, Membership.Knock]:
+    case [Membership.Knock, Membership.Knock].join(" "):
       return null;
 
     default:
