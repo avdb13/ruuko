@@ -363,11 +363,12 @@ const ContentFormatter = ({
   // we need to remove the last element since that's the latest edit
   const edits = () => (
     <ul className="bg-green-200 px-2">
-      {previousContent?.splice(0, previousContent.length-1).map((content) => (
+      {previousContent?.slice(0, -1).map((content) => (
         <ContentFormatter content={content} />
       ))}
     </ul>
   );
+  console.log(showEdits, previousContent);
 
   const extractedAttributes = content.body
     ? extractAttributes(content.body, ["src", "alt"])
@@ -401,7 +402,7 @@ const ContentFormatter = ({
             <p className={`whitespace-normal break-all`}>
               {content.body}{" "}
               {previousContent ? (
-                <button type="button" onClick={() => setShowEdits(!showEdits)}>
+                <button type="button" className={`${showEdits ? "bg-green-200 px-2" : null}`} onClick={() => setShowEdits(!showEdits)}>
                 {showEdits ? "hide" : "(edited)"}
                 </button>
               ) : null}
@@ -415,7 +416,7 @@ const ContentFormatter = ({
             <p className={`whitespace-normal break-all`}>
               {content.body}{" "}
               {previousContent ? (
-                <button type="button" onClick={() => setShowEdits(!showEdits)}>
+                <button type="button" className={`${showEdits ? "bg-green-200 px-2" : null}`} onClick={() => setShowEdits(!showEdits)}>
                   {showEdits ? "hide" : "(edited)"}
                 </button>
               ) : null}
@@ -468,9 +469,9 @@ const Content = ({
   return (
     <>
       <button
-        onClick={() =>
-          console.log(event.getContent(), event.getOriginalContent(), replacements)
-        }
+        // onClick={() =>
+        //   console.log(event.getContent(), event.getOriginalContent(), replacements)
+        // }
       >
         {isReply ? (
           <ContentFormatter
