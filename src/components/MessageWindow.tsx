@@ -21,6 +21,9 @@ const groupEventsByTs = (events: MatrixEvent[]) =>
       const initArr = Object.entries(init);
 
       const [previousTimestamp, previousEvents] = initArr[initArr.length - 1]!;
+      // we enter a new entry with the latest timestamp
+      delete init[previousTimestamp];
+
       const diff = event.getTs() - parseInt(previousTimestamp);
 
       return diff < 60 * 1000 &&
@@ -29,9 +32,9 @@ const groupEventsByTs = (events: MatrixEvent[]) =>
         previousEvents[0]!.getType() === EventType.RoomMessage
         ? {
             ...init,
-            [previousTimestamp]: [...(init[previousTimestamp] ?? []), event],
+            [event.getTs()]: [...previousEvents, event],
           }
-        : { ...init, [event.getTs()]: [event] };
+        : { ...init, [previousTimestamp]: previousEvents, [event.getTs()]: [event] };
     },
     {} as Record<string, MatrixEvent[]>,
   );
