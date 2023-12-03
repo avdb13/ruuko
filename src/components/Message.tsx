@@ -99,10 +99,6 @@ const RoomMessage = ({
   const userId = firstEvent.getSender()!;
   const displayName = firstEvent.getContent().displayname;
 
-  if (events.length === 0 || events.every(e => !!e.getRelation())) {
-    return null;
-  }
-
   return (
     <div className="p-2 border-x-2 border-b-2 border-black w-full">
       <div className="flex content-center gap-2">
@@ -117,10 +113,9 @@ const RoomMessage = ({
             </p>
             <button
               className="border-2 border-gray-600 bg-gray-400 rounded-md px-2"
-              onClick={() =>
-                console.log(events.map(e => e.getContent()))
-              }
-            >debug frame
+              onClick={() => console.log(events.map((e) => e.getContent()))}
+            >
+              debug frame
             </button>
           </div>
           <div>
@@ -143,43 +138,35 @@ const RoomMessage = ({
   );
 };
 
-const replyToEvent = (body: string) => {
-  const split = body.substring(2).split(" ");
-  const message = split[1];
-  const sender = split[0] ? split[0].substring(1, split[0].length - 1) : null;
+// const Reply = ({
+//   eventId,
+//   message,
+//   member,
+// }: {
+//   eventId: string;
+//   message: string;
+//   member: RoomMember;
+// }) => {
+//   const element = document.getElementById(eventId);
 
-  return [sender, message];
-};
+//   const handleClick = () => {
+//     if (element) {
+//       element.scrollIntoView({ behavior: "smooth", block: "center" });
+//       // flash the message
+//     }
+//   };
 
-const Reply = ({
-  eventId,
-  message,
-  member,
-}: {
-  eventId: string;
-  message: string;
-  member: RoomMember;
-}) => {
-  const element = document.getElementById(eventId);
-
-  const handleClick = () => {
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
-      // flash the message
-    }
-  };
-
-  return (
-    <button
-      className="flex px-2 border-black gap-1 items-center ml-16 mb-2"
-      onClick={handleClick}
-    >
-      <DirectAvatar url={member.getMxcAvatarUrl()!} size={8} />
-      <p className="whitespace-normal break-all font-bold">{member.name}</p>
-      <p className="whitespace-normal break-all">{message}</p>
-    </button>
-  );
-};
+//   return (
+//     <button
+//       className="flex px-2 border-black gap-1 items-center ml-16 mb-2"
+//       onClick={handleClick}
+//     >
+//       <DirectAvatar url={member.getMxcAvatarUrl()!} size={8} />
+//       <p className="whitespace-normal break-all font-bold">{member.name}</p>
+//       <p className="whitespace-normal break-all">{message}</p>
+//     </button>
+//   );
+// };
 
 const StateMessage = ({ event }: { event: MatrixEvent }) => {
   const client = useContext(ClientContext);
@@ -366,17 +353,16 @@ const ContentFormatter = ({
   previousContent?: IContent[];
 }) => {
   const client = useContext(ClientContext);
-  const { currentRoom, roomEvents } = useContext(RoomContext)!;
   const inReplyTo =
-    content["m.relates_to"]?.["m.in_reply_to"]?.event_id ?? null;
+    content["m.relates_to"]?.["m.in_reply_to"]?.event_id ? (content.body as string).split("\n\n", 2) : null;
   const [showEdits, setShowEdits] = useState(false);
 
   // we need to remove the last element since that's the latest edit
   const edits = () => (
     <ul className="bg-green-200 px-2">
-      {previousContent?.slice(0, -1).map((content) => (
-        <ContentFormatter content={content} />
-      ))}
+      {previousContent
+        ?.slice(0, -1)
+        .map((content) => <ContentFormatter content={content} />)}
     </ul>
   );
 
@@ -386,54 +372,33 @@ const ContentFormatter = ({
 
   switch (content.msgtype) {
     case MsgType.Text: {
-      if (content.format === "org.matrix.custom.html") {
-        return extractedAttributes ? (
-          <ContentFormatter
-            content={{
-              url: extractedAttributes.get("src"),
-              body: extractedAttributes.get("alt"),
-            }}
-          />
-        ) : content.body ? (
-          (content.body as string)
-            .split("\n")
-            .map((s) => <p className="whitespace-normal break-all">{s}</p>)
-        ) : (
-          `unsupported: ${content}`
-        );
-      } else if (inReplyTo) {
-        const reply =
-          roomEvents[currentRoom!.roomId]?.[inReplyTo]?.getContent() ?? null;
-        console.log(reply);
-
-        return (
-          <>
-            {showEdits ? edits() : null}
-            <p className={`whitespace-normal break-all`}>
-              {content.body}{" "}
-              {previousContent ? (
-                <button type="button" className={`${showEdits ? "bg-green-200 px-2" : null}`} onClick={() => setShowEdits(!showEdits)}>
-                {showEdits ? "hide" : "(edited)"}
-                </button>
-              ) : null}
-            </p>
-          </>
-        );
-      } else {
-        return (
-          <>
-            {showEdits ? edits() : null}
-            <p className={`whitespace-normal break-all`}>
-              {content.body}{" "}
-              {previousContent ? (
-                <button type="button" className={`${showEdits ? "bg-green-200 px-2" : null}`} onClick={() => setShowEdits(!showEdits)}>
-                  {showEdits ? "hide" : "(edited)"}
-                </button>
-              ) : null}
-            </p>
-          </>
-        );
+      if (content.format === "org.matrix.custom.html" && extractedAttributes) {
+        return <ContentFormatter
+          content={{
+            url: extractedAttributes.get("src"),
+            body: extractedAttributes.get("alt"),
+          }}
+        />
       }
+
+      return (
+        <>
+          {inReplyTo ? <div className="bg-green-200">{"> "}{inReplyTo[0]!.split("\n").map((s, i) => i === 0 ? s.split("> ", 3)[2] : s.split("> ", 2)[1])}</div> : null}
+          {showEdits ? edits() : null}
+          <span className={`whitespace-normal break-all`}>
+            {inReplyTo ? inReplyTo[1]!.split("\n").map(s => <p>{s}</p>) : content.body}{" "}
+            {previousContent ? (
+              <button
+                type="button"
+                className={`${showEdits ? "bg-green-200 px-2" : null}`}
+                onClick={() => setShowEdits(!showEdits)}
+              >
+                {showEdits ? "hide" : "(edited)"}
+              </button>
+            ) : null}
+          </span>
+        </>
+      );
     }
     case MsgType.Image:
       return (
@@ -474,18 +439,17 @@ const Content = ({
   replacements?: IContent[];
 }) => {
   const content = event.getContent();
-  const isReply = !!content["m.relates_to"]?.["m.in_reply_to"]?.event_id;
 
   return (
     <>
-        {isReply ? (
-          <ContentFormatter
-            previousContent={replacements ? [event.getOriginalContent(), ...replacements] : undefined}
-            content={{ ...content, body: content.body.split("\n")[2]! }}
-          />
-        ) : (
-          <ContentFormatter content={content} previousContent={replacements ? [event.getOriginalContent(), ...replacements] : undefined} />
-        )}
+      <ContentFormatter
+        content={content}
+        previousContent={
+          replacements
+            ? [event.getOriginalContent(), ...replacements]
+            : undefined
+        }
+      />
       <div className="flex gap-2 flex-wrap">
         {annotations
           ? Object.entries(annotations).map(([annotation, annotators]) => {
@@ -498,14 +462,15 @@ const Content = ({
               );
             })
           : null}
+        <button
+          className="border-2 border-gray-600 bg-gray-400 rounded-md px-2 my-2"
+          onClick={() =>
+            console.log(event.getContent(), event.getContent()["m.relates_to"]?.["m.in_reply_to"])
+          }
+        >
+          debug content
+        </button>
       </div>
-      <button
-        className="border-2 border-gray-600 bg-gray-400 rounded-md px-2 my-2"
-        onClick={() =>
-          console.log(event.getContent(), event.getRelation())
-        }
-      >debug content
-      </button>
     </>
   );
 };
