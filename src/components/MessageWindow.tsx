@@ -145,15 +145,15 @@ export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
     const date = new Date(parseInt(timestamp));
     const previousDate = new Date(parseInt(previousTimestamp));
 
-    const sameDay = date.getDate() === previousDate.getDate();
+    const dayBreak = date.getDate() !== previousDate.getDate();
 
-    return sameDay ? (
-      <Message events={events} replacements={replacements} key={i} />
-    ) : (
+    return dayBreak && events.some(e => e.getType() === EventType.RoomMessage) ? (
       <>
         <DateMessage date={date} />
         <Message events={events} replacements={replacements} key={i} />
       </>
+    ) : (
+      <Message events={events} replacements={replacements} key={i} />
     );
   });
 };
