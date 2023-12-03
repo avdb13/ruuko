@@ -130,6 +130,10 @@ export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
     const annotations = filterRecord(ids, allAnnotations);
     const replacements = filterRecord(ids, allReplacements);
 
+    if (events.length === 0 || events.every(e => !!e.getRelation())) {
+      return null;
+    }
+
     if (i === 0) {
       return (
         <Message

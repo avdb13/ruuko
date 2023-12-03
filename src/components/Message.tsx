@@ -99,6 +99,10 @@ const RoomMessage = ({
   const userId = firstEvent.getSender()!;
   const displayName = firstEvent.getContent().displayname;
 
+  if (events.length === 0 || events.every(e => !!e.getRelation())) {
+    return null;
+  }
+
   return (
     <div className="p-2 border-x-2 border-b-2 border-black w-full">
       <div className="flex content-center gap-2">
@@ -111,6 +115,13 @@ const RoomMessage = ({
             <p className="whitespace-normal break-all">
               {new Date(timestamp).toLocaleString("en-US")}
             </p>
+            <button
+              className="border-2 border-gray-600 bg-gray-400 rounded-md px-2"
+              onClick={() =>
+                console.log(events.map(e => e.getContent()))
+              }
+            >debug frame
+            </button>
           </div>
           <div>
             {events
@@ -368,7 +379,6 @@ const ContentFormatter = ({
       ))}
     </ul>
   );
-  console.log(showEdits, previousContent);
 
   const extractedAttributes = content.body
     ? extractAttributes(content.body, ["src", "alt"])
@@ -468,11 +478,6 @@ const Content = ({
 
   return (
     <>
-      <button
-        // onClick={() =>
-        //   console.log(event.getContent(), event.getOriginalContent(), replacements)
-        // }
-      >
         {isReply ? (
           <ContentFormatter
             previousContent={replacements ? [event.getOriginalContent(), ...replacements] : undefined}
@@ -481,7 +486,6 @@ const Content = ({
         ) : (
           <ContentFormatter content={content} previousContent={replacements ? [event.getOriginalContent(), ...replacements] : undefined} />
         )}
-      </button>
       <div className="flex gap-2 flex-wrap">
         {annotations
           ? Object.entries(annotations).map(([annotation, annotators]) => {
@@ -495,6 +499,13 @@ const Content = ({
             })
           : null}
       </div>
+      <button
+        className="border-2 border-gray-600 bg-gray-400 rounded-md px-2 my-2"
+        onClick={() =>
+          console.log(event.getContent(), event.getRelation())
+        }
+      >debug content
+      </button>
     </>
   );
 };
