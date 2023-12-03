@@ -1,14 +1,6 @@
 import { MatrixEvent } from "matrix-js-sdk";
 
   // "text" | "annotation" | "join" | "leave" | "invite" | "displayNameChange" | "avatarChange" | "reply" | "edit" | "redaction" | "unimplemented"
-export enum Membership {
-  Invite = "invite",
-  Join = "join",
-  Leave = "leave",
-  Ban = "ban",
-  Knock = "knock",
-}
-
 const isText = (event: MatrixEvent) => {
   return !!event.getContent().body
 }
@@ -26,12 +18,7 @@ export const isAnnotation = (event: MatrixEvent) =>
 const formatAnnotation = (event: MatrixEvent) =>
   `${event.getSender()} replied ${event.getContent()["m.relates_to"]?.key} to ${event.getContent()["m.relates_to"]?.event_id}`
 
-const isJoin = (event: MatrixEvent) =>
-  event.getContent().membership === "join" && Object.keys(event.getPrevContent()).length === 0
-
 const formatJoin = (event: MatrixEvent) => `${event.getSender()} joined the room`
-
-const isLeave = (event: MatrixEvent) => event.getContent().membership === "leave"
 
 const formatLeave = (event: MatrixEvent) => `${event.getSender()} left the room`
 
@@ -94,4 +81,4 @@ export const formatAnnotators = (annotators: string[]) => {
   }
 }
 
-export default formatEvent;
+export default { formatJoin, formatLeave };

@@ -67,7 +67,7 @@ const Message = ({
       case EventType.PollStart:
       default:
         return (
-          <p>
+          <p className="whitespace-normal break-all">
             unsupported: ${event.getType()} $
             {JSON.stringify(event.getContent())}
           </p>
@@ -349,6 +349,8 @@ const ContentFormatter = ({
   previousContent?: IContent[];
 }) => {
   const client = useContext(ClientContext);
+  const { currentRoom, roomEvents } = useContext(RoomContext)!;
+  const inReplyTo = content["m.relates_to"]?.["m.in_reply_to"]?.event_id ?? null;
 
   const extractedAttributes = content.body
     ? extractAttributes(content.body, ["src", "alt"])
@@ -371,8 +373,16 @@ const ContentFormatter = ({
         ) : (
           `unsupported: ${content}`
         );
+      } else if (inReplyTo) {
+        const reply = roomEvents[currentRoom!.roomId]?.[inReplyTo]?.getContent() ?? null;
+        console.log(reply);
+
+          // <span className="whitespace-normal break-all">{reply?.displayname} {previousContent ? "(edited)" : null}</span>
+        return 
+          <span className="whitespace-normal break-all">{content.body} {previousContent ? "(edited)" : null}</span>
+      } else {
+        return <span className="whitespace-normal break-all">{content.body} {previousContent ? "(edited)" : null}</span>;
       }
-      return <span className="whitespace-normal break-all">{content.body} {previousContent ? "(edited)" : null}</span>;
     }
     case MsgType.Image:
       return (

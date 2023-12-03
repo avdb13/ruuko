@@ -10,6 +10,7 @@ import "@matrix-org/olm";
 
 global.Olm = Olm;
 
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <CookiesProvider>
     <ClientProvider>

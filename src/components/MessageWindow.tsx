@@ -95,7 +95,7 @@ const MessageWindow = () => {
           />
           <div
             ref={bottomDivRef}
-            className="overflow-y-auto bg-green-100 scrollbar"
+            className="overflow-y-auto bg-green-100"
           >
             <MessagesWithDayBreak events={Object.values(events)} />
           </div>
