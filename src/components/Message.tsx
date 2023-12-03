@@ -3,10 +3,11 @@ import {
   IContent,
   MatrixEvent,
   MsgType,
+  RelationType,
   RoomMember,
 } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
@@ -112,13 +113,18 @@ const RoomMessage = ({
             </p>
           </div>
           <div>
-            {events.map((event) => (
-              <Content
-                event={event}
-                annotations={annotations && annotations[event.getId()!]}
-                replacements={replacements && replacements[event.getId()!]}
-              />
-            ))}
+            {events
+              .filter(
+                (e) =>
+                  e.getRelation()?.rel_type !== RelationType.Replace ?? true,
+              )
+              .map((event) => (
+                <Content
+                  event={event}
+                  annotations={annotations && annotations[event.getId()!]}
+                  replacements={replacements && replacements[event.getId()!]}
+                />
+              ))}
           </div>
         </div>
       </div>
@@ -350,7 +356,18 @@ const ContentFormatter = ({
 }) => {
   const client = useContext(ClientContext);
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
-  const inReplyTo = content["m.relates_to"]?.["m.in_reply_to"]?.event_id ?? null;
+  const inReplyTo =
+    content["m.relates_to"]?.["m.in_reply_to"]?.event_id ?? null;
+  const [showEdits, setShowEdits] = useState(false);
+
+  // we need to remove the last element since that's the latest edit
+  const edits = () => (
+    <ul className="bg-green-200 px-2">
+      {previousContent?.splice(0, previousContent.length-1).map((content) => (
+        <ContentFormatter content={content} />
+      ))}
+    </ul>
+  );
 
   const extractedAttributes = content.body
     ? extractAttributes(content.body, ["src", "alt"])
@@ -374,14 +391,37 @@ const ContentFormatter = ({
           `unsupported: ${content}`
         );
       } else if (inReplyTo) {
-        const reply = roomEvents[currentRoom!.roomId]?.[inReplyTo]?.getContent() ?? null;
+        const reply =
+          roomEvents[currentRoom!.roomId]?.[inReplyTo]?.getContent() ?? null;
         console.log(reply);
 
-          // <span className="whitespace-normal break-all">{reply?.displayname} {previousContent ? "(edited)" : null}</span>
-        return 
-          <span className="whitespace-normal break-all">{content.body} {previousContent ? "(edited)" : null}</span>
+        return (
+          <>
+            {showEdits ? edits() : null}
+            <p className={`whitespace-normal break-all`}>
+              {content.body}{" "}
+              {previousContent ? (
+                <button type="button" onClick={() => setShowEdits(!showEdits)}>
+                {showEdits ? "hide" : "(edited)"}
+                </button>
+              ) : null}
+            </p>
+          </>
+        );
       } else {
-        return <span className="whitespace-normal break-all">{content.body} {previousContent ? "(edited)" : null}</span>;
+        return (
+          <>
+            {showEdits ? edits() : null}
+            <p className={`whitespace-normal break-all`}>
+              {content.body}{" "}
+              {previousContent ? (
+                <button type="button" onClick={() => setShowEdits(!showEdits)}>
+                  {showEdits ? "hide" : "(edited)"}
+                </button>
+              ) : null}
+            </p>
+          </>
+        );
       }
     }
     case MsgType.Image:
@@ -427,13 +467,18 @@ const Content = ({
 
   return (
     <>
-      <button onClick={() => console.log(event.getType(), event, content, event.getRelation())}>
+      <button
+        onClick={() =>
+          console.log(event.getContent(), event.getOriginalContent(), replacements)
+        }
+      >
         {isReply ? (
-          <ContentFormatter previousContent={replacements}
+          <ContentFormatter
+            previousContent={replacements ? [event.getOriginalContent(), ...replacements] : undefined}
             content={{ ...content, body: content.body.split("\n")[2]! }}
           />
         ) : (
-          <ContentFormatter content={content} previousContent={replacements} />
+          <ContentFormatter content={content} previousContent={replacements ? [event.getOriginalContent(), ...replacements] : undefined} />
         )}
       </button>
       <div className="flex gap-2 flex-wrap">
