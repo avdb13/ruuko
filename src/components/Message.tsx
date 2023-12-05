@@ -7,7 +7,7 @@ import {
   RoomMember,
 } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
-import { useContext, useState } from "react";
+import { PropsWithChildren, useContext, useState } from "react";
 import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
@@ -41,6 +41,10 @@ const Message = ({
       case EventType.RoomRedaction:
       case EventType.RoomMessageEncrypted:
       case EventType.Sticker:
+        return <Sticker
+            event={event}
+            annotations={annotations}
+          />;
       case EventType.CallInvite:
       case EventType.CallCandidates:
       case EventType.CallAnswer:
@@ -85,6 +89,42 @@ const Message = ({
   }
 };
 
+const Sticker = ({
+  event,
+  annotations,
+}: {
+  event: MatrixEvent;
+  annotations?: Record<string, Record<string, string[]>>;
+}) => {
+  const content = event.getContent();
+// ${"body":"Cute Gentoo","info":{"h":256,"mimetype":"image/webp","size":91520,"thumbnail_info":{"h":256,"mimetype":"image/webp","size":91520,"w":227},"thumbnail_url":"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0","w":227},"url":"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0"}
+  const client = useContext(ClientContext);
+
+  if (!content.info) {
+    console.log(content.info);
+    return null;
+  }
+
+  return (
+    <Frame userId={event.getSender()!} displayName={content.displayname} timestamp={event.getTs()} annotations={annotations}>
+      <img
+        src={client.mxcUrlToHttp(content.url)!}
+        alt={content.body}
+        height={content.info.h}
+        width={content.info.w}
+      />
+      <button
+        className="border-2 border-gray-600 bg-gray-400 rounded-md px-2 my-2"
+        onClick={() =>
+          console.log(content.info)
+        }
+      >
+        debug content
+      </button>
+    </Frame>
+  );
+};
+
 const RoomMessage = ({
   events,
   annotations,
@@ -100,43 +140,62 @@ const RoomMessage = ({
   const displayName = firstEvent.getContent().displayname;
 
   return (
-    <div className="p-2 border-x-2 border-b-2 border-black w-full">
-      <div className="flex content-center gap-2">
-        <Avatar id={userId} type="user" size={16} />
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <p className="whitespace-normal break-all font-bold">
-              {displayName || userId}
-            </p>
-            <p className="whitespace-normal break-all">
-              {new Date(timestamp).toLocaleString("en-US")}
-            </p>
-            <button
-              className="border-2 border-gray-600 bg-gray-400 rounded-md px-2"
-              onClick={() => console.log(events.map((e) => e.getContent()))}
-            >
-              debug frame
-            </button>
-          </div>
-          <div>
-            {events
-              .filter(
-                (e) =>
-                  e.getRelation()?.rel_type !== RelationType.Replace ?? true,
-              )
-              .map((event) => (
-                <Content
-                  event={event}
-                  annotations={annotations && annotations[event.getId()!]}
-                  replacements={replacements && replacements[event.getId()!]}
-                />
-              ))}
-          </div>
-        </div>
-      </div>
-    </div>
+    <Frame
+      userId={userId}
+      displayName={displayName}
+      timestamp={timestamp}
+      annotations={annotations}
+      replacements={replacements}
+      logs={events.map((e) => e.getContent())}
+    >
+      {events
+        .filter(
+          (e) => e.getRelation()?.rel_type !== RelationType.Replace ?? true,
+        )
+        .map((event) => (
+          <Content
+            event={event}
+            annotations={annotations && annotations[event.getId()!]}
+            replacements={replacements && replacements[event.getId()!]}
+          />
+        ))}
+    </Frame>
   );
 };
+
+interface FrameProps {
+  userId: string;
+  displayName?: string;
+  timestamp: number;
+  annotations?: Record<string, Record<string, string[]>>;
+  replacements?: Record<string, IContent[]>;
+  logs?: any;
+}
+
+const Frame = (props: PropsWithChildren<FrameProps>) => (
+  <div className="p-2 border-x-2 border-b-2 border-black w-full">
+    <div className="flex content-center gap-2">
+      <Avatar id={props.userId} type="user" size={16} />
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2">
+          <p className="whitespace-normal break-all font-bold">
+            {props.displayName || props.userId}
+          </p>
+          <p className="whitespace-normal break-all">
+            {new Date(props.timestamp).toLocaleString("en-US")}
+          </p>
+          <button
+            className="border-2 border-gray-600 bg-gray-400 rounded-md px-2"
+            onClick={() => console.log(props.logs)}
+          >
+            debug frame
+          </button>
+        </div>
+        <div>{props.children}</div>
+      </div>
+    </div>
+  </div>
+);
 
 // const Reply = ({
 //   eventId,
@@ -353,8 +412,9 @@ const ContentFormatter = ({
   previousContent?: IContent[];
 }) => {
   const client = useContext(ClientContext);
-  const inReplyTo =
-    content["m.relates_to"]?.["m.in_reply_to"]?.event_id ? (content.body as string).split("\n\n", 2) : null;
+  const inReplyTo = content["m.relates_to"]?.["m.in_reply_to"]?.event_id
+    ? (content.body as string).split("\n\n", 2)
+    : null;
   const [showEdits, setShowEdits] = useState(false);
 
   // we need to remove the last element since that's the latest edit
@@ -373,20 +433,33 @@ const ContentFormatter = ({
   switch (content.msgtype) {
     case MsgType.Text: {
       if (content.format === "org.matrix.custom.html" && extractedAttributes) {
-        return <ContentFormatter
-          content={{
-            url: extractedAttributes.get("src"),
-            body: extractedAttributes.get("alt"),
-          }}
-        />
+        return (
+          <ContentFormatter
+            content={{
+              url: extractedAttributes.get("src"),
+              body: extractedAttributes.get("alt"),
+            }}
+          />
+        );
       }
 
       return (
         <>
-          {inReplyTo ? <div className="bg-green-200">{"> "}{inReplyTo[0]!.split("\n").map((s, i) => i === 0 ? s.split("> ", 3)[2] : s.split("> ", 2)[1])}</div> : null}
+          {inReplyTo ? (
+            <div className="bg-green-200">
+              {"> "}
+              {inReplyTo[0]!
+                .split("\n")
+                .map((s, i) =>
+                  i === 0 ? s.split("> ", 3)[2] : s.split("> ", 2)[1],
+                )}
+            </div>
+          ) : null}
           {showEdits ? edits() : null}
           <span className={`whitespace-normal break-all`}>
-            {inReplyTo ? inReplyTo[1]!.split("\n").map(s => <p>{s}</p>) : content.body}{" "}
+            {inReplyTo
+              ? inReplyTo[1]!.split("\n").map((s) => <p>{s}</p>)
+              : content.body}{" "}
             {previousContent ? (
               <button
                 type="button"
@@ -465,7 +538,10 @@ const Content = ({
         <button
           className="border-2 border-gray-600 bg-gray-400 rounded-md px-2 my-2"
           onClick={() =>
-            console.log(event.getContent(), event.getContent()["m.relates_to"]?.["m.in_reply_to"])
+            console.log(
+              event.getContent(),
+              event.getContent()["m.relates_to"]?.["m.in_reply_to"],
+            )
           }
         >
           debug content

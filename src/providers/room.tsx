@@ -1,4 +1,4 @@
-import { ClientEvent, EventType, MatrixEvent, RelationType, Room, RoomEvent } from "matrix-js-sdk";
+import { ClientEvent, MatrixEvent, Room, RoomEvent } from "matrix-js-sdk";
 import {
   PropsWithChildren,
   createContext,
