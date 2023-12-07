@@ -1,48 +1,50 @@
 import { EventType, IStatusResponse, MatrixEvent, RelationType } from "matrix-js-sdk";
-import Message, { DateMessage } from "./Message";
+import Message, { MessageFrame } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
 import {
-  filterRecord,
   getAnnotations,
   getRedactions,
   getReplacements,
 } from "../lib/helpers";
 
-const groupEventsByTs = (events: MatrixEvent[]) =>
+// in case we have performance issues later
+// type SortingMetadata = {
+//   sender: string, timestamp: number, id: string,
+// }
+
+const sortByTimestamp = (events: MatrixEvent[]) =>
+  // .map(e => ({sender: e.getSender(), timestamp: e.getTs(), id: e.getId()! }))
   events.reduce(
     (init, event, i) => {
       if (i === 0) {
-        return { [event.getTs()]: [event] };
+        return [[event]];
       }
 
-      const initArr = Object.entries(init);
+      // we retrieve the last
+      const previousList = init.slice(-1)[0]!;
+      const previousEvent = previousList.slice(-1)[0]!;
 
-      const [previousTimestamp, previousEvents] = initArr[initArr.length - 1]!;
-      // we enter a new entry with the latest timestamp
-      delete init[previousTimestamp];
+      const diff = event.getTs() - previousEvent.getTs();
 
-      const diff = event.getTs() - parseInt(previousTimestamp);
-
-      return diff < 60 * 1000 &&
-        previousEvents[0]!.getSender() === event.getSender() &&
+      return previousEvent.getSender() === event.getSender() &&
         event.getType() === EventType.RoomMessage &&
-        previousEvents[0]!.getType() === EventType.RoomMessage
-        ? {
+        previousEvent.getType() === EventType.RoomMessage &&
+        diff < 60 * 1000
+        ? [
+            ...init.slice(-1),
+            [...previousList, event],
+          ]
+        : [
             ...init,
-            [event.getTs()]: [...previousEvents, event],
-          }
-        : {
-            ...init,
-            [previousTimestamp]: previousEvents,
-            [event.getTs()]: [event],
-          };
+            [event],
+          ];
     },
-    {} as Record<string, MatrixEvent[]>,
-  );
+    [] as MatrixEvent[][],
+  ).map(list => list.map(e => e.getId()!));
 
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
@@ -119,64 +121,34 @@ const MessageWindow = () => {
 };
 
 const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
+  const { currentRoom } = useContext(RoomContext)!;
+
   const allAnnotations = getAnnotations(events);
   const allReplacements = getReplacements(events);
   const allRedactions = getRedactions(events);
   const eventFilter = (e: MatrixEvent) => !(e.getRelation() || EventType.RoomRedaction === e.getType() || EventType.Reaction === e.getType());
 
-  console.log(events.filter(eventFilter));
-  return events.filter(eventFilter).map((event) => (
-    <Message
-      event={event}
-      annotations={allAnnotations[event.getId()!]}
-      replacements={allReplacements[event.getId()!]}
-      redaction={allRedactions[event.getId()!]}
-    />
-  ));
+  const eventRecord = events.filter(eventFilter).reduce((init, event) => (
+    ({...init, [event.getId()!]: (
+      <Message
+        event={event}
+        annotations={allAnnotations[event.getId()!]}
+        replacements={allReplacements[event.getId()!]}
+        redaction={allRedactions[event.getId()!]}
+      />
+    )})
+  ), {} as Record<string, JSX.Element>);
   // return reply + event + annotations
+  //
+  return sortByTimestamp(events).map(list => {
+    const firstEvent = currentRoom?.findEventById(list[0]!)!;
+    const displayName = firstEvent.getContent().displayname;
+
+    return (<MessageFrame userId={firstEvent.getSender()!} displayName={displayName} timestamp={firstEvent.getTs()}>
+      {list.map(id => eventRecord[id]!)}
+    </MessageFrame>)
+  })
 };
-
-// export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
-
-//   const groupedEvents = Object.entries(events);
-//   const getPrevious = (i: number) => groupedEvents[i - 1]!;
-
-//   return groupedEvents.map(([timestamp, events], i) => {
-//     const ids = events.map((e) => e.getId()!);
-//     const annotations = filterRecord(ids, allAnnotations);
-//     const replacements = filterRecord(ids, allReplacements);
-
-//     if (events.length === 0 || events.every(e => !!e.getRelation())) {
-//       return null;
-//     }
-
-//     if (i === 0) {
-//       return (
-//         <Message
-//           events={events}
-//           annotations={annotations}
-//           replacements={replacements}
-//           key={i}
-//         />
-//       );
-//     }
-
-//     const [previousTimestamp, _] = getPrevious(i);
-//     const date = new Date(parseInt(timestamp));
-//     const previousDate = new Date(parseInt(previousTimestamp));
-
-//     const dayBreak = date.getDate() !== previousDate.getDate();
-
-//     return dayBreak && events.some(e => e.getType() === EventType.RoomMessage) ? (
-//       <>
-//         <DateMessage date={date} />
-//         <Message events={events} replacements={replacements} key={i} />
-//       </>
-//     ) : (
-//       <Message events={events} replacements={replacements} key={i} />
-//     );
-//   });
-// };
 
 const TitleBar = ({
   roomName,

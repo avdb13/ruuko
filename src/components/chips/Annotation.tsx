@@ -44,8 +44,6 @@ const Annotation = ({
     }
   };
 
-  console.log(annotation, annotators);
-
   return (
     <div className="relative flex justify-center items-center gap-1">
       <button
