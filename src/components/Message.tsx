@@ -234,10 +234,6 @@ const RoomEvent = ({
   redaction?: MatrixEvent;
 }) => {
   const client = useContext(ClientContext);
-
-  const timestamp = event.getTs();
-  const userId = event.getSender()!;
-  const displayName = event.getContent().displayname;
   const content = event.getContent();
 
   switch (content.msgtype) {
@@ -260,7 +256,7 @@ const RoomEvent = ({
         );
       }
 
-      return <p className="whitespace-normal break-all">{content.body} </p>;
+      return <p className="whitespace-normal break-all"><span className="italic text-gray-600">{event.getId()}</span> <br /> {replacements ? (content.body as string).split("\n\n")[1] : content.body} </p>;
     }
     case MsgType.Image:
       return (
@@ -289,10 +285,9 @@ const RoomEvent = ({
       //     className="h-16 w-16"
       //   />
       // ) : (
+      console.log(`unsupported: `, content);
       return (
-        <p className="whitespace-normal break-all">
-          `unsupported: ${JSON.stringify(content)}`
-        </p>
+        null
       );
     // );
   }

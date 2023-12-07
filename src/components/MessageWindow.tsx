@@ -1,15 +1,16 @@
-import { EventType, IStatusResponse, MatrixEvent, RelationType } from "matrix-js-sdk";
+import {
+  EventType,
+  IStatusResponse,
+  MatrixEvent,
+  RelationType,
+} from "matrix-js-sdk";
 import Message, { MessageFrame } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
-import {
-  getAnnotations,
-  getRedactions,
-  getReplacements,
-} from "../lib/helpers";
+import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
 
 // in case we have performance issues later
 // type SortingMetadata = {
@@ -18,9 +19,8 @@ import {
 
 const sortByTimestamp = (events: MatrixEvent[]) =>
   // .map(e => ({sender: e.getSender(), timestamp: e.getTs(), id: e.getId()! }))
-  events.reduce(
-    (init, event, i) => {
-
+  events
+    .reduce((init, event, i) => {
       if (i === 0) {
         return [[event]];
       }
@@ -35,17 +35,10 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
         event.getType() === EventType.RoomMessage &&
         previousEvent.getType() === EventType.RoomMessage &&
         diff < 60 * 1000
-        ? [
-            ...init.slice(0, init.length-1),
-            [...previousList, event],
-          ]
-        : [
-            ...init,
-            [event],
-          ];
-    },
-    [] as MatrixEvent[][],
-  ).map(list => list.map(e => e.getId()!));
+        ? [...init.slice(0, init.length - 1), [...previousList, event]]
+        : [...init, [event]];
+    }, [] as MatrixEvent[][])
+    .map((list) => list.map((e) => e.getId()!));
 
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
@@ -124,31 +117,54 @@ const MessageWindow = () => {
 const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
-  const allAnnotations = getAnnotations(events);
-  const allReplacements = getReplacements(events);
-  const allRedactions = getRedactions(events);
-  const eventFilter = (e: MatrixEvent) => !(e.getRelation() || EventType.RoomRedaction === e.getType() || EventType.Reaction === e.getType());
+  const isSpecialEvent = (e: MatrixEvent) =>
+      e.getRelation() ||
+      e.getRedactionEvent() ||
+      EventType.RoomRedaction === e.getType() ||
+      EventType.Reaction === e.getType();
+
+  const filteredEvents = events.reduce(
+    (init, e) =>
+      isSpecialEvent(e)
+        ? { ...init, ["others"]: [...(init["others"] ?? []), e] }
+        : { ...init, ["regular"]: [...(init["regular"] ?? []), e] },
+    {} as Record<string, MatrixEvent[]>,
+  );
+
+  const allAnnotations = getAnnotations(filteredEvents["others"]!);
+  const allReplacements = getReplacements(filteredEvents["others"]!);
+  const allRedactions = getRedactions(filteredEvents["others"]!);
 
   // return reply + event + annotations
-  const eventRecord = events.filter(eventFilter).reduce((init, event) => (
-    ({...init, [event.getId()!]: (
-      <Message
-        event={event}
-        annotations={allAnnotations[event.getId()!]}
-        replacements={allReplacements[event.getId()!]}
-        redaction={allRedactions[event.getId()!]}
-      />
-    )})
-  ), {} as Record<string, JSX.Element>);
+  const eventRecord = filteredEvents["regular"]!.reduce(
+    (init, event) => ({
+      ...init,
+      [event.getId()!]: (
+        <Message
+          event={event}
+          annotations={allAnnotations[event.getId()!]}
+          replacements={allReplacements[event.getId()!]}
+          redaction={allRedactions[event.getId()!]}
+        />
+      ),
+    }),
+    {} as Record<string, JSX.Element>,
+  );
 
-  return sortByTimestamp(events).map(list => {
+  return sortByTimestamp(filteredEvents["regular"]!).map((list) => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;
     const displayName = firstEvent.getContent().displayname;
 
-    return (<MessageFrame userId={firstEvent.getSender()!} displayName={displayName} timestamp={firstEvent.getTs()}>
-      {list.map(id => eventRecord[id]!)}
-    </MessageFrame>)
-  })
+    return (
+      <MessageFrame
+        userId={firstEvent.getSender()!}
+        displayName={displayName}
+        timestamp={firstEvent.getTs()}
+      >
+        {list.map((id) => eventRecord[id]!)}
+      </MessageFrame>
+    );
+  });
 };
 
 const TitleBar = ({
