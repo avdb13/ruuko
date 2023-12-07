@@ -77,14 +77,6 @@ const toAnnotation = (e: MatrixEvent) => {
     : null;
 };
 
-const toReplacement = (e: MatrixEvent) => {
-  const relation = e.getRelation();
-  const toReplace = relation?.event_id;
-  const newContent = e.getContent()["m.new_content"] as IContent;
-
-  return relation && toReplace && newContent ? { toReplace, newContent } : null;
-};
-
 export const getAnnotations = (events: MatrixEvent[]) => {
   const reactions = events.filter((e) => e.getType() === EventType.Reaction);
 
@@ -120,20 +112,19 @@ export const getReplacements = (events: MatrixEvent[]) => {
 
   return replacements.reduce(
     (init, e) => {
-      const replacement = toReplacement(e);
+      const replacement = e.getRelation()?.rel_type === RelationType.Replace;
+      const target_id = e.getRelation()?.event_id;
 
-      if (!replacement) {
+      if (!(replacement && target_id)) {
         return init;
       }
 
-      const { toReplace, newContent } = replacement;
-
       return {
         ...init,
-        [toReplace]: [...(init[toReplace] ?? []), newContent],
+        [target_id]: [...init[target_id] ?? [], e],
       };
     },
-    {} as Record<string, IContent[]>,
+    {} as Record<string, MatrixEvent[]>,
   );
 };
 

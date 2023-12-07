@@ -116,50 +116,56 @@ const MessageWindow = () => {
   );
 };
 
-export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
+const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const allAnnotations = getAnnotations(events);
   const allReplacements = getReplacements(events);
   const allRedactions = getRedactions(events);
 
-  const groupedEvents = Object.entries(groupEventsByTs(events));
-  const getPrevious = (i: number) => groupedEvents[i - 1]!;
+  return events.map(event => <Message event={event} annotations={allAnnotations[event.getId()!]} replacements={allReplacements[event.getId()!]} />)
+  // return reply + event + annotations
+}
 
-  return groupedEvents.map(([timestamp, events], i) => {
-    const ids = events.map((e) => e.getId()!);
-    const annotations = filterRecord(ids, allAnnotations);
-    const replacements = filterRecord(ids, allReplacements);
+// export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
 
-    if (events.length === 0 || events.every(e => !!e.getRelation())) {
-      return null;
-    }
+//   const groupedEvents = Object.entries(events);
+//   const getPrevious = (i: number) => groupedEvents[i - 1]!;
 
-    if (i === 0) {
-      return (
-        <Message
-          events={events}
-          annotations={annotations}
-          replacements={replacements}
-          key={i}
-        />
-      );
-    }
+//   return groupedEvents.map(([timestamp, events], i) => {
+//     const ids = events.map((e) => e.getId()!);
+//     const annotations = filterRecord(ids, allAnnotations);
+//     const replacements = filterRecord(ids, allReplacements);
 
-    const [previousTimestamp, _] = getPrevious(i);
-    const date = new Date(parseInt(timestamp));
-    const previousDate = new Date(parseInt(previousTimestamp));
+//     if (events.length === 0 || events.every(e => !!e.getRelation())) {
+//       return null;
+//     }
 
-    const dayBreak = date.getDate() !== previousDate.getDate();
+//     if (i === 0) {
+//       return (
+//         <Message
+//           events={events}
+//           annotations={annotations}
+//           replacements={replacements}
+//           key={i}
+//         />
+//       );
+//     }
 
-    return dayBreak && events.some(e => e.getType() === EventType.RoomMessage) ? (
-      <>
-        <DateMessage date={date} />
-        <Message events={events} replacements={replacements} key={i} />
-      </>
-    ) : (
-      <Message events={events} replacements={replacements} key={i} />
-    );
-  });
-};
+//     const [previousTimestamp, _] = getPrevious(i);
+//     const date = new Date(parseInt(timestamp));
+//     const previousDate = new Date(parseInt(previousTimestamp));
+
+//     const dayBreak = date.getDate() !== previousDate.getDate();
+
+//     return dayBreak && events.some(e => e.getType() === EventType.RoomMessage) ? (
+//       <>
+//         <DateMessage date={date} />
+//         <Message events={events} replacements={replacements} key={i} />
+//       </>
+//     ) : (
+//       <Message events={events} replacements={replacements} key={i} />
+//     );
+//   });
+// };
 
 const TitleBar = ({
   roomName,

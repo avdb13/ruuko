@@ -6,7 +6,13 @@ import {
   MsgType,
 } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
-import { PropsWithChildren, forwardRef, useContext, useImperativeHandle, useRef, useState } from "react";
+import {
+  PropsWithChildren,
+  forwardRef,
+  useContext,
+  useImperativeHandle,
+  useState,
+} from "react";
 import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
 import Annotation, { Annotator } from "./chips/Annotation";
@@ -19,12 +25,12 @@ const Message = ({
 }: {
   event: MatrixEvent;
   annotations?: Record<string, Annotator[]>;
-  replacements?: IContent[];
+  replacements?: MatrixEvent[];
 }) => {
   return (
     <>
       <Reply relation={event.getRelation()} />
-      <Event event={event} edited={} />
+      <Event event={event} />
       <Annotations annotations={annotations} reply_id={event.getId()!} />
     </>
   );
@@ -148,25 +154,31 @@ type HistoryHandle = {
   setShowHistory: (_: boolean) => void;
 };
 
-const ReplacedEvent = forwardRef<HistoryHandle, ReplacedEventProps>((props, historyRef) => {
-  const { original, replacements } = props;
+const ReplacedEvent = forwardRef<HistoryHandle, ReplacedEventProps>(
+  (props, historyRef) => {
+    const { original, replacements } = props;
 
-  const current = replacements.slice(-1)[0]!;
-  const [showHistory, setShowHistory] = useState(false);
+    const current = replacements.slice(-1)[0]!;
+    const [showHistory, setShowHistory] = useState(false);
 
-  useImperativeHandle(historyRef, () => ({
-    setShowHistory,
-  }))
+    useImperativeHandle(historyRef, () => ({
+      setShowHistory,
+    }));
 
-  return (
-    <>
-    {showHistory ? <ul>
-      {[original, ...replacements.slice(-1)].map(e => <Event event={e} />)}
-    </ul> : null}
-      <RoomEvent event={current} />
-    </>
-  );
-});
+    return (
+      <>
+        {showHistory ? (
+          <ul>
+            {[original, ...replacements.slice(-1)].map((e) => (
+              <Event event={e} />
+            ))}
+          </ul>
+        ) : null}
+        <RoomEvent event={current} />
+      </>
+    );
+  },
+);
 
 const RoomEvent = ({
   event,
