@@ -121,7 +121,8 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const allReplacements = getReplacements(events);
   const allRedactions = getRedactions(events);
 
-  return events.map(event => <Message event={event} annotations={allAnnotations[event.getId()!]} replacements={allReplacements[event.getId()!]} />)
+  return events.map(event => <Message event={event} annotations={allAnnotations[event.getId()!]} replacements={allReplacements[event.getId()!]} redaction={allRedactions[event.getId()!]} />)
+  
   // return reply + event + annotations
 }
 

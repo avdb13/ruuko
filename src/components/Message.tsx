@@ -22,10 +22,12 @@ const Message = ({
   event,
   annotations,
   replacements,
+  redaction,
 }: {
   event: MatrixEvent;
   annotations?: Record<string, Annotator[]>;
   replacements?: MatrixEvent[];
+  redaction?: MatrixEvent;
 }) => {
   return (
     <>

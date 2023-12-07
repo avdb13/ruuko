@@ -131,13 +131,12 @@ export const getReplacements = (events: MatrixEvent[]) => {
 export const getRedactions = (events: MatrixEvent[]) =>
   events
     .filter((e) => e.getType() === EventType.RoomRedaction)
-    .map((e) => e.getContent())
     .reduce(
-      (init, content) => ({
+      (init, e) => ({
         ...init,
-        [content.redacts as string]: `(reason: ${content.reason as string})`,
+        [e.getContent().redacts as string]: e,
       }),
-      {} as Record<string, string>,
+      {} as Record<string, MatrixEvent>,
     );
 
 export const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
