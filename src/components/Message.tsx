@@ -86,8 +86,9 @@ const Event = ({
           redaction={redaction}
         />
       );
-    case EventType.Reaction:
     case EventType.RoomRedaction:
+      return <RedactionEvent event={event} />;
+    case EventType.Reaction:
       throw new Error("impossible");
 
     case EventType.RoomMessageEncrypted:
@@ -169,6 +170,16 @@ const Annotations = ({
   ));
 };
 
+const RedactionEvent = ({ event }: { event: MatrixEvent }) => {
+  const content = event.getContent();
+
+  return (
+    <p>{`redacted by ${content.displayname || event.getSender()} ${
+      content.reason ? ` (reason: ${content.reason})` : null
+    }`}</p>
+  );
+};
+
 const Sticker = ({ event }: { event: MatrixEvent }) => {
   const content = event.getContent();
   const client = useContext(ClientContext);
@@ -178,12 +189,12 @@ const Sticker = ({ event }: { event: MatrixEvent }) => {
   }
 
   return (
-      <img
-        src={client.mxcUrlToHttp(content.url)!}
-        alt={content.body}
-        height={content.info.h}
-        width={content.info.w}
-      />
+    <img
+      src={client.mxcUrlToHttp(content.url)!}
+      alt={content.body}
+      height={content.info.h}
+      width={content.info.w}
+    />
   );
 };
 
@@ -239,7 +250,8 @@ const RoomEvent = ({
   switch (content.msgtype) {
     case MsgType.Text: {
       if (
-        content.formatted_body && (content.formatted_body as string).startsWith("<img")
+        content.formatted_body &&
+        (content.formatted_body as string).startsWith("<img")
       ) {
         const attributes = extractAttributes(content.formatted_body, [
           "src",
@@ -256,7 +268,14 @@ const RoomEvent = ({
         );
       }
 
-      return <p className="whitespace-normal break-all"><span className="italic text-gray-600">{event.getId()}</span> <br /> {replacements ? (content.body as string).split("\n\n")[1] : content.body} </p>;
+      return (
+        <p className="whitespace-normal break-all">
+          <span className="italic text-gray-600">{event.getId()}</span> <br />{" "}
+          {replacements
+            ? (content.body as string).split("\n\n")[1]
+            : content.body}{" "}
+        </p>
+      );
     }
     case MsgType.Image:
       return (
@@ -286,9 +305,7 @@ const RoomEvent = ({
       //   />
       // ) : (
       console.log(`unsupported: `, content);
-      return (
-        null
-      );
+      return null;
     // );
   }
 

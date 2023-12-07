@@ -120,7 +120,7 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const isSpecialEvent = (e: MatrixEvent) =>
       e.getRelation() ||
       e.getRedactionEvent() ||
-      EventType.RoomRedaction === e.getType() ||
+      // EventType.RoomRedaction === e.getType() ||
       EventType.Reaction === e.getType();
 
   const filteredEvents = events.reduce(
@@ -134,6 +134,10 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const allAnnotations = getAnnotations(filteredEvents["others"]!);
   const allReplacements = getReplacements(filteredEvents["others"]!);
   const allRedactions = getRedactions(filteredEvents["others"]!);
+
+  console.log(events);
+  console.log(Object.values(allRedactions).map(e => [e.getId(), e]));
+  console.log(filteredEvents["regular"]!.map(e => [e.getId(), e]));
 
   // return reply + event + annotations
   const eventRecord = filteredEvents["regular"]!.reduce(
