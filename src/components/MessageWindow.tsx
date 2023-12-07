@@ -1,15 +1,16 @@
-import {
-  EventType,
-  IStatusResponse,
-  MatrixEvent,
-} from "matrix-js-sdk";
+import { EventType, IStatusResponse, MatrixEvent, RelationType } from "matrix-js-sdk";
 import Message, { DateMessage } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
-import { filterRecord, getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
+import {
+  filterRecord,
+  getAnnotations,
+  getRedactions,
+  getReplacements,
+} from "../lib/helpers";
 
 const groupEventsByTs = (events: MatrixEvent[]) =>
   events.reduce(
@@ -34,7 +35,11 @@ const groupEventsByTs = (events: MatrixEvent[]) =>
             ...init,
             [event.getTs()]: [...previousEvents, event],
           }
-        : { ...init, [previousTimestamp]: previousEvents, [event.getTs()]: [event] };
+        : {
+            ...init,
+            [previousTimestamp]: previousEvents,
+            [event.getTs()]: [event],
+          };
     },
     {} as Record<string, MatrixEvent[]>,
   );
@@ -96,11 +101,8 @@ const MessageWindow = () => {
             setShowMembers={setShowMembers}
             roomName={currentRoom.name}
           />
-          <div
-            ref={bottomDivRef}
-            className="overflow-y-auto bg-green-100"
-          >
-            <MessagesWithDayBreak events={Object.values(events)} />
+          <div ref={bottomDivRef} className="overflow-y-auto bg-green-100">
+            <TimeLine events={Object.values(events)} />
           </div>
           <InputBar roomId={currentRoom.roomId} />
         </div>
@@ -120,11 +122,18 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const allAnnotations = getAnnotations(events);
   const allReplacements = getReplacements(events);
   const allRedactions = getRedactions(events);
+  const eventFilter = (e: MatrixEvent) => !(e.getRelation() || EventType.RoomRedaction !== e.getType() || EventType.Reaction !== e.getType());
 
-  return events.map(event => <Message event={event} annotations={allAnnotations[event.getId()!]} replacements={allReplacements[event.getId()!]} redaction={allRedactions[event.getId()!]} />)
-  
+  return events.filter(eventFilter).map((event) => (
+    <Message
+      event={event}
+      annotations={allAnnotations[event.getId()!]}
+      replacements={allReplacements[event.getId()!]}
+      redaction={allRedactions[event.getId()!]}
+    />
+  ));
   // return reply + event + annotations
-}
+};
 
 // export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
 

@@ -11,6 +11,7 @@ import {
   forwardRef,
   useContext,
   useImperativeHandle,
+  useRef,
   useState,
 } from "react";
 import { ClientContext } from "../providers/client";
@@ -32,19 +33,38 @@ const Message = ({
   return (
     <>
       <Reply relation={event.getRelation()} />
-      <Event event={event} />
+      <Event event={event} replacements={replacements} redaction={redaction} />
       <Annotations annotations={annotations} reply_id={event.getId()!} />
     </>
   );
 };
 
-const Event = ({ event }: { event: MatrixEvent }) => {
+const Event = ({
+  event,
+  replacements,
+  redaction,
+}: {
+  event: MatrixEvent;
+  replacements?: MatrixEvent[];
+  redaction?: MatrixEvent;
+}) => {
+  const historyRef = useRef<HistoryHandle>(null);
+
   switch (event.getType()) {
     case EventType.RoomMember:
-      return <MemberMessage event={event} />;
+      return <MemberEvent event={event} />;
     case EventType.RoomMessage:
-      return <RoomMessage event={event} replacements={replacements} />;
+      if (replacements) {
+        const historyButton = <button onClick={() => historyRef.current?.setShowHistory(!historyRef.current.showHistory)}>(edited)</button>;
 
+        return <><ReplacedRoomEvent ref={historyRef} original={event} replacements={replacements} />{" "}{historyButton}</>
+      }
+
+      return <RoomEvent
+          event={event}
+          replacements={replacements}
+          redaction={redaction}
+        />
     case EventType.Reaction:
     case EventType.RoomRedaction:
       throw new Error("impossible");
@@ -147,16 +167,17 @@ const Sticker = ({ event }: { event: MatrixEvent }) => {
   );
 };
 
-type ReplacedEventProps = {
+type ReplacedRoomEventProps = {
   original: MatrixEvent;
   replacements: MatrixEvent[];
 };
 
 type HistoryHandle = {
+  showHistory: boolean;
   setShowHistory: (_: boolean) => void;
 };
 
-const ReplacedEvent = forwardRef<HistoryHandle, ReplacedEventProps>(
+const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
   (props, historyRef) => {
     const { original, replacements } = props;
 
@@ -164,6 +185,7 @@ const ReplacedEvent = forwardRef<HistoryHandle, ReplacedEventProps>(
     const [showHistory, setShowHistory] = useState(false);
 
     useImperativeHandle(historyRef, () => ({
+      showHistory,
       setShowHistory,
     }));
 
@@ -172,7 +194,7 @@ const ReplacedEvent = forwardRef<HistoryHandle, ReplacedEventProps>(
         {showHistory ? (
           <ul>
             {[original, ...replacements.slice(-1)].map((e) => (
-              <Event event={e} />
+              <RoomEvent event={e} />
             ))}
           </ul>
         ) : null}
@@ -185,9 +207,11 @@ const ReplacedEvent = forwardRef<HistoryHandle, ReplacedEventProps>(
 const RoomEvent = ({
   event,
   replacements,
+  redaction,
 }: {
   event: MatrixEvent;
   replacements?: MatrixEvent[];
+  redaction?: MatrixEvent;
 }) => {
   const client = useContext(ClientContext);
 
@@ -209,7 +233,7 @@ const RoomEvent = ({
       //   );
       // }
 
-      return <p className="whitespace-normal break-all">{content.body}</p>;
+      return <p className="whitespace-normal break-all">{content.body} </p>;
     }
     case MsgType.Image:
       return (
@@ -367,7 +391,7 @@ const ContentFormatter = ({
     : null;
 };
 
-const MemberMessage = ({ event }: { event: MatrixEvent }) => (
+const MemberEvent = ({ event }: { event: MatrixEvent }) => (
   <p>{formatMembership(event)}</p>
 );
 
