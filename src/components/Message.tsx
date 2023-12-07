@@ -6,7 +6,7 @@ import {
   MsgType,
 } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
-import { PropsWithChildren, useContext, useState } from "react";
+import { PropsWithChildren, forwardRef, useContext, useImperativeHandle, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
 import Annotation, { Annotator } from "./chips/Annotation";
@@ -24,7 +24,7 @@ const Message = ({
   return (
     <>
       <Reply relation={event.getRelation()} />
-      <Event event={event} />
+      <Event event={event} edited={} />
       <Annotations annotations={annotations} reply_id={event.getId()!} />
     </>
   );
@@ -34,12 +34,13 @@ const Event = ({ event }: { event: MatrixEvent }) => {
   switch (event.getType()) {
     case EventType.RoomMember:
       return <MemberMessage event={event} />;
-    case EventType.Reaction:
-      throw new Error("impossible");
     case EventType.RoomMessage:
-      return <RoomMessage event={event} />;
+      return <RoomMessage event={event} replacements={replacements} />;
+
+    case EventType.Reaction:
     case EventType.RoomRedaction:
       throw new Error("impossible");
+
     case EventType.RoomMessageEncrypted:
     case EventType.Sticker:
       return <Sticker event={event} />;
@@ -114,19 +115,11 @@ const Annotations = ({
   ));
 };
 
-const Sticker = ({
-  event,
-  annotations,
-}: {
-  event: MatrixEvent;
-  annotations?: Record<string, Record<string, string[]>>;
-}) => {
+const Sticker = ({ event }: { event: MatrixEvent }) => {
   const content = event.getContent();
-  // ${"body":"Cute Gentoo","info":{"h":256,"mimetype":"image/webp","size":91520,"thumbnail_info":{"h":256,"mimetype":"image/webp","size":91520,"w":227},"thumbnail_url":"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0","w":227},"url":"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0"}
   const client = useContext(ClientContext);
 
   if (!content.info) {
-    console.log(content.info);
     return null;
   }
 
@@ -135,7 +128,6 @@ const Sticker = ({
       userId={event.getSender()!}
       displayName={content.displayname}
       timestamp={event.getTs()}
-      annotations={annotations}
     >
       <img
         src={client.mxcUrlToHttp(content.url)!}
@@ -143,23 +135,45 @@ const Sticker = ({
         height={content.info.h}
         width={content.info.w}
       />
-      <button
-        className="border-2 border-gray-600 bg-gray-400 rounded-md px-2 my-2"
-        onClick={() => console.log(content.info)}
-      >
-        debug content
-      </button>
     </MessageFrame>
   );
 };
 
-const RoomMessage = ({
-  event, // annotations,
-} // replacements,
-: {
+type ReplacedEventProps = {
+  original: MatrixEvent;
+  replacements: MatrixEvent[];
+};
+
+type HistoryHandle = {
+  setShowHistory: (_: boolean) => void;
+};
+
+const ReplacedEvent = forwardRef<HistoryHandle, ReplacedEventProps>((props, historyRef) => {
+  const { original, replacements } = props;
+
+  const current = replacements.slice(-1)[0]!;
+  const [showHistory, setShowHistory] = useState(false);
+
+  useImperativeHandle(historyRef, () => ({
+    setShowHistory,
+  }))
+
+  return (
+    <>
+    {showHistory ? <ul>
+      {[original, ...replacements.slice(-1)].map(e => <Event event={e} />)}
+    </ul> : null}
+      <RoomEvent event={current} />
+    </>
+  );
+});
+
+const RoomEvent = ({
+  event,
+  replacements,
+}: {
   event: MatrixEvent;
-  // annotations?: Record<string, Record<string, string[]>>;
-  // replacements?: Record<string, IContent[]>;
+  replacements?: MatrixEvent[];
 }) => {
   const client = useContext(ClientContext);
 
@@ -181,7 +195,6 @@ const RoomMessage = ({
       //   );
       // }
 
-      // {showEdits ? edits() : null}
       return <p className="whitespace-normal break-all">{content.body}</p>;
     }
     case MsgType.Image:
@@ -334,18 +347,15 @@ const ContentFormatter = ({
   const [showEdits, setShowEdits] = useState(false);
 
   // we need to remove the last element since that's the latest edit
-  const edits = () => (
-    <ul className="bg-green-200 px-2">
-      {previousContent
-        ?.slice(0, -1)
-        .map((content) => <ContentFormatter content={content} />)}
-    </ul>
-  );
 
   const extractedAttributes = content.body
     ? extractAttributes(content.body, ["src", "alt"])
     : null;
 };
+
+const MemberMessage = ({ event }: { event: MatrixEvent }) => (
+  <p>{formatMembership(event)}</p>
+);
 
 export enum Membership {
   Invite = "invite",
