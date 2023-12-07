@@ -20,6 +20,7 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
   // .map(e => ({sender: e.getSender(), timestamp: e.getTs(), id: e.getId()! }))
   events.reduce(
     (init, event, i) => {
+
       if (i === 0) {
         return [[event]];
       }
@@ -35,7 +36,7 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
         previousEvent.getType() === EventType.RoomMessage &&
         diff < 60 * 1000
         ? [
-            ...init.slice(-1),
+            ...init.slice(0, init.length-1),
             [...previousList, event],
           ]
         : [
@@ -128,6 +129,7 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const allRedactions = getRedactions(events);
   const eventFilter = (e: MatrixEvent) => !(e.getRelation() || EventType.RoomRedaction === e.getType() || EventType.Reaction === e.getType());
 
+  // return reply + event + annotations
   const eventRecord = events.filter(eventFilter).reduce((init, event) => (
     ({...init, [event.getId()!]: (
       <Message
@@ -138,8 +140,7 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
       />
     )})
   ), {} as Record<string, JSX.Element>);
-  // return reply + event + annotations
-  //
+
   return sortByTimestamp(events).map(list => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;
     const displayName = firstEvent.getContent().displayname;
