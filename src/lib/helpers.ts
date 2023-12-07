@@ -1,6 +1,5 @@
 import {
   EventType,
-  IContent,
   MatrixClient,
   MatrixEvent,
   RelationType,
@@ -11,15 +10,16 @@ import { Annotator } from "../components/chips/Annotation";
 export const extractAttributes = (
   s: string,
   attributes: Array<string>,
-): Map<string, string> => {
-  const matches = attributes.map((a) => {
-    const match = s.match(new RegExp(`${a}s*=s*"(.+?)"`));
+// {"body":":gentoo_uwu: ","format":"org.matrix.custom.html","formatted_body":"<img data-mx-emoticon=\"\" src=\"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0\" alt=\":gentoo_uwu:\" title=\":gentoo_uwu:\" height=\"32\" vertical-align=\"middle\" />","msgtype":"m.text"}
+) => attributes.reduce((init, attr) => {
+    const match = s.match(new RegExp(`${attr}s*=s*"(.+?)"`));
 
-    return match ? (match.every((m) => !!m) ? [a, match[1]!] : null) : null;
-  });
+    if (!match) {
+      return init;
+    }
 
-  return matches.every((m) => !!m) ? new Map(matches) : null;
-};
+    return ({...init, [attr]: match[0] });
+  }, {} as Record<string, string>)
 
 export const getAvatarUrl = (
   client: MatrixClient,

@@ -35,6 +35,7 @@ const Message = ({
       <Reply relation={event.getRelation()} />
       <Event event={event} replacements={replacements} redaction={redaction} />
       <Annotations annotations={annotations} reply_id={event.getId()!} />
+      <p>{JSON.stringify(event.getContent())}</p>
     </>
   );
 };
@@ -399,23 +400,6 @@ export const StateFrame = (props: PropsWithChildren<StateFrameProps>) => (
     </li>
   </div>
 );
-
-const ContentFormatter = ({
-  content,
-  previousContent,
-}: {
-  content: IContent;
-  previousContent?: IContent[];
-}) => {
-  const client = useContext(ClientContext);
-  const [showEdits, setShowEdits] = useState(false);
-
-  // we need to remove the last element since that's the latest edit
-
-  const extractedAttributes = content.body
-    ? extractAttributes(content.body, ["src", "alt"])
-    : null;
-};
 
 const MemberEvent = ({ event }: { event: MatrixEvent }) => (
   <p>{formatMembership(event)}</p>
