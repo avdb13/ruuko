@@ -39,12 +39,12 @@ const Spinner = () => {
   // }, []);
 
   return (
-    <div className="h-screen w-screen">
+    <div>
       <div className="z-0 w-[108px] h-[108px] ripple">
         <div className={divStyle}></div>
         <div className={divStyle}></div>
       </div>
-      <div className="flex flex-col justify-center h-screen">
+      <div className="flex flex-col justify-center">
         <p
           className="z-10 w-full text-zinc-600 duration-500 text-center bg-white py-12 font-bold"
           style={{ background: "linear-gradient(#FFF0, #FFFF, #FFFF, #FFF0)" }}

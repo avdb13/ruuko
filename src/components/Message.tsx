@@ -35,7 +35,6 @@ const Message = ({
       <Reply relation={event.getRelation()} />
       <Event event={event} replacements={replacements} redaction={redaction} />
       <Annotations annotations={annotations} reply_id={event.getId()!} />
-      <p>{JSON.stringify(event.getContent())}</p>
     </>
   );
 };
@@ -179,18 +178,12 @@ const Sticker = ({ event }: { event: MatrixEvent }) => {
   }
 
   return (
-    <MessageFrame
-      userId={event.getSender()!}
-      displayName={content.displayname}
-      timestamp={event.getTs()}
-    >
       <img
         src={client.mxcUrlToHttp(content.url)!}
         alt={content.body}
         height={content.info.h}
         width={content.info.w}
       />
-    </MessageFrame>
   );
 };
 
@@ -249,16 +242,23 @@ const RoomEvent = ({
 
   switch (content.msgtype) {
     case MsgType.Text: {
-      // if (content.format === "org.matrix.custom.html" && extractedAttributes) {
-      //   return (
-      //     <ContentFormatter
-      //       content={{
-      //         url: extractedAttributes.get("src"),
-      //         body: extractedAttributes.get("alt"),
-      //       }}
-      //     />
-      //   );
-      // }
+      if (
+        content.formatted_body && (content.formatted_body as string).startsWith("<img")
+      ) {
+        const attributes = extractAttributes(content.formatted_body, [
+          "src",
+          "alt",
+        ]);
+
+        return (
+          <img
+            src={
+              client.mxcUrlToHttp(attributes["src"]!, 1200, 120, "scale", true)!
+            }
+            alt={attributes["alt"]!}
+          />
+        );
+      }
 
       return <p className="whitespace-normal break-all">{content.body} </p>;
     }

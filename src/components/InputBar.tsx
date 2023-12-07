@@ -109,10 +109,14 @@ const InputBar = ({ roomId }: { roomId: string }) => {
             value={message}
           />
           <span className="relative flex justify-center items-center basis-8">
-            <button className="peer" onClick={() => setShowEmojis(!showEmojis)}>
+            <button className="peer" onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowEmojis(!showEmojis);
+            }}>
               😺
             </button>
-            <div className="absolute right-[0%] bottom-[100%] peer-active:translate-y-[10%] peer-active:opacity-0 opacity-100 translate-x-0 duration-300 ease-out">
+            <div className="absolute right-[0%] bottom-[100%]  translate-x-0 duration-300 ease-out">
               {showEmojis ? (
                 <EmojiPicker
                   skinTonesDisabled={true}
@@ -129,6 +133,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
       </form>
     </div>
   );
+            // peer-active:translate-y-[10%] peer-active:opacity-0 opacity-100
 };
 
 const FilePreview = ({ file, removeFile }: { file: File, removeFile: (_: string) => void }) => {

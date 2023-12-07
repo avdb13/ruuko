@@ -10,16 +10,27 @@ import { Annotator } from "../components/chips/Annotation";
 export const extractAttributes = (
   s: string,
   attributes: Array<string>,
-// {"body":":gentoo_uwu: ","format":"org.matrix.custom.html","formatted_body":"<img data-mx-emoticon=\"\" src=\"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0\" alt=\":gentoo_uwu:\" title=\":gentoo_uwu:\" height=\"32\" vertical-align=\"middle\" />","msgtype":"m.text"}
-) => attributes.reduce((init, attr) => {
-    const match = s.match(new RegExp(`${attr}s*=s*"(.+?)"`));
+) =>
+  attributes.reduce(
+    (init, attr) => {
+      const match = s.match(new RegExp(`${attr}s*=s*"(.+?)"`));
 
-    if (!match) {
-      return init;
-    }
+      if (!match) {
+        return init;
+      }
 
-    return ({...init, [attr]: match[0] });
-  }, {} as Record<string, string>)
+      // attr.length + 2 .. match[0].length - 1 =>
+      //     _____
+      //     '   '
+      // src="abc"
+
+      return {
+        ...init,
+        [attr]: match[0].substring(attr.length + 2, match[0].length - 1),
+      };
+    },
+    {} as Record<string, string>,
+  );
 
 export const getAvatarUrl = (
   client: MatrixClient,
@@ -64,15 +75,20 @@ export const getFlagEmoji = (countryCode: string) => {
   return String.fromCodePoint(...codePoints);
 };
 
-
-
 const toAnnotation = (e: MatrixEvent) => {
   const relation = e.getContent()["m.relates_to"];
   const reply_id = relation?.event_id;
   const key = relation?.key;
-  const annotator: Annotator = { user_id: e.getSender()!, event_id: e.getId()! };
+  const annotator: Annotator = {
+    user_id: e.getSender()!,
+    event_id: e.getId()!,
+  };
 
-  return relation && relation.rel_type === RelationType.Annotation && annotator && reply_id && key
+  return relation &&
+    relation.rel_type === RelationType.Annotation &&
+    annotator &&
+    reply_id &&
+    key
     ? { reply_id, key, annotator }
     : null;
 };
@@ -94,10 +110,7 @@ export const getAnnotations = (events: MatrixEvent[]) => {
         ...init,
         [reply_id]: {
           ...init[reply_id],
-          [key]: [
-            ...init[reply_id]?.[key] ?? [],
-            annotator,
-          ],
+          [key]: [...(init[reply_id]?.[key] ?? []), annotator],
         },
       };
     },
@@ -121,7 +134,7 @@ export const getReplacements = (events: MatrixEvent[]) => {
 
       return {
         ...init,
-        [target_id]: [...init[target_id] ?? [], e],
+        [target_id]: [...(init[target_id] ?? []), e],
       };
     },
     {} as Record<string, MatrixEvent[]>,
