@@ -9,7 +9,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
-import { filterRecord, getAnnotations, getReplacements } from "../lib/helpers";
+import { filterRecord, getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
 
 const groupEventsByTs = (events: MatrixEvent[]) =>
   events.reduce(
@@ -119,6 +119,7 @@ const MessageWindow = () => {
 export const MessagesWithDayBreak = ({ events }: { events: MatrixEvent[] }) => {
   const allAnnotations = getAnnotations(events);
   const allReplacements = getReplacements(events);
+  const allRedactions = getRedactions(events);
 
   const groupedEvents = Object.entries(groupEventsByTs(events));
   const getPrevious = (i: number) => groupedEvents[i - 1]!;

@@ -134,8 +134,20 @@ export const getReplacements = (events: MatrixEvent[]) => {
   );
 };
 
+export const getRedactions = (events: MatrixEvent[]) =>
+  events
+    .filter((e) => e.getType() === EventType.RoomRedaction)
+    .map((e) => e.getContent())
+    .reduce(
+      (init, content) => ({
+        ...init,
+        [content.redacts as string]: `(reason: ${content.reason as string})`,
+      }),
+      {} as Record<string, string>,
+    );
+
 export const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
   ids.reduce(
-    (init, id) => record[id] ? ({ ...init, [id]: record[id]! }) : init,
+    (init, id) => (record[id] ? { ...init, [id]: record[id]! } : init),
     {} as Record<string, T>,
   );

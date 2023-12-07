@@ -4,14 +4,13 @@ import {
   MatrixEvent,
   MsgType,
   RelationType,
-  RoomMember,
 } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
 import { PropsWithChildren, useContext, useState } from "react";
 import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
 import Annotation from "./chips/Annotation";
-import Avatar, { DirectAvatar } from "./Avatar";
+import Avatar from "./Avatar";
 
 const Message = ({
   events,
@@ -39,6 +38,7 @@ const Message = ({
           />
         );
       case EventType.RoomRedaction:
+        setRoom
       case EventType.RoomMessageEncrypted:
       case EventType.Sticker:
         return <Sticker
@@ -481,6 +481,7 @@ const ContentFormatter = ({
         />
       );
     case MsgType.Emote:
+      return `* ${content.displayName} ${content.body}`;
     case MsgType.Notice:
     case MsgType.File:
     case MsgType.Audio:
