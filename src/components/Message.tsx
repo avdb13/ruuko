@@ -13,90 +13,66 @@ import Annotation, { Annotator } from "./chips/Annotation";
 import Avatar from "./Avatar";
 
 const Message = ({
-  inReplyTo, event, annotations, replacements,
-  } : {
+  inReplyTo,
+  event,
+  annotations,
+  replacements,
+}: {
   inReplyTo?: MatrixEvent;
   event: MatrixEvent;
   annotations?: Record<string, Annotator[]>;
   replacements?: IContent[];
 }) => {
-  return (
-    <>
-        {annotations
-          ? Object.entries(annotations).map(([key, annotators]) =>
-                <Annotation
-                  key={key}
-                  annotators={annotators}
-                  reply_id={event.getId()!}
-                />
-              )
-          : null}
-    </>
-  )
+  return <></>;
 };
 
-const Event = ({
-  event,
-}: {
-  event: MatrixEvent;
-}) => {
-    switch (event.getType()) {
-      case EventType.RoomMember:
-        return <MemberMessage event={event} />;
-      case EventType.Reaction:
-        throw new Error('impossible');
-      case EventType.RoomMessage:
-        return (
-          <RoomMessage
-            event={event}
-          />
-        );
-      case EventType.RoomRedaction:
-        throw new Error('impossible');
-      case EventType.RoomMessageEncrypted:
-      case EventType.Sticker:
-        return <Sticker
-            event={event}
-          />;
-      case EventType.CallInvite:
-      case EventType.CallCandidates:
-      case EventType.CallAnswer:
-      case EventType.CallHangup:
-      case EventType.CallReject:
-      case EventType.CallSelectAnswer:
-      case EventType.CallNegotiate:
-      case EventType.CallSDPStreamMetadataChanged:
-      case EventType.CallSDPStreamMetadataChangedPrefix:
-      case EventType.CallReplaces:
-      case EventType.CallAssertedIdentity:
-      case EventType.CallAssertedIdentityPrefix:
-      case EventType.KeyVerificationRequest:
-      case EventType.KeyVerificationStart:
-      case EventType.KeyVerificationCancel:
-      case EventType.KeyVerificationMac:
-      case EventType.KeyVerificationDone:
-      case EventType.KeyVerificationKey:
-      case EventType.KeyVerificationAccept:
-      // Not used directly - see READY_TYPE in VerificationRequest.
-      case EventType.KeyVerificationReady:
-      // use of this is discouraged https://matrix.org/docs/spec/client_server/r0.6.1#m-room-message-feedback
-      case EventType.RoomMessageFeedback:
-      case EventType.PollStart:
-      default:
-        return (
-          <p className="whitespace-normal break-all">
-            unsupported: ${event.getType()} $
-            {JSON.stringify(event.getContent())}
-          </p>
-        );
-    }
+const Event = ({ event }: { event: MatrixEvent }) => {
+  switch (event.getType()) {
+    case EventType.RoomMember:
+      return <MemberMessage event={event} />;
+    case EventType.Reaction:
+      throw new Error("impossible");
+    case EventType.RoomMessage:
+      return <RoomMessage event={event} />;
+    case EventType.RoomRedaction:
+      throw new Error("impossible");
+    case EventType.RoomMessageEncrypted:
+    case EventType.Sticker:
+      return <Sticker event={event} />;
+    case EventType.CallInvite:
+    case EventType.CallCandidates:
+    case EventType.CallAnswer:
+    case EventType.CallHangup:
+    case EventType.CallReject:
+    case EventType.CallSelectAnswer:
+    case EventType.CallNegotiate:
+    case EventType.CallSDPStreamMetadataChanged:
+    case EventType.CallSDPStreamMetadataChangedPrefix:
+    case EventType.CallReplaces:
+    case EventType.CallAssertedIdentity:
+    case EventType.CallAssertedIdentityPrefix:
+    case EventType.KeyVerificationRequest:
+    case EventType.KeyVerificationStart:
+    case EventType.KeyVerificationCancel:
+    case EventType.KeyVerificationMac:
+    case EventType.KeyVerificationDone:
+    case EventType.KeyVerificationKey:
+    case EventType.KeyVerificationAccept:
+    // Not used directly - see READY_TYPE in VerificationRequest.
+    case EventType.KeyVerificationReady:
+    // use of this is discouraged https://matrix.org/docs/spec/client_server/r0.6.1#m-room-message-feedback
+    case EventType.RoomMessageFeedback:
+    case EventType.PollStart:
+    default:
+      return (
+        <p className="whitespace-normal break-all">
+          unsupported: ${event.getType()} ${JSON.stringify(event.getContent())}
+        </p>
+      );
+  }
 };
 
-const Reply = ({
-  relation,
-}: {
-  relation: IEventRelation;
-}) => {
+const Reply = ({ relation }: { relation: IEventRelation }) => {
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
   const events = roomEvents[currentRoom?.roomId!]!;
 
@@ -107,21 +83,31 @@ const Reply = ({
   // const emote = original.getContent().msgtype === MsgType.Emote;
 
   if (!inReplyTo) {
-    return null
+    return null;
   }
 
   return (
     <div className="bg-green-200">
       <Event event={original} />
     </div>
-  )
-}
+  );
+};
 
-// const Annotations = ({
+const Annotations = ({
+  reply_id,
+  annotations,
+}: {
+  reply_id: string;
+  annotations?: Record<string, Annotator[]>;
+}) => {
+  if (!annotations) {
+    return null;
+  }
 
-// }) => {
-
-// }
+  return Object.entries(annotations).map(([key, annotators]) => (
+    <Annotation key={key} annotators={annotators} reply_id={reply_id} />
+  ));
+};
 
 const Sticker = ({
   event,
@@ -131,7 +117,7 @@ const Sticker = ({
   annotations?: Record<string, Record<string, string[]>>;
 }) => {
   const content = event.getContent();
-// ${"body":"Cute Gentoo","info":{"h":256,"mimetype":"image/webp","size":91520,"thumbnail_info":{"h":256,"mimetype":"image/webp","size":91520,"w":227},"thumbnail_url":"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0","w":227},"url":"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0"}
+  // ${"body":"Cute Gentoo","info":{"h":256,"mimetype":"image/webp","size":91520,"thumbnail_info":{"h":256,"mimetype":"image/webp","size":91520,"w":227},"thumbnail_url":"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0","w":227},"url":"mxc://pixie.town/WQ25h9HBAOZyUWSqetJ4q3o0"}
   const client = useContext(ClientContext);
 
   if (!content.info) {
@@ -140,7 +126,12 @@ const Sticker = ({
   }
 
   return (
-    <Frame userId={event.getSender()!} displayName={content.displayname} timestamp={event.getTs()} annotations={annotations}>
+    <Frame
+      userId={event.getSender()!}
+      displayName={content.displayname}
+      timestamp={event.getTs()}
+      annotations={annotations}
+    >
       <img
         src={client.mxcUrlToHttp(content.url)!}
         alt={content.body}
@@ -149,9 +140,7 @@ const Sticker = ({
       />
       <button
         className="border-2 border-gray-600 bg-gray-400 rounded-md px-2 my-2"
-        onClick={() =>
-          console.log(content.info)
-        }
+        onClick={() => console.log(content.info)}
       >
         debug content
       </button>
@@ -161,9 +150,9 @@ const Sticker = ({
 
 const RoomMessage = ({
   event,
-  // annotations,
-  // replacements,
-}: {
+} // annotations,
+// replacements,
+: {
   event: MatrixEvent;
   // annotations?: Record<string, Record<string, string[]>>;
   // replacements?: Record<string, IContent[]>;
@@ -188,11 +177,9 @@ const RoomMessage = ({
       //   );
       // }
 
-          // {showEdits ? edits() : null}
+      // {showEdits ? edits() : null}
       return (
-        <span className="whitespace-normal break-all">
-          {content.body}
-        </span>
+        <span className="whitespace-normal break-all">{content.body}</span>
       );
     }
     case MsgType.Image:
@@ -218,12 +205,12 @@ const RoomMessage = ({
       //     className="h-16 w-16"
       //   />
       // ) : (
-        return (
+      return (
         <p className="whitespace-normal break-all">
           `unsupported: ${JSON.stringify(content)}`
         </p>
-        )
-      // );
+      );
+    // );
   }
 
   // return (
@@ -513,7 +500,6 @@ const ContentFormatter = ({
   const extractedAttributes = content.body
     ? extractAttributes(content.body, ["src", "alt"])
     : null;
-
 };
 
 const Content = ({
