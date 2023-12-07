@@ -2,40 +2,46 @@ import { EventType, IContent, RelationType } from "matrix-js-sdk";
 import { useContext } from "react";
 import { ClientContext } from "../../providers/client";
 import { RoomContext } from "../../providers/room";
-import { formatAnnotators } from "../../lib/eventFormatter";
+
+export type Annotator = {
+  user_id: string;
+  event_id: string;
+};
 
 const Annotation = ({
-  annotation,
+  key,
   annotators,
-  eventId,
+  reply_id,
 }: {
-  annotation: string;
-  annotators: string[];
-  eventId: string;
+  key: string;
+  annotators: Annotator[];
+  reply_id: string;
 }) => {
   const client = useContext(ClientContext);
   const { currentRoom } = useContext(RoomContext)!;
 
-  const src = client.mxcUrlToHttp(annotation, 40, 40, "scale", true);
+  const src = key.startsWith("mxc")
+    ? client.mxcUrlToHttp(key, 40, 40, "scale", true)
+    : null;
 
   const handleClick = () => {
     const myId = client.getUserId()!;
-    const myAnnotation = annotators.find((sender) => sender === myId);
+    const myAnnotation = annotators.find(({ user_id }) => user_id === myId);
 
     if (myAnnotation) {
-      client.redactEvent(currentRoom!.roomId!, myAnnotation[1]!);
+      client.redactEvent(currentRoom!.roomId, myAnnotation.event_id);
     } else {
       const content: IContent = {
         "m.relates_to": {
-          event_id: eventId,
-          key: annotation,
+          event_id: reply_id,
+          key,
           rel_type: RelationType.Annotation,
         },
       };
-      client.sendEvent(currentRoom!.roomId!, EventType.Reaction, content);
+
+      client.sendEvent(currentRoom!.roomId, EventType.Reaction, content);
     }
   };
-
 
   return (
     <div className="relative flex justify-center items-center gap-1">
@@ -43,11 +49,7 @@ const Annotation = ({
         className="flex justify-center items-center gap-1 peer w-[50px] h-[30px] rounded-xl bg-gray-50 hover:bg-gray-100 transition-all text-gray-600 rounded-md border-2 "
         onClick={handleClick}
       >
-        {annotation.startsWith("mxc") ? (
-          <img src={src!} className="h-5" alt={annotation} />
-        ) : (
-          annotation
-        )}
+        {src ? <img src={src} className="h-5" alt={key} /> : key}
         <p className="font-bold">{annotators.length}</p>
       </button>
       <div
@@ -59,6 +61,19 @@ const Annotation = ({
       </div>
     </div>
   );
+};
+
+const formatAnnotators = (annotators: Annotator[]) => {
+  const ids = annotators.map(({ user_id }) => user_id);
+
+  switch (ids.length) {
+    case 1:
+      return ids[0];
+    case 2:
+      return `${ids[0]} and ${ids[1]}`;
+    default:
+      return `${ids[0]}, ${ids[1]} and ${ids.length - 2} others`;
+  }
 };
 
 export default Annotation;

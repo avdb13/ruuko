@@ -3,7 +3,6 @@ import {
   IContent,
   MatrixEvent,
   MsgType,
-  RelationType,
 } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
 import { PropsWithChildren, useContext, useState } from "react";
@@ -13,37 +12,48 @@ import Annotation from "./chips/Annotation";
 import Avatar from "./Avatar";
 
 const Message = ({
-  events,
-  annotations,
-  replacements,
-}: {
-  events: MatrixEvent[];
+  event, annotations, replacements }:{
+  event: MatrixEvent;
   annotations?: Record<string, Record<string, string[]>>;
   replacements?: Record<string, IContent[]>;
 }) => {
-  if (events.length === 1) {
-    const event = events[0]!;
+  return (
+        {annotations
+          ? Object.entries(annotations).map(([annotation, annotators]) => {
+              return (
+                <Annotation
+                  annotation={annotation}
+                  annotators={annotators}
+                  eventId={event.getId()!}
+                />
+              );
+            })
+          : null}
+  )
+};
 
+const Event = ({
+  event,
+}: {
+  event: MatrixEvent;
+}) => {
     switch (event.getType()) {
       case EventType.RoomMember:
         return <MemberMessage event={event} />;
       case EventType.Reaction:
-        break;
+        throw new Error('impossible');
       case EventType.RoomMessage:
         return (
           <RoomMessage
-            events={[event]}
-            annotations={annotations}
-            replacements={replacements}
+            event={event}
           />
         );
       case EventType.RoomRedaction:
-        setRoom
+        throw new Error('impossible');
       case EventType.RoomMessageEncrypted:
       case EventType.Sticker:
         return <Sticker
             event={event}
-            annotations={annotations}
           />;
       case EventType.CallInvite:
       case EventType.CallCandidates:
@@ -68,7 +78,6 @@ const Message = ({
       case EventType.KeyVerificationReady:
       // use of this is discouraged https://matrix.org/docs/spec/client_server/r0.6.1#m-room-message-feedback
       case EventType.RoomMessageFeedback:
-      case EventType.Reaction:
       case EventType.PollStart:
       default:
         return (
@@ -78,15 +87,6 @@ const Message = ({
           </p>
         );
     }
-  } else {
-    return (
-      <RoomMessage
-        events={events}
-        annotations={annotations}
-        replacements={replacements}
-      />
-    );
-  }
 };
 
 const Sticker = ({
@@ -126,41 +126,104 @@ const Sticker = ({
 };
 
 const RoomMessage = ({
-  events,
-  annotations,
-  replacements,
+  event,
+  // annotations,
+  // replacements,
 }: {
-  events: MatrixEvent[];
-  annotations?: Record<string, Record<string, string[]>>;
-  replacements?: Record<string, IContent[]>;
+  event: MatrixEvent;
+  // annotations?: Record<string, Record<string, string[]>>;
+  // replacements?: Record<string, IContent[]>;
 }) => {
-  const firstEvent = events[0]!;
-  const timestamp = firstEvent.getTs();
-  const userId = firstEvent.getSender()!;
-  const displayName = firstEvent.getContent().displayname;
+  const client = useContext(ClientContext);
 
-  return (
-    <Frame
-      userId={userId}
-      displayName={displayName}
-      timestamp={timestamp}
-      annotations={annotations}
-      replacements={replacements}
-      logs={events.map((e) => e.getContent())}
-    >
-      {events
-        .filter(
-          (e) => e.getRelation()?.rel_type !== RelationType.Replace ?? true,
+  const timestamp = event.getTs();
+  const userId = event.getSender()!;
+  const displayName = event.getContent().displayname;
+  const content = event.getContent();
+
+  switch (content.msgtype) {
+    case MsgType.Text: {
+      // if (content.format === "org.matrix.custom.html" && extractedAttributes) {
+      //   return (
+      //     <ContentFormatter
+      //       content={{
+      //         url: extractedAttributes.get("src"),
+      //         body: extractedAttributes.get("alt"),
+      //       }}
+      //     />
+      //   );
+      // }
+
+          // {inReplyTo ? (
+          //   <div className="bg-green-200">
+          //     {"> "}
+          //     {inReplyTo[0]!
+          //       .split("\n")
+          //       .map((s, i) =>
+          //         i === 0 ? s.split("> ", 3)[2] : s.split("> ", 2)[1],
+          //       )}
+          //   </div>
+          // ) : null}
+          // {showEdits ? edits() : null}
+      return (
+        <span className="whitespace-normal break-all">
+          {content.body}
+        </span>
+      );
+    }
+    case MsgType.Image:
+      return (
+        <img
+          src={client.mxcUrlToHttp(content.url, 120, 120, "scale", true)!}
+          alt={content.body}
+        />
+      );
+    case MsgType.Emote:
+      return `* ${content.displayName} ${content.body}`;
+    case MsgType.Notice:
+    case MsgType.File:
+    case MsgType.Audio:
+    case MsgType.Location:
+    case MsgType.Video:
+    case MsgType.KeyVerificationRequest:
+    default:
+      // return content.url ? (
+      //   <img
+      //     src={client.mxcUrlToHttp(content.url)!}
+      //     alt={content.body}
+      //     className="h-16 w-16"
+      //   />
+      // ) : (
+        return (
+        <p className="whitespace-normal break-all">
+          `unsupported: ${JSON.stringify(content)}`
+        </p>
         )
-        .map((event) => (
-          <Content
-            event={event}
-            annotations={annotations && annotations[event.getId()!]}
-            replacements={replacements && replacements[event.getId()!]}
-          />
-        ))}
-    </Frame>
-  );
+      // );
+  }
+
+  // return (
+  //   <Frame
+  //     userId={userId}
+  //     displayName={displayName}
+  //     timestamp={timestamp}
+  //     annotations={annotations}
+  //     replacements={replacements}
+  //     logs={events.map((e) => e.getContent())}
+  //   >
+  //     {events
+  //       .filter(
+  //         (e) => e.getRelation()?.rel_type !== RelationType.Replace ?? true,
+  //       )
+  //       .map((event) => (
+  //         <Content
+  //           event={event}
+  //           annotations={annotations && annotations[event.getId()!]}
+  //           replacements={replacements && replacements[event.getId()!]}
+  //         />
+  //       ))}
+  //   </Frame>
+  // );
 };
 
 interface FrameProps {
@@ -430,77 +493,6 @@ const ContentFormatter = ({
     ? extractAttributes(content.body, ["src", "alt"])
     : null;
 
-  switch (content.msgtype) {
-    case MsgType.Text: {
-      if (content.format === "org.matrix.custom.html" && extractedAttributes) {
-        return (
-          <ContentFormatter
-            content={{
-              url: extractedAttributes.get("src"),
-              body: extractedAttributes.get("alt"),
-            }}
-          />
-        );
-      }
-
-      return (
-        <>
-          {inReplyTo ? (
-            <div className="bg-green-200">
-              {"> "}
-              {inReplyTo[0]!
-                .split("\n")
-                .map((s, i) =>
-                  i === 0 ? s.split("> ", 3)[2] : s.split("> ", 2)[1],
-                )}
-            </div>
-          ) : null}
-          {showEdits ? edits() : null}
-          <span className={`whitespace-normal break-all`}>
-            {inReplyTo
-              ? inReplyTo[1]!.split("\n").map((s) => <p>{s}</p>)
-              : content.body}{" "}
-            {previousContent ? (
-              <button
-                type="button"
-                className={`${showEdits ? "bg-green-200 px-2" : null}`}
-                onClick={() => setShowEdits(!showEdits)}
-              >
-                {showEdits ? "hide" : "(edited)"}
-              </button>
-            ) : null}
-          </span>
-        </>
-      );
-    }
-    case MsgType.Image:
-      return (
-        <img
-          src={client.mxcUrlToHttp(content.url, 120, 120, "scale", true)!}
-          alt={content.body}
-        />
-      );
-    case MsgType.Emote:
-      return `* ${content.displayName} ${content.body}`;
-    case MsgType.Notice:
-    case MsgType.File:
-    case MsgType.Audio:
-    case MsgType.Location:
-    case MsgType.Video:
-    case MsgType.KeyVerificationRequest:
-    default:
-      return content.url ? (
-        <img
-          src={client.mxcUrlToHttp(content.url)!}
-          alt={content.body}
-          className="h-16 w-16"
-        />
-      ) : (
-        <p className="whitespace-normal break-all">
-          `unsupported: ${JSON.stringify(content)}`
-        </p>
-      );
-  }
 };
 
 const Content = ({

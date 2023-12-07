@@ -6,6 +6,7 @@ import {
   RelationType,
 } from "matrix-js-sdk";
 import { AvatarType } from "../components/Avatar";
+import { Annotator } from "../components/chips/Annotation";
 
 export const extractAttributes = (
   s: string,
@@ -63,14 +64,16 @@ export const getFlagEmoji = (countryCode: string) => {
   return String.fromCodePoint(...codePoints);
 };
 
+
+
 const toAnnotation = (e: MatrixEvent) => {
   const relation = e.getContent()["m.relates_to"];
-  const sender = e.getSender();
-  const inReplyTo = relation?.event_id;
+  const reply_id = relation?.event_id;
   const key = relation?.key;
+  const annotator: Annotator = { user_id: e.getSender()!, event_id: e.getId()! };
 
-  return relation && sender && inReplyTo && key
-    ? { inReplyTo, key, sender }
+  return relation && relation.rel_type === RelationType.Annotation && annotator && reply_id && key
+    ? { reply_id, key, annotator }
     : null;
 };
 
@@ -93,20 +96,20 @@ export const getAnnotations = (events: MatrixEvent[]) => {
         return init;
       }
 
-      const { inReplyTo, key, sender } = annotation;
+      const { reply_id, key, annotator } = annotation;
 
       return {
         ...init,
-        [inReplyTo]: {
-          ...init[inReplyTo],
+        [reply_id]: {
+          ...init[reply_id],
           [key]: {
-            ...(init[inReplyTo]?.[key] ?? []),
-            sender,
+            ...init[reply_id]?.[key] ?? [],
+            annotator,
           },
         },
       };
     },
-    {} as Record<string, Record<string, string[]>>,
+    {} as Record<string, Record<string, Annotator[]>>,
   );
 };
 
