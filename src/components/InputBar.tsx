@@ -10,6 +10,7 @@ import { ClientContext } from "../providers/client";
 import FileIcon from "./icons/File";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import CrossIcon from "./icons/Cross";
+import { RoomContext } from "../providers/room";
 
 const FilePicker = ({
   files,
@@ -64,6 +65,8 @@ const FilePicker = ({
 
 const InputBar = ({ roomId }: { roomId: string }) => {
   const client = useContext(ClientContext);
+  const {currentRoom} = useContext(RoomContext)!;
+
   const [message, setMessage] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
   const [files, setFiles] = useState<File[] | null>(null);
@@ -71,6 +74,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
 
     if (files) {
       Promise.all([...files.map((f) => client.uploadContent(f))]).then(
@@ -87,6 +91,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
       client.sendTextMessage(roomId, message);
     }
 
+    currentRoom?.setTimelineNeedsRefresh(true);
     setMessage("");
   };
 
@@ -109,7 +114,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
             value={message}
           />
           <span className="relative flex justify-center items-center basis-8">
-            <button className="peer" onClick={(e) => {
+            <button className="peer" type="button" onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setShowEmojis(!showEmojis);

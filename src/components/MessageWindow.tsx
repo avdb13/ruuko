@@ -73,6 +73,8 @@ const MessageWindow = () => {
     [currentRoom, roomEvents],
   );
 
+  console.log(Object.values(events || {}).map(e => e.getContent().body))
+
   useEffect(() => {
     console.log("scroll to bottom " + currentRoom?.name);
     if (events) {
@@ -82,7 +84,7 @@ const MessageWindow = () => {
         bottomDivRef.current.scrollTo(0, scroll);
       }
     }
-  }, [currentRoom, bottomDivRef]);
+  }, [events]);
 
   if (!events || !currentRoom) {
     return <div></div>;
@@ -118,26 +120,22 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
   const isSpecialEvent = (e: MatrixEvent) =>
-      e.getRelation() ||
-      e.getRedactionEvent() ||
-      // EventType.RoomRedaction === e.getType() ||
-      EventType.Reaction === e.getType();
+    e.getRelation() ||
+    e.getRedactionEvent() ||
+    // EventType.RoomRedaction === e.getType() ||
+    EventType.Reaction === e.getType();
 
   const filteredEvents = events.reduce(
     (init, e) =>
       isSpecialEvent(e)
         ? { ...init, ["others"]: [...(init["others"] ?? []), e] }
         : { ...init, ["regular"]: [...(init["regular"] ?? []), e] },
-    {} as Record<string, MatrixEvent[]>,
+    { others: [], regular: [] } as Record<string, MatrixEvent[]>,
   );
 
   const allAnnotations = getAnnotations(filteredEvents["others"]!);
   const allReplacements = getReplacements(filteredEvents["others"]!);
   const allRedactions = getRedactions(filteredEvents["others"]!);
-
-  console.log(events);
-  console.log(Object.values(allRedactions).map(e => [e.getId(), e]));
-  console.log(filteredEvents["regular"]!.map(e => [e.getId(), e]));
 
   // return reply + event + annotations
   const eventRecord = filteredEvents["regular"]!.reduce(

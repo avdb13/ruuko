@@ -41,10 +41,10 @@ const RoomIconWidget = ({ room }: { room: Room }) => {
 };
 
 const RoomWidget = ({ room }: { room: Room }) => {
-  const { setCurrentRoom } = useContext(RoomContext)!;
+  const { setCurrentRoom, roomEvents } = useContext(RoomContext)!;
 
-  const events = room.getLiveTimeline().getEvents();
-  const latestEvent = events[events.length - 1];
+  const events = Object.values(roomEvents[room.roomId] || {});
+  const latestEvent = events ? events[events.length - 1] : null;
 
   return (
     <button

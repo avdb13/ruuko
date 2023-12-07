@@ -171,7 +171,10 @@ const Annotations = ({
 };
 
 const RedactionEvent = ({ event }: { event: MatrixEvent }) => {
+  const { currentRoom } = useContext(RoomContext)!;
+
   const content = event.getContent();
+  const original = currentRoom?.findEventById(content.redacts);
 
   return (
     <p>{`redacted by ${content.displayname || event.getSender()} ${
