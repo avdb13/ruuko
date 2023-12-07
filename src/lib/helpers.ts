@@ -94,10 +94,10 @@ export const getAnnotations = (events: MatrixEvent[]) => {
         ...init,
         [reply_id]: {
           ...init[reply_id],
-          [key]: {
+          [key]: [
             ...init[reply_id]?.[key] ?? [],
             annotator,
-          },
+          ],
         },
       };
     },

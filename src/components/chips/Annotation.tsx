@@ -9,19 +9,19 @@ export type Annotator = {
 };
 
 const Annotation = ({
-  key,
+  annotation,
   annotators,
   reply_id,
 }: {
-  key: string;
+  annotation: string;
   annotators: Annotator[];
   reply_id: string;
 }) => {
   const client = useContext(ClientContext);
   const { currentRoom } = useContext(RoomContext)!;
 
-  const src = key.startsWith("mxc")
-    ? client.mxcUrlToHttp(key, 40, 40, "scale", true)
+  const src = annotation.startsWith("mxc")
+    ? client.mxcUrlToHttp(annotation, 40, 40, "scale", true)
     : null;
 
   const handleClick = () => {
@@ -34,7 +34,8 @@ const Annotation = ({
       const content: IContent = {
         "m.relates_to": {
           event_id: reply_id,
-          key,
+          // can't name key since it's a reserved keyword in React
+          key: annotation,
           rel_type: RelationType.Annotation,
         },
       };
@@ -43,13 +44,15 @@ const Annotation = ({
     }
   };
 
+  console.log(annotation, annotators);
+
   return (
     <div className="relative flex justify-center items-center gap-1">
       <button
         className="flex justify-center items-center gap-1 peer w-[50px] h-[30px] rounded-xl bg-gray-50 hover:bg-gray-100 transition-all text-gray-600 rounded-md border-2 "
         onClick={handleClick}
       >
-        {src ? <img src={src} className="h-5" alt={key} /> : key}
+        {src ? <img src={src} className="h-5" alt={annotation} /> : annotation}
         <p className="font-bold">{annotators.length}</p>
       </button>
       <div

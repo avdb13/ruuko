@@ -122,8 +122,9 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const allAnnotations = getAnnotations(events);
   const allReplacements = getReplacements(events);
   const allRedactions = getRedactions(events);
-  const eventFilter = (e: MatrixEvent) => !(e.getRelation() || EventType.RoomRedaction !== e.getType() || EventType.Reaction !== e.getType());
+  const eventFilter = (e: MatrixEvent) => !(e.getRelation() || EventType.RoomRedaction === e.getType() || EventType.Reaction === e.getType());
 
+  console.log(events.filter(eventFilter));
   return events.filter(eventFilter).map((event) => (
     <Message
       event={event}

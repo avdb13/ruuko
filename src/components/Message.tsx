@@ -55,16 +55,37 @@ const Event = ({
       return <MemberEvent event={event} />;
     case EventType.RoomMessage:
       if (replacements) {
-        const historyButton = <button onClick={() => historyRef.current?.setShowHistory(!historyRef.current.showHistory)}>(edited)</button>;
+        const historyButton = (
+          <button
+            onClick={() =>
+              historyRef.current?.setShowHistory(
+                !historyRef.current.showHistory,
+              )
+            }
+          >
+            (edited)
+          </button>
+        );
 
-        return <><ReplacedRoomEvent ref={historyRef} original={event} replacements={replacements} />{" "}{historyButton}</>
+        return (
+          <>
+            <ReplacedRoomEvent
+              ref={historyRef}
+              original={event}
+              replacements={replacements}
+            />{" "}
+            {historyButton}
+          </>
+        );
       }
 
-      return <RoomEvent
+      return (
+        <RoomEvent
           event={event}
           replacements={replacements}
           redaction={redaction}
         />
+      );
     case EventType.Reaction:
     case EventType.RoomRedaction:
       throw new Error("impossible");
@@ -138,8 +159,13 @@ const Annotations = ({
     return null;
   }
 
-  return Object.entries(annotations).map(([key, annotators]) => (
-    <Annotation key={key} annotators={annotators} reply_id={reply_id} />
+  return Object.entries(annotations).map(([annotation, annotators]) => (
+    <Annotation
+      key={annotation}
+      annotation={annotation}
+      annotators={annotators}
+      reply_id={reply_id}
+    />
   ));
 };
 
@@ -194,7 +220,7 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
         {showHistory ? (
           <ul>
             {[original, ...replacements.slice(-1)].map((e) => (
-              <RoomEvent event={e} />
+              <RoomEvent key={e.getId()!} event={e} />
             ))}
           </ul>
         ) : null}
