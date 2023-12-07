@@ -13,17 +13,21 @@ import Annotation, { Annotator } from "./chips/Annotation";
 import Avatar from "./Avatar";
 
 const Message = ({
-  inReplyTo,
   event,
   annotations,
   replacements,
 }: {
-  inReplyTo?: MatrixEvent;
   event: MatrixEvent;
   annotations?: Record<string, Annotator[]>;
   replacements?: IContent[];
 }) => {
-  return <></>;
+  return (
+    <>
+      <Reply relation={event.getRelation()} />
+      <Event event={event} />
+      <Annotations annotations={annotations} reply_id={event.getId()!} />
+    </>
+  );
 };
 
 const Event = ({ event }: { event: MatrixEvent }) => {
@@ -72,19 +76,20 @@ const Event = ({ event }: { event: MatrixEvent }) => {
   }
 };
 
-const Reply = ({ relation }: { relation: IEventRelation }) => {
+const Reply = ({ relation }: { relation: IEventRelation | null }) => {
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
-  const events = roomEvents[currentRoom?.roomId!]!;
 
-  const inReplyTo = relation["m.in_reply_to"]?.event_id;
-  // what happens if the replied-to event got redacted?
-  const original = events[inReplyTo!]!;
-  // do we need to check for this?
-  // const emote = original.getContent().msgtype === MsgType.Emote;
+  const events = roomEvents[currentRoom?.roomId!]!;
+  const inReplyTo = relation?.["m.in_reply_to"]?.event_id;
 
   if (!inReplyTo) {
     return null;
   }
+
+  // what happens if the replied-to event got redacted?
+  // do we need to check for this?
+  // const emote = original.getContent().msgtype === MsgType.Emote;
+  const original = events[inReplyTo!]!;
 
   return (
     <div className="bg-green-200">
@@ -126,7 +131,7 @@ const Sticker = ({
   }
 
   return (
-    <Frame
+    <MessageFrame
       userId={event.getSender()!}
       displayName={content.displayname}
       timestamp={event.getTs()}
@@ -144,14 +149,13 @@ const Sticker = ({
       >
         debug content
       </button>
-    </Frame>
+    </MessageFrame>
   );
 };
 
 const RoomMessage = ({
-  event,
-} // annotations,
-// replacements,
+  event, // annotations,
+} // replacements,
 : {
   event: MatrixEvent;
   // annotations?: Record<string, Record<string, string[]>>;
@@ -178,9 +182,7 @@ const RoomMessage = ({
       // }
 
       // {showEdits ? edits() : null}
-      return (
-        <span className="whitespace-normal break-all">{content.body}</span>
-      );
+      return <p className="whitespace-normal break-all">{content.body}</p>;
     }
     case MsgType.Image:
       return (
@@ -190,7 +192,11 @@ const RoomMessage = ({
         />
       );
     case MsgType.Emote:
-      return `* ${content.displayName} ${content.body}`;
+      return (
+        <p>
+          `* ${content.displayName} ${content.body}`
+        </p>
+      );
     case MsgType.Notice:
     case MsgType.File:
     case MsgType.Audio:
@@ -214,7 +220,7 @@ const RoomMessage = ({
   }
 
   // return (
-  //   <Frame
+  //   <MessageFrame
   //     userId={userId}
   //     displayName={displayName}
   //     timestamp={timestamp}
@@ -233,20 +239,17 @@ const RoomMessage = ({
   //           replacements={replacements && replacements[event.getId()!]}
   //         />
   //       ))}
-  //   </Frame>
+  //   </MessageFrame>
   // );
 };
 
-interface FrameProps {
+interface MessageFrameProps {
   userId: string;
   displayName?: string;
   timestamp: number;
-  annotations?: Record<string, Record<string, string[]>>;
-  replacements?: Record<string, IContent[]>;
-  logs?: any;
 }
 
-const Frame = (props: PropsWithChildren<FrameProps>) => (
+const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
   <div className="p-2 border-x-2 border-b-2 border-black w-full">
     <div className="flex content-center gap-2">
       <Avatar id={props.userId} type="user" size={16} />
@@ -258,12 +261,6 @@ const Frame = (props: PropsWithChildren<FrameProps>) => (
           <p className="whitespace-normal break-all">
             {new Date(props.timestamp).toLocaleString("en-US")}
           </p>
-          <button
-            className="border-2 border-gray-600 bg-gray-400 rounded-md px-2"
-            onClick={() => console.log(props.logs)}
-          >
-            debug frame
-          </button>
         </div>
         <div>{props.children}</div>
       </div>
@@ -301,32 +298,6 @@ const Frame = (props: PropsWithChildren<FrameProps>) => (
 //   );
 // };
 
-const StateMessage = ({ event }: { event: MatrixEvent }) => {
-  const client = useContext(ClientContext);
-  const { roomEvents, currentRoom } = useContext(RoomContext)!;
-
-  return (
-    <div className="p-2 border-x-2 border-b-2 border-black">
-      <li className="flex content-center gap-2 items-center">
-        <img
-          src={
-            event.sender!.getAvatarUrl(
-              client.baseUrl,
-              80,
-              80,
-              "scale",
-              true,
-              true,
-            ) || "/public/anonymous.jpg"
-          }
-          className="object-cover h-8 w-8 rounded-full self-center border-2"
-        />
-        <p className="italic whitespace-normal break-all">{}</p>
-      </li>
-    </div>
-  );
-};
-
 export const DateMessage = ({ date }: { date: Date }) => {
   return (
     <div className="p-2 border-x-2 border-b-2 border-black">
@@ -337,23 +308,43 @@ export const DateMessage = ({ date }: { date: Date }) => {
   );
 };
 
-export const MemberMessage = ({ event }: { event: MatrixEvent }) => {
-  const content = formatMembership(event);
+interface StateFrameProps {
+  userId: string;
+}
 
-  if (!content) {
-    return null;
-  }
+export const StateFrame = (props: PropsWithChildren<StateFrameProps>) => (
+  <div className="p-2 border-x-2 border-b-2 border-black pl-6">
+    <li className="flex content-center gap-2">
+      <Avatar id={props.userId} size={8} type="user" />
+      <p className="flex flex-col justify-center whitespace-normal break-all">
+        {props.children}
+      </p>
+    </li>
+  </div>
+);
 
-  return (
-    <div className="p-2 border-x-2 border-b-2 border-black pl-6">
-      <li className="flex content-center gap-2">
-        <Avatar id={event.getSender()!} size={8} type="user" />
-        <p className="flex flex-col justify-center whitespace-normal break-all">
-          {content}
-        </p>
-      </li>
-    </div>
+const ContentFormatter = ({
+  content,
+  previousContent,
+}: {
+  content: IContent;
+  previousContent?: IContent[];
+}) => {
+  const client = useContext(ClientContext);
+  const [showEdits, setShowEdits] = useState(false);
+
+  // we need to remove the last element since that's the latest edit
+  const edits = () => (
+    <ul className="bg-green-200 px-2">
+      {previousContent
+        ?.slice(0, -1)
+        .map((content) => <ContentFormatter content={content} />)}
+    </ul>
   );
+
+  const extractedAttributes = content.body
+    ? extractAttributes(content.body, ["src", "alt"])
+    : null;
 };
 
 export enum Membership {
@@ -476,79 +467,6 @@ const formatMembership = (event: MatrixEvent) => {
     default:
       return null;
   }
-};
-
-const ContentFormatter = ({
-  content,
-  previousContent,
-}: {
-  content: IContent;
-  previousContent?: IContent[];
-}) => {
-  const client = useContext(ClientContext);
-  const [showEdits, setShowEdits] = useState(false);
-
-  // we need to remove the last element since that's the latest edit
-  const edits = () => (
-    <ul className="bg-green-200 px-2">
-      {previousContent
-        ?.slice(0, -1)
-        .map((content) => <ContentFormatter content={content} />)}
-    </ul>
-  );
-
-  const extractedAttributes = content.body
-    ? extractAttributes(content.body, ["src", "alt"])
-    : null;
-};
-
-const Content = ({
-  event,
-  annotations,
-  replacements,
-}: {
-  event: MatrixEvent;
-  annotations?: Record<string, string[]>;
-  replacements?: IContent[];
-}) => {
-  const content = event.getContent();
-
-  return (
-    <>
-      <ContentFormatter
-        content={content}
-        previousContent={
-          replacements
-            ? [event.getOriginalContent(), ...replacements]
-            : undefined
-        }
-      />
-      <div className="flex gap-2 flex-wrap">
-        {annotations
-          ? Object.entries(annotations).map(([annotation, annotators]) => {
-              return (
-                <Annotation
-                  annotation={annotation}
-                  annotators={annotators}
-                  eventId={event.getId()!}
-                />
-              );
-            })
-          : null}
-        <button
-          className="border-2 border-gray-600 bg-gray-400 rounded-md px-2 my-2"
-          onClick={() =>
-            console.log(
-              event.getContent(),
-              event.getContent()["m.relates_to"]?.["m.in_reply_to"],
-            )
-          }
-        >
-          debug content
-        </button>
-      </div>
-    </>
-  );
 };
 
 export default Message;
