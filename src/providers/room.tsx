@@ -76,7 +76,7 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
     // weird bug that gets triggered the message twice
-    console.log("received: ", event.getContent());
+    // console.log("received: ", event.getContent());
 
     if (room) {
       if (

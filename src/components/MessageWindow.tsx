@@ -73,8 +73,6 @@ const MessageWindow = () => {
     [currentRoom, roomEvents],
   );
 
-  console.log(Object.values(events || {}).map(e => e.getContent().body))
-
   useEffect(() => {
     console.log("scroll to bottom " + currentRoom?.name);
     if (events) {
