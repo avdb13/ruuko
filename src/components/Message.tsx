@@ -1,6 +1,7 @@
 import {
   EventType,
   IContent,
+  IEventRelation,
   MatrixEvent,
   MsgType,
 } from "matrix-js-sdk";
@@ -8,27 +9,29 @@ import { extractAttributes } from "../lib/helpers";
 import { PropsWithChildren, useContext, useState } from "react";
 import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
-import Annotation from "./chips/Annotation";
+import Annotation, { Annotator } from "./chips/Annotation";
 import Avatar from "./Avatar";
 
 const Message = ({
-  event, annotations, replacements }:{
+  inReplyTo, event, annotations, replacements,
+  } : {
+  inReplyTo?: MatrixEvent;
   event: MatrixEvent;
-  annotations?: Record<string, Record<string, string[]>>;
-  replacements?: Record<string, IContent[]>;
+  annotations?: Record<string, Annotator[]>;
+  replacements?: IContent[];
 }) => {
   return (
+    <>
         {annotations
-          ? Object.entries(annotations).map(([annotation, annotators]) => {
-              return (
+          ? Object.entries(annotations).map(([key, annotators]) =>
                 <Annotation
-                  annotation={annotation}
+                  key={key}
                   annotators={annotators}
-                  eventId={event.getId()!}
+                  reply_id={event.getId()!}
                 />
-              );
-            })
+              )
           : null}
+    </>
   )
 };
 
@@ -88,6 +91,37 @@ const Event = ({
         );
     }
 };
+
+const Reply = ({
+  relation,
+}: {
+  relation: IEventRelation;
+}) => {
+  const { currentRoom, roomEvents } = useContext(RoomContext)!;
+  const events = roomEvents[currentRoom?.roomId!]!;
+
+  const inReplyTo = relation["m.in_reply_to"]?.event_id;
+  // what happens if the replied-to event got redacted?
+  const original = events[inReplyTo!]!;
+  // do we need to check for this?
+  // const emote = original.getContent().msgtype === MsgType.Emote;
+
+  if (!inReplyTo) {
+    return null
+  }
+
+  return (
+    <div className="bg-green-200">
+      <Event event={original} />
+    </div>
+  )
+}
+
+// const Annotations = ({
+
+// }) => {
+
+// }
 
 const Sticker = ({
   event,
@@ -154,16 +188,6 @@ const RoomMessage = ({
       //   );
       // }
 
-          // {inReplyTo ? (
-          //   <div className="bg-green-200">
-          //     {"> "}
-          //     {inReplyTo[0]!
-          //       .split("\n")
-          //       .map((s, i) =>
-          //         i === 0 ? s.split("> ", 3)[2] : s.split("> ", 2)[1],
-          //       )}
-          //   </div>
-          // ) : null}
           // {showEdits ? edits() : null}
       return (
         <span className="whitespace-normal break-all">
@@ -475,9 +499,6 @@ const ContentFormatter = ({
   previousContent?: IContent[];
 }) => {
   const client = useContext(ClientContext);
-  const inReplyTo = content["m.relates_to"]?.["m.in_reply_to"]?.event_id
-    ? (content.body as string).split("\n\n", 2)
-    : null;
   const [showEdits, setShowEdits] = useState(false);
 
   // we need to remove the last element since that's the latest edit
