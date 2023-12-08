@@ -4,6 +4,7 @@ import {
   IEventRelation,
   MatrixEvent,
   MsgType,
+  RelationType,
 } from "matrix-js-sdk";
 import { extractAttributes } from "../lib/helpers";
 import {
@@ -37,7 +38,7 @@ const Message = ({
 }) => {
   return (
     // flash message on click
-    <div id={event.getId()!} className="">
+    <div id={event.getId()!} className="focus:blur-2 blur-0 duration-300">
       <Reply relation={event.getContent()["m.relates_to"] ?? null} />
       <MessageOptions>
         <Event
@@ -164,6 +165,7 @@ const Reply = ({ relation }: { relation: IEventRelation | null }) => {
 
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.focus();
     }
   };
 
@@ -275,37 +277,37 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
     // >
     //
     // TODO: height transition
+        // <div
+        //   className={`[&>li]:list-none ease-in-out transition-all duration-500 max-w-[75%] px-4 py-2 my-1 ${
+        //     showHistory
+        //       ? `delay-100 origin-bottom opacity-100 scale-y-1 max-h-[${
+        //           replacements.length * 24
+        //         }px]`
+        //       : "opacity-0 scale-y-0 max-h-[0px] p-0 m-0"
+        //   }`}
+        // >
+        //   {showHistory
+        //     ? [
+        //         original,
+        //         ...(replacements.length > 1
+        //           ? replacements.slice(0, replacements.length - 1)
+        //           : []),
+        //       ].map((e, i) =>
+        //         i === 0 ? (
+        //           <li>
+        //             <RoomEvent key={e.getId()!} event={e} originalContent />
+        //           </li>
+        //         ) : (
+        //           <li>
+        //             <RoomEvent key={e.getId()!} event={e} replacement />
+        //           </li>
+        //         ),
+        //       )
+        //     : null}
+        // </div>
     return (
       <>
-        <div
-          className={`[&>li]:list-none ease-in-out transition-all duration-500 max-w-[75%] px-4 py-2 my-1 ${
-            showHistory
-              ? `delay-100 origin-bottom opacity-100 scale-y-1 max-h-[${
-                  replacements.length * 24
-                }px]`
-              : "opacity-0 scale-y-0 max-h-[0px] p-0 m-0"
-          }`}
-        >
-          {showHistory
-            ? [
-                original,
-                ...(replacements.length > 1
-                  ? replacements.slice(0, replacements.length - 1)
-                  : []),
-              ].map((e, i) =>
-                i === 0 ? (
-                  <li>
-                    <RoomEvent key={e.getId()!} event={e} originalContent />
-                  </li>
-                ) : (
-                  <li>
-                    <RoomEvent key={e.getId()!} event={e} replacement />
-                  </li>
-                ),
-              )
-            : null}
-        </div>
-        <RoomEvent event={current} replacement />
+        <RoomEvent event={current} />
         <label
           className="align-top text-gray-600 hover:text-gray-900 duration-300"
           htmlFor={original.getId()!}
@@ -328,19 +330,16 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
 
 const RoomEvent = ({
   event,
-  replacement = false,
   originalContent = false,
 }: {
   event: MatrixEvent;
-  replacement?: boolean;
   originalContent?: boolean;
 }) => {
   const client = useContext(ClientContext);
   const content = originalContent
     ? event.getOriginalContent()
     : event.getContent();
-  const body = replacement ? content["m.new_content"]?.body : content.body;
-  const reply = event.getContent()["m.relates_to"];
+  const reply = event.getContent()["m.relates_to"]?.["m.in_reply_to"];
 
   switch (content.msgtype) {
     case MsgType.Text: {
@@ -363,13 +362,14 @@ const RoomEvent = ({
         );
       }
 
+      const body = reply ? content.body?.split("\n\n")[1] : (content["m.relates_to"]?.rel_type === RelationType.Replace ?
+        content["m.new_content"].body : content.body
+      );
+      console.log(body, reply, content["m.relates_to"]);
       // check later if we can also change the event type with edits
-      if (reply) {
-        console.log(JSON.stringify(body));
-      }
       return (
         <p className="inline-block whitespace-normal break-all">
-          {reply ? body?.split("\n\n")[1] : body}
+        {body}
         </p>
       );
     }

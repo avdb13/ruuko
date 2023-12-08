@@ -32,7 +32,8 @@
   }
 
   #bg {
-    background: radial-gradient(ellipse at top, #e66465, transparent), radial-gradient(ellipse at bottom, #4d9f0c, transparent);
+    background: radial-gradient(ellipse at top, #e66465, transparent),
+      radial-gradient(ellipse at bottom, #4d9f0c, transparent);
   }
   #logo {
     transition-property: opacity;
@@ -44,15 +45,15 @@
   @keyframes beat {
     0% {
       opacity: 0.1;
-      filter: blur(0px);
+      filter: blur(4px);
     }
     50% {
       opacity: 0.6;
-      filter: blur(0.4px);
+      filter: blur(0px);
     }
     100% {
       opacity: 0.1;
-      filter: blur(0px);
+      filter: blur(4px);
     }
   }
 
