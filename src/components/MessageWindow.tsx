@@ -4,7 +4,7 @@ import {
   MatrixEvent,
   RelationType,
 } from "matrix-js-sdk";
-import Message, { MessageFrame, StateFrame } from "./Message";
+import Message, { DateMessage, MessageFrame, StateFrame } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
@@ -32,6 +32,7 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
       const diff = event.getTs() - previousEvent.getTs();
 
       return previousEvent.getSender() === event.getSender() &&
+        !isDifferentDay(previousEvent, event) &&
         event.getType() === EventType.RoomMessage &&
         previousEvent.getType() === EventType.RoomMessage &&
         diff < 60 * 1000
@@ -98,7 +99,7 @@ const MessageWindow = () => {
             roomName={currentRoom.name}
           />
           <div ref={bottomDivRef} className="overflow-y-auto bg-green-100">
-            <TimeLine events={Object.values(events)} />
+            <Timeline events={Object.values(events)} />
           </div>
           <InputBar roomId={currentRoom.roomId} />
         </div>
@@ -114,7 +115,7 @@ const MessageWindow = () => {
   );
 };
 
-const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
+const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
   const isSpecialEvent = (e: MatrixEvent) =>
@@ -135,6 +136,8 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   const allReplacements = getReplacements(filteredEvents["others"]!);
   const allRedactions = getRedactions(filteredEvents["others"]!);
 
+  const sortedEvents = sortByTimestamp(filteredEvents["regular"]!);
+
   // return reply + event + annotations
   const eventRecord = filteredEvents["regular"]!.reduce(
     (init, event) => ({
@@ -151,31 +154,53 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
     {} as Record<string, JSX.Element>,
   );
 
-  return sortByTimestamp(filteredEvents["regular"]!).map((list) => {
+  return sortedEvents.map((list, i) => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;
     const displayName = firstEvent.getContent().displayname;
 
+    const previous = i !== 0 ? currentRoom!.findEventById(sortedEvents[i-1]?.[0] || "") : null;
+
     if (list.length === 1 && firstEvent.getType() !== EventType.RoomMessage) {
       return (
-        <StateFrame
-          userId={firstEvent.getSender()!}
-        >
-          {list.map((id) => eventRecord[id]!)}
-        </StateFrame>
+        <>
+          <StateFrame userId={firstEvent.getSender()!}>
+            {list.map((id) => eventRecord[id]!)}
+          </StateFrame>
+          <DayBreak previous={previous} current={firstEvent} />
+        </>
       );
     }
 
     return (
-      <MessageFrame
-        userId={firstEvent.getSender()!}
-        displayName={displayName}
-        timestamp={firstEvent.getTs()}
-      >
-        {list.map((id) => eventRecord[id]!)}
-      </MessageFrame>
+      <>
+        <MessageFrame
+          userId={firstEvent.getSender()!}
+          displayName={displayName}
+          timestamp={firstEvent.getTs()}
+        >
+          {list.map((id) => eventRecord[id]!)}
+        </MessageFrame>
+        <DayBreak previous={previous} current={firstEvent} />
+      </>
     );
   });
 };
+
+const isDifferentDay = (previous: MatrixEvent, current: MatrixEvent) => {
+  const previousDate = new Date(previous.getTs());
+  const date = new Date(current.getTs());
+
+  console.log(date.getDate(), previousDate.getDate())
+  return date.getDate() !== previousDate.getDate();
+}
+
+const DayBreak = ({ previous, current }: {previous: MatrixEvent | null, current: MatrixEvent}) => {
+  if (!previous || !isDifferentDay(previous, current)) {
+    return null;
+  }
+
+  return <DateMessage date={new Date(current.getTs())} />;
+}
 
 const TitleBar = ({
   roomName,

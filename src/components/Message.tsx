@@ -398,9 +398,11 @@ export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
 
 export const DateMessage = ({ date }: { date: Date }) => {
   return (
-    <div className="p-2 border-x-2 border-b-2 border-black">
-      <li className="flex content-center gap-2">
-        <p className="break-all">{date.toLocaleString("en-US")}</p>
+    <div className="py-4 border-b-2 border-black">
+      <li className="flex content-center justify-center gap-2">
+        <div className="w-full h-[2px] translate-y-[500%] bg-black" />
+        <p className="whitespace-nowrap px-2">{date.toLocaleDateString("en-US")}</p>
+        <div className="w-full h-[2px] translate-y-[500%] bg-black" />
       </li>
     </div>
   );
@@ -546,5 +548,7 @@ const formatMembership = (event: MatrixEvent) => {
       return null;
   }
 };
+
+
 
 export default Message;
