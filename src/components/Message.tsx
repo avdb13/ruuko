@@ -10,6 +10,7 @@ import {
   PropsWithChildren,
   forwardRef,
   useContext,
+  useEffect,
   useId,
   useImperativeHandle,
   useRef,
@@ -62,10 +63,11 @@ const Event = ({
             id={event.getId()!}
             type="checkbox"
             className="fixed opacity-0"
-              onClick={() =>
+              onClick={() => {
                 historyRef.current?.setShowHistory(
                   !historyRef.current.showHistory,
-                )
+                );
+              }
               }
             >
             </input>
@@ -225,10 +227,19 @@ type HistoryHandle = {
 const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
   (props, historyRef) => {
     const { original, replacements } = props;
-    console.log(replacements.length, replacements.map(e => e.getContent()));
 
     const current = replacements.slice(-1)[0]!;
     const [showHistory, setShowHistory] = useState(false);
+
+    const bottomDiv = document.getElementById("bottom-div");
+
+    useEffect(() => {
+      if (bottomDiv) {
+        const scroll =
+          bottomDiv.scrollHeight - bottomDiv.clientHeight;
+        bottomDiv.scrollTo(0, scroll);
+      }
+    }, [showHistory, bottomDiv])
 
     useImperativeHandle(historyRef, () => ({
       showHistory,
@@ -237,16 +248,16 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
 
     return (
       <>
-        {showHistory ? (
-          <ul className={`bg-green-200 shadow-md p-2 opacity-0 [&>li:nth-child(n+2)]:mt-10] duration-300`}>
-            {[original, ...replacements.length > 1 ? replacements.slice(-1) : []].map((e, i) => (
-              i === 0 ?
-              <RoomEvent key={e.getId()!} event={e} originalContent />
-              :
-              <RoomEvent key={e.getId()!} event={e} replacement />
-            ))}
-          </ul>
-        ) : null}
+        <span className={`duration-300 transition-all ${showHistory ? "opacity-100" : "opacity-0"}`}>
+          <ul className={`bg-green-200 shadow-md p-2 ${showHistory ? null : "hidden"}`}>
+              {[original, ...replacements.length > 1 ? replacements.slice(-1) : []].map((e, i) => (
+                i === 0 ?
+                <RoomEvent key={e.getId()!} event={e} originalContent />
+                :
+                <RoomEvent key={e.getId()!} event={e} replacement />
+              ))}
+            </ul>
+        </span>
         <RoomEvent event={current} replacement />
       </>
     );

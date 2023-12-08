@@ -98,7 +98,7 @@ const MessageWindow = () => {
             setShowMembers={setShowMembers}
             roomName={currentRoom.name}
           />
-          <div ref={bottomDivRef} className="overflow-y-auto bg-green-100">
+          <div ref={bottomDivRef} className="overflow-y-auto bg-green-100" id="bottom-div">
             <Timeline events={Object.values(events)} />
           </div>
           <InputBar roomId={currentRoom.roomId} />
@@ -135,10 +135,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
           return e.getRelation()?.rel_type === RelationType.Replace
             ? {
                 ...init,
-                [RelationType.Replace]: [
-                  ...init[RelationType.Replace]!,
-                  e,
-                ],
+                [RelationType.Replace]: [...init[RelationType.Replace]!, e],
               }
             : { ...init, ["rest"]: [...init["rest"]!, e] };
       }
@@ -152,7 +149,9 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   );
 
   const allAnnotations = getAnnotations(filteredEvents[EventType.Reaction]!);
-  const allReplacements = getReplacements(filteredEvents[RelationType.Replace]!);
+  const allReplacements = getReplacements(
+    filteredEvents[RelationType.Replace]!,
+  );
   const allRedactions = getRedactions(filteredEvents[EventType.RoomRedaction]!);
 
   const sortedEvents = sortByTimestamp(filteredEvents["rest"]!);

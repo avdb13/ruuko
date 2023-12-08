@@ -14,7 +14,6 @@ export const RoomContext = createContext<RoomState | null>(null);
 interface RoomState {
   rooms: Room[] | null;
   currentRoom: Room | null;
-  currentRedactions: null;
   roomEvents: Record<string, Record<string, MatrixEvent>>;
   setRooms: (_: Room[]) => void;
   setCurrentRoom: (_: Room) => void;
