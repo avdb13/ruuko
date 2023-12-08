@@ -20,7 +20,6 @@ import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
 import Annotation, { Annotator } from "./chips/Annotation";
 import Avatar from "./Avatar";
-import PencilIcon from "./icons/Pencil";
 import EditIcon from "./icons/Edit";
 import ReplyIcon from "./icons/Reply";
 import CopyIcon from "./icons/Copy";
@@ -37,8 +36,9 @@ const Message = ({
   redaction?: MatrixEvent;
 }) => {
   return (
-    <>
-      <Reply relation={event.getRelation()} />
+    // flash message on click
+    <div id={event.getId()!} className="">
+      <Reply relation={event.getContent()["m.relates_to"] ?? null} />
       <MessageOptions>
         <Event
           event={event}
@@ -47,7 +47,7 @@ const Message = ({
         />
       </MessageOptions>
       <Annotations annotations={annotations} reply_id={event.getId()!} />
-    </>
+    </div>
   );
 };
 
@@ -145,24 +145,35 @@ const Event = ({
 };
 
 const Reply = ({ relation }: { relation: IEventRelation | null }) => {
-  const { currentRoom, roomEvents } = useContext(RoomContext)!;
-
-  const events = roomEvents[currentRoom?.roomId!]!;
   const inReplyTo = relation?.["m.in_reply_to"]?.event_id;
 
   if (!inReplyTo) {
     return null;
   }
 
+  const { currentRoom, roomEvents } = useContext(RoomContext)!;
+  const events = roomEvents[currentRoom?.roomId!]!;
+
   // what happens if the replied-to event got redacted?
   // do we need to check for this?
   // const emote = original.getContent().msgtype === MsgType.Emote;
   const original = events[inReplyTo!]!;
 
+  const handleClick = () => {
+    const element = document.getElementById(inReplyTo);
+
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   return (
-    <div className="bg-green-200">
+    <button
+      onClick={handleClick}
+      className="shadow-sm px-2 py-1 border-l-4 border-white bg-green-200"
+    >
       <Event event={original} />
-    </div>
+    </button>
   );
 };
 
@@ -253,17 +264,17 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
       setShowHistory,
     }));
 
-        // <div
-        //   className={`[&>li]:list-none ease-in-out transition-all duration-500 bg-cyan-100 max-w-[75%] shadow-md px-4 py-2 my-1 ${
-        //     showHistory
-        //       ? `delay-100 origin-bottom opacity-100 scale-y-1 max-h-[${
-        //           replacements.length * 24
-        //         }px]`
-        //       : "opacity-0 scale-y-0 max-h-[0px]"
-        //   }`}
-        // >
-        //
-        // TODO: height transition
+    // <div
+    //   className={`[&>li]:list-none ease-in-out transition-all duration-500 bg-cyan-100 max-w-[75%] shadow-md px-4 py-2 my-1 ${
+    //     showHistory
+    //       ? `delay-100 origin-bottom opacity-100 scale-y-1 max-h-[${
+    //           replacements.length * 24
+    //         }px]`
+    //       : "opacity-0 scale-y-0 max-h-[0px]"
+    //   }`}
+    // >
+    //
+    // TODO: height transition
     return (
       <>
         <div
@@ -328,6 +339,8 @@ const RoomEvent = ({
   const content = originalContent
     ? event.getOriginalContent()
     : event.getContent();
+  const body = replacement ? content["m.new_content"]?.body : content.body;
+  const reply = event.getContent()["m.relates_to"];
 
   switch (content.msgtype) {
     case MsgType.Text: {
@@ -351,9 +364,12 @@ const RoomEvent = ({
       }
 
       // check later if we can also change the event type with edits
+      if (reply) {
+        console.log(JSON.stringify(body));
+      }
       return (
         <p className="inline-block whitespace-normal break-all">
-          {replacement ? content["m.new_content"]?.body : content.body}
+          {reply ? body?.split("\n\n")[1] : body}
         </p>
       );
     }
@@ -424,14 +440,6 @@ export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
 //   message: string;
 //   member: RoomMember;
 // }) => {
-//   const element = document.getElementById(eventId);
-
-//   const handleClick = () => {
-//     if (element) {
-//       element.scrollIntoView({ behavior: "smooth", block: "center" });
-//       // flash the message
-//     }
-//   };
 
 //   return (
 //     <button

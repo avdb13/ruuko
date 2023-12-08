@@ -22,14 +22,6 @@
   /*   border-radius: 100vh; */
   /* } */
 
-  .ripple div:nth-child(2) {
-    animation-delay: -0.5s;
-  }
-
-  .ripple div {
-    animation: ripple 1s cubic-bezier(0, 0, 0.3, 1) infinite;
-  }
-
   #logo {
     position: fixed;
     top: -100%;
@@ -39,75 +31,28 @@
     margin: auto;
   }
 
-  .ripple {
-    position: fixed;
-    top: -100%;
-    right: -100%;
-    left: -100%;
-    bottom: -100%;
-    margin: auto;
+  #bg {
+    background: radial-gradient(ellipse at top, #e66465, transparent), radial-gradient(ellipse at bottom, #4d9f0c, transparent);
   }
-
-  @keyframes ripple {
-    0% {
-      top: 54px;
-      left: 54px;
-      width: 0;
-      height: 0;
-      opacity: 0;
-    }
-    4.9% {
-      top: 54px;
-      left: 54px;
-      width: 0;
-      height: 0;
-      opacity: 0;
-    }
-    5% {
-      top: 54px;
-      left: 54px;
-      width: 0;
-      height: 0;
-      opacity: 0;
-    }
-    20% {
-      opacity: 0;
-      filter: blur(0.2px);
-    }
-    40% {
-      opacity: 0.3;
-      filter: blur(0.4px);
-    }
-    60% {
-      opacity: 0.1;
-      filter: blur(0.8px);
-    }
-    100% {
-      top: 0px;
-      left: 0px;
-      width: 108px;
-      height: 108px;
-      opacity: 0;
-      filter: blur(1.6px);
-    }
-  }
-
   #logo {
     transition-property: opacity;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
-    animation: beat 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: beat 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 
   @keyframes beat {
     0% {
-      opacity: 0.2;
+      opacity: 0.1;
+      filter: blur(0px);
     }
     50% {
       opacity: 0.6;
+      filter: blur(0.4px);
     }
     100% {
-      opacity: 0.2;
+      opacity: 0.1;
+      filter: blur(0px);
     }
   }
 

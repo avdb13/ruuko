@@ -93,6 +93,11 @@ const RoomList = ({
 
 const Sidebar = () => {
   const { rooms } = useContext(RoomContext)!;
+
+  if (!rooms) {
+    return null;
+  }
+
   const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
   const [sidebarWidth, setSidebarWidth] = useState(300);
 
