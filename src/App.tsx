@@ -7,8 +7,6 @@ import { ClientContext } from "./providers/client";
 import { SyncState } from "matrix-js-sdk";
 
 const App = () => {
-  return <Spinner />;
-
   const roomState = useContext(RoomContext);
   const client = useContext(ClientContext);
   const _ = useContext(RoomContext);

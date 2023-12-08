@@ -23,7 +23,7 @@ export default {
         }
       },
       transitionProperty: {
-        "max-height": "max-height"
+        'height': 'height'
       }
     },
   },

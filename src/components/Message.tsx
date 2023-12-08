@@ -253,31 +253,46 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
       setShowHistory,
     }));
 
+        // <div
+        //   className={`[&>li]:list-none ease-in-out transition-all duration-500 bg-cyan-100 max-w-[75%] shadow-md px-4 py-2 my-1 ${
+        //     showHistory
+        //       ? `delay-100 origin-bottom opacity-100 scale-y-1 max-h-[${
+        //           replacements.length * 24
+        //         }px]`
+        //       : "opacity-0 scale-y-0 max-h-[0px]"
+        //   }`}
+        // >
+        //
+        // TODO: height transition
     return (
       <>
         <div
-          className={`transition-all duration-300 bg-cyan-100 max-w-[75%] shadow-md px-4 py-2 my-1 origin-top ${
+          className={`[&>li]:list-none ease-in-out transition-all duration-500 max-w-[75%] px-4 py-2 my-1 ${
             showHistory
-              ? "opacity-100 scale-y-1 origin-top"
-              : "opacity-0 scale-y-0 origin-top"
-          } transition-max-height duration-500 ${
-            showHistory
-              ? `transition-max-height duration-300 max-h-[${replacements.length * 24}px]`
-              : "max-h-[0px]"
+              ? `delay-100 origin-bottom opacity-100 scale-y-1 max-h-[${
+                  replacements.length * 24
+                }px]`
+              : "opacity-0 scale-y-0 max-h-[0px] p-0 m-0"
           }`}
         >
-          {[
-            original,
-            ...(replacements.length > 1
-              ? replacements.slice(0, replacements.length - 1)
-              : []),
-          ].map((e, i) =>
-            i === 0 ? (
-              <RoomEvent key={e.getId()!} event={e} originalContent />
-            ) : (
-              <RoomEvent key={e.getId()!} event={e} replacement />
-            ),
-          )}
+          {showHistory
+            ? [
+                original,
+                ...(replacements.length > 1
+                  ? replacements.slice(0, replacements.length - 1)
+                  : []),
+              ].map((e, i) =>
+                i === 0 ? (
+                  <li>
+                    <RoomEvent key={e.getId()!} event={e} originalContent />
+                  </li>
+                ) : (
+                  <li>
+                    <RoomEvent key={e.getId()!} event={e} replacement />
+                  </li>
+                ),
+              )
+            : null}
         </div>
         <RoomEvent event={current} replacement />
         <label

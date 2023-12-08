@@ -1,5 +1,3 @@
-import Logo from "./icons/Logo";
-
 const Spinner = () => {
   const divStyle =
     "absolute ring-[4px] ring-zinc-600 rounded-full animate-ping";
