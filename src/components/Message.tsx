@@ -53,8 +53,8 @@ const Message = ({
 
 const MessageOptions = (props: PropsWithChildren) => {
   return (
-    <div className="relative w-full group">
-      <div className="group-hover:bg-green-200 duration-100 py-[2px]">
+    <div className="w-full group">
+      <div className="group-hover:bg-green-200 duration-100 py-[2px] px-[8px]">
         {props.children}
       </div>
       <div className="scale-75 border-2 border-zinc-400 flex gap-4 py-1 px-2 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-[80%] bottom-[75%]">
@@ -256,8 +256,14 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
     return (
       <>
         <div
-          className={`bg-green-200 shadow-md px-4 py-2 my-1 transition-max-height duration-500 ${
-            showHistory ? null : "hidden"
+          className={`transition-all duration-300 bg-cyan-100 max-w-[75%] shadow-md px-4 py-2 my-1 origin-top ${
+            showHistory
+              ? "opacity-100 scale-y-1 origin-top"
+              : "opacity-0 scale-y-0 origin-top"
+          } transition-max-height duration-500 ${
+            showHistory
+              ? `transition-max-height duration-300 max-h-[${replacements.length * 24}px]`
+              : "max-h-[0px]"
           }`}
         >
           {[
@@ -275,7 +281,7 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
         </div>
         <RoomEvent event={current} replacement />
         <label
-          className="inline text-gray-600 hover:text-gray-900 duration-300"
+          className="align-top text-gray-600 hover:text-gray-900 duration-300"
           htmlFor={original.getId()!}
         >
           {" "}
@@ -331,9 +337,9 @@ const RoomEvent = ({
 
       // check later if we can also change the event type with edits
       return (
-        <span className="whitespace-normal break-all">
+        <p className="inline-block whitespace-normal break-all">
           {replacement ? content["m.new_content"]?.body : content.body}
-        </span>
+        </p>
       );
     }
     case MsgType.Image:
@@ -345,9 +351,9 @@ const RoomEvent = ({
       );
     case MsgType.Emote:
       return (
-        <span>
+        <p>
           `* ${content.displayName} ${content.body}`
-        </span>
+        </p>
       );
     case MsgType.Notice:
     case MsgType.File:
@@ -429,7 +435,7 @@ export const DateMessage = ({ date }: { date: Date }) => {
     <div className="py-4 border-b-2 border-black">
       <li className="flex content-center justify-center gap-2">
         <div className="w-full h-[2px] translate-y-[500%] bg-black" />
-        <p className="break-all whitespace-normal px-2">
+        <p className="whitespace-nowrap px-2">
           {date.toLocaleDateString("en-US")}
         </p>
         <div className="w-full h-[2px] translate-y-[500%] bg-black" />
