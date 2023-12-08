@@ -21,6 +21,9 @@ export default {
           "50%": { transform: "scale(0.95)", filter: "blur(1px)" },
           "100%": { transform: "scale(0.9)", filter: "blur(2px)" },
         }
+      },
+      transitionProperty: {
+        "max-height": "max-height"
       }
     },
   },

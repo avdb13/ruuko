@@ -60,18 +60,19 @@ const Event = ({
         const historyButton = (
           <>
             <input
-            id={event.getId()!}
-            type="checkbox"
-            className="fixed opacity-0"
+              id={event.getId()!}
+              type="checkbox"
+              className="fixed opacity-0"
               onClick={() => {
                 historyRef.current?.setShowHistory(
                   !historyRef.current.showHistory,
                 );
-              }
-              }
+              }}
+            ></input>
+            <label
+              className="text-gray-600 hover:text-gray-900 duration-300"
+              htmlFor={event.getId()!}
             >
-            </input>
-            <label className="text-gray-600 hover:text-gray-900 duration-300" htmlFor={event.getId()!}>
               (edited)
             </label>
           </>
@@ -89,12 +90,7 @@ const Event = ({
         );
       }
 
-      return (
-        <RoomEvent
-          event={event}
-          redaction={redaction}
-        />
-      );
+      return <RoomEvent event={event} redaction={redaction} />;
     case EventType.RoomRedaction:
       return <RedactionEvent event={event} />;
     case EventType.Reaction:
@@ -235,11 +231,10 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
 
     useEffect(() => {
       if (bottomDiv) {
-        const scroll =
-          bottomDiv.scrollHeight - bottomDiv.clientHeight;
+        const scroll = bottomDiv.scrollHeight - bottomDiv.clientHeight;
         bottomDiv.scrollTo(0, scroll);
       }
-    }, [showHistory, bottomDiv])
+    }, [showHistory, bottomDiv]);
 
     useImperativeHandle(historyRef, () => ({
       showHistory,
@@ -248,16 +243,20 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
 
     return (
       <>
-        <span className={`duration-300 transition-all ${showHistory ? "opacity-100" : "opacity-0"}`}>
-          <ul className={`bg-green-200 shadow-md p-2 ${showHistory ? null : "hidden"}`}>
-              {[original, ...replacements.length > 1 ? replacements.slice(-1) : []].map((e, i) => (
-                i === 0 ?
-                <RoomEvent key={e.getId()!} event={e} originalContent />
-                :
-                <RoomEvent key={e.getId()!} event={e} replacement />
-              ))}
-            </ul>
-        </span>
+      <div className={`bg-green-200 shadow-md px-4 py-2 my-1 transition-max-height duration-500 ${showHistory ? null : "hidden"}`}>
+          {[
+            original,
+            ...(replacements.length > 1
+              ? replacements.slice(0, replacements.length - 1)
+              : []),
+          ].map((e, i) =>
+            i === 0 ? (
+              <RoomEvent key={e.getId()!} event={e} originalContent />
+            ) : (
+              <RoomEvent key={e.getId()!} event={e} replacement />
+            ),
+          )}
+      </div>
         <RoomEvent event={current} replacement />
       </>
     );
@@ -274,7 +273,9 @@ const RoomEvent = ({
   originalContent?: boolean;
 }) => {
   const client = useContext(ClientContext);
-  const content = originalContent ? event.getOriginalContent() : event.getContent();
+  const content = originalContent
+    ? event.getOriginalContent()
+    : event.getContent();
 
   switch (content.msgtype) {
     case MsgType.Text: {
