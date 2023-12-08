@@ -2,6 +2,7 @@ import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "rea
 
 interface ResizableProps {
   width: number;
+  minWidth: number;
   setWidth: (_: number) => void;
   side: "left" | "right";
   className?: string;
@@ -23,8 +24,8 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
     (mouseMoveEvent: MouseEvent) => {
       if (isResizing) {
         setSidebarWidth(props.side === "right" ? mouseMoveEvent.clientX : window.outerWidth - sidebarWidth - mouseMoveEvent.clientX);
-        if (mouseMoveEvent.clientX < 120) {
-          setSidebarWidth(60);
+        if (mouseMoveEvent.clientX < (props.minWidth)) {
+          setSidebarWidth(props.minWidth / 1.5);
         }
       }
     },
@@ -42,7 +43,7 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
   
   const children = (
       <div
-        className={"flex flex-col shrink-0 grow-0 basis-1/2 bg-green-100 max-h-screen overflow-y-auto scrollbar px-2 w-min-0  " + props.className}
+        className={"max-h-screen flex flex-col shrink-0 grow-0 basis-1/2 bg-green-100 overflow-y-auto scrollbar w-min-0  " + props.className}
         onMouseDown={(e) => e.preventDefault()}
         style={{ flexBasis: sidebarWidth }}
         ref={sidebarRef}

@@ -97,8 +97,8 @@ const Sidebar = () => {
   const [sidebarWidth, setSidebarWidth] = useState(300);
 
   return (
-    <Resizable width={sidebarWidth} setWidth={setSidebarWidth} side="right">
-      <Scrollbar>
+    <Resizable width={sidebarWidth} setWidth={setSidebarWidth} minWidth={180} side="right">
+      <Scrollbar width={sidebarWidth} minWidth={180}>
         <Togglable modal={<SearchUserForm />}
           title="friends"
           sidebarWidth={sidebarWidth}
@@ -118,7 +118,7 @@ const Sidebar = () => {
           />
         </Togglable>
       </Scrollbar>
-      <UserPanel />
+    {sidebarWidth > 180 ? <UserPanel /> : null}
     </Resizable>
   );
 };

@@ -20,6 +20,10 @@ import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
 import Annotation, { Annotator } from "./chips/Annotation";
 import Avatar from "./Avatar";
+import PencilIcon from "./icons/Pencil";
+import EditIcon from "./icons/Edit";
+import ReplyIcon from "./icons/Reply";
+import CopyIcon from "./icons/Copy";
 
 const Message = ({
   event,
@@ -35,9 +39,36 @@ const Message = ({
   return (
     <>
       <Reply relation={event.getRelation()} />
-      <Event event={event} replacements={replacements} redaction={redaction} />
+      <MessageOptions>
+        <Event
+          event={event}
+          replacements={replacements}
+          redaction={redaction}
+        />
+      </MessageOptions>
       <Annotations annotations={annotations} reply_id={event.getId()!} />
     </>
+  );
+};
+
+const MessageOptions = (props: PropsWithChildren) => {
+  return (
+    <div className="relative w-full group">
+      <div className="group-hover:bg-green-200 duration-100 py-[2px]">
+        {props.children}
+      </div>
+      <div className="scale-75 border-2 border-zinc-400 flex gap-4 py-1 px-2 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-[80%] bottom-[75%]">
+        <button title="edit">
+          <EditIcon />
+        </button>
+        <button title="reply">
+          <ReplyIcon />
+        </button>
+        <button title="copy">
+          <CopyIcon />
+        </button>
+      </div>
+    </div>
   );
 };
 
@@ -57,26 +88,7 @@ const Event = ({
       return <MemberEvent event={event} />;
     case EventType.RoomMessage:
       if (replacements) {
-        const historyButton = (
-          <>
-            <input
-              id={event.getId()!}
-              type="checkbox"
-              className="fixed opacity-0"
-              onClick={() => {
-                historyRef.current?.setShowHistory(
-                  !historyRef.current.showHistory,
-                );
-              }}
-            ></input>
-            <label
-              className="text-gray-600 hover:text-gray-900 duration-300"
-              htmlFor={event.getId()!}
-            >
-              (edited)
-            </label>
-          </>
-        );
+        const historyButton = <></>;
 
         return (
           <>
@@ -243,7 +255,11 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
 
     return (
       <>
-      <div className={`bg-green-200 shadow-md px-4 py-2 my-1 transition-max-height duration-500 ${showHistory ? null : "hidden"}`}>
+        <div
+          className={`bg-green-200 shadow-md px-4 py-2 my-1 transition-max-height duration-500 ${
+            showHistory ? null : "hidden"
+          }`}
+        >
           {[
             original,
             ...(replacements.length > 1
@@ -256,8 +272,23 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
               <RoomEvent key={e.getId()!} event={e} replacement />
             ),
           )}
-      </div>
+        </div>
         <RoomEvent event={current} replacement />
+        <label
+          className="inline text-gray-600 hover:text-gray-900 duration-300"
+          htmlFor={original.getId()!}
+        >
+          {" "}
+          (edited)
+        </label>
+        <input
+          id={original.getId()!}
+          type="checkbox"
+          className="fixed opacity-0"
+          onClick={() => {
+            setShowHistory(!showHistory);
+          }}
+        ></input>
       </>
     );
   },
@@ -300,9 +331,9 @@ const RoomEvent = ({
 
       // check later if we can also change the event type with edits
       return (
-        <p className="whitespace-normal break-all">
+        <span className="whitespace-normal break-all">
           {replacement ? content["m.new_content"]?.body : content.body}
-        </p>
+        </span>
       );
     }
     case MsgType.Image:
@@ -314,9 +345,9 @@ const RoomEvent = ({
       );
     case MsgType.Emote:
       return (
-        <p>
+        <span>
           `* ${content.displayName} ${content.body}`
-        </p>
+        </span>
       );
     case MsgType.Notice:
     case MsgType.File:
@@ -336,29 +367,6 @@ const RoomEvent = ({
       return null;
     // );
   }
-
-  // return (
-  //   <MessageFrame
-  //     userId={userId}
-  //     displayName={displayName}
-  //     timestamp={timestamp}
-  //     annotations={annotations}
-  //     replacements={replacements}
-  //     logs={events.map((e) => e.getContent())}
-  //   >
-  //     {events
-  //       .filter(
-  //         (e) => e.getRelation()?.rel_type !== RelationType.Replace ?? true,
-  //       )
-  //       .map((event) => (
-  //         <Content
-  //           event={event}
-  //           annotations={annotations && annotations[event.getId()!]}
-  //           replacements={replacements && replacements[event.getId()!]}
-  //         />
-  //       ))}
-  //   </MessageFrame>
-  // );
 };
 
 interface MessageFrameProps {
@@ -371,7 +379,7 @@ export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
   <div className="p-2 border-x-2 border-b-2 border-black w-full">
     <div className="flex content-center gap-2">
       <Avatar id={props.userId} type="user" size={16} />
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 w-full">
         <div className="flex gap-2">
           <p className="whitespace-normal break-all font-bold">
             {props.displayName || props.userId}
@@ -380,7 +388,7 @@ export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
             {new Date(props.timestamp).toLocaleString("en-US")}
           </p>
         </div>
-        <div>{props.children}</div>
+        <div className="">{props.children}</div>
       </div>
     </div>
   </div>
@@ -421,7 +429,7 @@ export const DateMessage = ({ date }: { date: Date }) => {
     <div className="py-4 border-b-2 border-black">
       <li className="flex content-center justify-center gap-2">
         <div className="w-full h-[2px] translate-y-[500%] bg-black" />
-        <p className="whitespace-nowrap px-2">
+        <p className="break-all whitespace-normal px-2">
           {date.toLocaleDateString("en-US")}
         </p>
         <div className="w-full h-[2px] translate-y-[500%] bg-black" />

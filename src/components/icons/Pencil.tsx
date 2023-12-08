@@ -1,4 +1,4 @@
-const Pencil = (props) => (
+const PencilIcon = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={24}
@@ -22,4 +22,4 @@ const Pencil = (props) => (
   </svg>
 );
 
-export default Pencil;
+export default PencilIcon;
