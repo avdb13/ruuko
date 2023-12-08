@@ -38,7 +38,8 @@ const Message = ({
 }) => {
   return (
     // flash message on click
-    <div id={event.getId()!} className="focus:blur-2 blur-0 duration-300">
+    <div>
+      <span id={event.getId()!} tabIndex={-1} className="peer"></span>
       <Reply relation={event.getContent()["m.relates_to"] ?? null} />
       <MessageOptions>
         <Event
@@ -54,7 +55,7 @@ const Message = ({
 
 const MessageOptions = (props: PropsWithChildren) => {
   return (
-    <div className="w-full group">
+    <div className="group relative w-full peer-focus:bg-green-200 duration-300 transition-all ease-in-out bg-transparent">
       <div className="group-hover:bg-green-200 duration-100 py-[2px] px-[8px]">
         {props.children}
       </div>
@@ -164,8 +165,18 @@ const Reply = ({ relation }: { relation: IEventRelation | null }) => {
     const element = document.getElementById(inReplyTo);
 
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
       element.focus();
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      setTimeout(() => {
+        element.blur();
+      }, 300);
+      setTimeout(() => {
+        element.focus();
+      }, 600);
+      setTimeout(() => {
+        element.blur();
+      }, 900);
     }
   };
 
@@ -362,10 +373,11 @@ const RoomEvent = ({
         );
       }
 
+      // ugly, fix later
       const body = reply ? content.body?.split("\n\n")[1] : (content["m.relates_to"]?.rel_type === RelationType.Replace ?
         content["m.new_content"].body : content.body
       );
-      console.log(body, reply, content["m.relates_to"]);
+
       // check later if we can also change the event type with edits
       return (
         <p className="inline-block whitespace-normal break-all">
