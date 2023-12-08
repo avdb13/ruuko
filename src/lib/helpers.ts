@@ -45,8 +45,8 @@ export const getAvatarUrl = (
         ? room
             .getMembers()
             .find((member) => member.userId !== client.getUserId())
-            ?.getAvatarUrl("https://matrix.org", 120, 120, "scale", true, true)
-        : room.getAvatarUrl("https://matrix.org", 120, 120, "scale", true);
+            ?.getAvatarUrl("https://matrix.org", 1200, 1200, "scale", true, true)
+        : room.getAvatarUrl("https://matrix.org", 1200, 1200, "scale", true);
     }
     case "user": {
       const user = client.getUser(id)!;
@@ -54,8 +54,8 @@ export const getAvatarUrl = (
       // bug: avatar doesn't load sometimes since this method returns null for some reason.
       const httpUrl = client.mxcUrlToHttp(
         user.avatarUrl!,
-        120,
-        120,
+        1200,
+        1200,
         "scale",
         true,
       );

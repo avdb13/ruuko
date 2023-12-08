@@ -42,7 +42,7 @@ export const DirectAvatar = ({
   return (
     <img
       src={
-        url ? client.mxcUrlToHttp(url, 120, 120, "scale", true) ||
+        url ? client.mxcUrlToHttp(url, 1200, 1200, "scale", true) ||
         "/public/anonymous.jpg" : "/public/anonymous.jpg"
       }
       className={

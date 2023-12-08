@@ -4,7 +4,7 @@ import {
   MatrixEvent,
   RelationType,
 } from "matrix-js-sdk";
-import Message, { MessageFrame } from "./Message";
+import Message, { MessageFrame, StateFrame } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
@@ -154,6 +154,16 @@ const TimeLine = ({ events }: { events: MatrixEvent[] }) => {
   return sortByTimestamp(filteredEvents["regular"]!).map((list) => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;
     const displayName = firstEvent.getContent().displayname;
+
+    if (list.length === 1 && firstEvent.getType() !== EventType.RoomMessage) {
+      return (
+        <StateFrame
+          userId={firstEvent.getSender()!}
+        >
+          {list.map((id) => eventRecord[id]!)}
+        </StateFrame>
+      );
+    }
 
     return (
       <MessageFrame

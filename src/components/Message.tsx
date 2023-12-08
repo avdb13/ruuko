@@ -160,14 +160,19 @@ const Annotations = ({
     return null;
   }
 
-  return Object.entries(annotations).map(([annotation, annotators]) => (
+  return (
+    <div className="inline-flex justify-self-start">
+    {Object.entries(annotations).map(([annotation, annotators]) => (
     <Annotation
       key={annotation}
       annotation={annotation}
       annotators={annotators}
       reply_id={reply_id}
     />
-  ));
+  ))
+    }
+    </div>
+  );
 };
 
 const RedactionEvent = ({ event }: { event: MatrixEvent }) => {
