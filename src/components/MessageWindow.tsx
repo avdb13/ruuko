@@ -118,28 +118,47 @@ const MessageWindow = () => {
 const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
-  const isSpecialEvent = (e: MatrixEvent) =>
-    e.getRelation() ||
-    e.getRedactionEvent() ||
-    // EventType.RoomRedaction === e.getType() ||
-    EventType.Reaction === e.getType();
-
   const filteredEvents = events.reduce(
-    (init, e) =>
-      isSpecialEvent(e)
-        ? { ...init, ["others"]: [...(init["others"] ?? []), e] }
-        : { ...init, ["regular"]: [...(init["regular"] ?? []), e] },
-    { others: [], regular: [] } as Record<string, MatrixEvent[]>,
+    (init, e) => {
+      switch (e.getType()) {
+        case EventType.Reaction:
+          return {
+            ...init,
+            [EventType.Reaction]: [...init[EventType.Reaction]!, e],
+          };
+        case EventType.RoomRedaction:
+          return {
+            ...init,
+            [EventType.RoomRedaction]: [...init[EventType.RoomRedaction]!, e],
+          };
+        default:
+          return e.getRelation()?.rel_type === RelationType.Replace
+            ? {
+                ...init,
+                [RelationType.Replace]: [
+                  ...init[RelationType.Replace]!,
+                  e,
+                ],
+              }
+            : { ...init, ["rest"]: [...init["rest"]!, e] };
+      }
+    },
+    {
+      [EventType.Reaction]: [],
+      [EventType.RoomRedaction]: [],
+      [RelationType.Replace]: [],
+      ["rest"]: [],
+    } as Record<string, MatrixEvent[]>,
   );
 
-  const allAnnotations = getAnnotations(filteredEvents["others"]!);
-  const allReplacements = getReplacements(filteredEvents["others"]!);
-  const allRedactions = getRedactions(filteredEvents["others"]!);
+  const allAnnotations = getAnnotations(filteredEvents[EventType.Reaction]!);
+  const allReplacements = getReplacements(filteredEvents[RelationType.Replace]!);
+  const allRedactions = getRedactions(filteredEvents[EventType.RoomRedaction]!);
 
-  const sortedEvents = sortByTimestamp(filteredEvents["regular"]!);
+  const sortedEvents = sortByTimestamp(filteredEvents["rest"]!);
 
   // return reply + event + annotations
-  const eventRecord = filteredEvents["regular"]!.reduce(
+  const eventRecord = filteredEvents["rest"]!.reduce(
     (init, event) => ({
       ...init,
       [event.getId()!]: (
@@ -158,7 +177,10 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;
     const displayName = firstEvent.getContent().displayname;
 
-    const previous = i !== 0 ? currentRoom!.findEventById(sortedEvents[i-1]?.[0] || "") : null;
+    const previous =
+      i !== 0
+        ? currentRoom!.findEventById(sortedEvents[i - 1]?.[0] || "") ?? null
+        : null;
 
     if (list.length === 1 && firstEvent.getType() !== EventType.RoomMessage) {
       return (
@@ -190,17 +212,22 @@ const isDifferentDay = (previous: MatrixEvent, current: MatrixEvent) => {
   const previousDate = new Date(previous.getTs());
   const date = new Date(current.getTs());
 
-  console.log(date.getDate(), previousDate.getDate())
   return date.getDate() !== previousDate.getDate();
-}
+};
 
-const DayBreak = ({ previous, current }: {previous: MatrixEvent | null, current: MatrixEvent}) => {
+const DayBreak = ({
+  previous,
+  current,
+}: {
+  previous: MatrixEvent | null;
+  current: MatrixEvent;
+}) => {
   if (!previous || !isDifferentDay(previous, current)) {
     return null;
   }
 
   return <DateMessage date={new Date(current.getTs())} />;
-}
+};
 
 const TitleBar = ({
   roomName,

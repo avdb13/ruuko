@@ -7,10 +7,7 @@ import {
 import { AvatarType } from "../components/Avatar";
 import { Annotator } from "../components/chips/Annotation";
 
-export const extractAttributes = (
-  s: string,
-  attributes: Array<string>,
-) =>
+export const extractAttributes = (s: string, attributes: Array<string>) =>
   attributes.reduce(
     (init, attr) => {
       const match = s.match(new RegExp(`${attr}s*=s*"(.+?)"`));
@@ -45,7 +42,14 @@ export const getAvatarUrl = (
         ? room
             .getMembers()
             .find((member) => member.userId !== client.getUserId())
-            ?.getAvatarUrl("https://matrix.org", 1200, 1200, "scale", true, true)
+            ?.getAvatarUrl(
+              "https://matrix.org",
+              1200,
+              1200,
+              "scale",
+              true,
+              true,
+            )
         : room.getAvatarUrl("https://matrix.org", 1200, 1200, "scale", true);
     }
     case "user": {
@@ -93,10 +97,8 @@ const toAnnotation = (e: MatrixEvent) => {
     : null;
 };
 
-export const getAnnotations = (events: MatrixEvent[]) => {
-  const reactions = events.filter((e) => e.getType() === EventType.Reaction);
-
-  return reactions.reduce(
+export const getAnnotations = (events: MatrixEvent[]) =>
+  events.reduce(
     (init, e) => {
       const annotation = toAnnotation(e);
 
@@ -116,19 +118,13 @@ export const getAnnotations = (events: MatrixEvent[]) => {
     },
     {} as Record<string, Record<string, Annotator[]>>,
   );
-};
 
-export const getReplacements = (events: MatrixEvent[]) => {
-  const replacements = events.filter(
-    (e) => e.getRelation()?.rel_type === RelationType.Replace ?? false,
-  );
-
-  return replacements.reduce(
+export const getReplacements = (events: MatrixEvent[]) =>
+  events.reduce(
     (init, e) => {
-      const replacement = e.getRelation()?.rel_type === RelationType.Replace;
       const target_id = e.getRelation()?.event_id;
 
-      if (!(replacement && target_id)) {
+      if (!target_id) {
         return init;
       }
 
@@ -139,18 +135,15 @@ export const getReplacements = (events: MatrixEvent[]) => {
     },
     {} as Record<string, MatrixEvent[]>,
   );
-};
 
 export const getRedactions = (events: MatrixEvent[]) =>
-  events
-    .filter((e) => e.getType() === EventType.RoomRedaction)
-    .reduce(
-      (init, e) => ({
-        ...init,
-        [e.getContent().redacts as string]: e,
-      }),
-      {} as Record<string, MatrixEvent>,
-    );
+  events.reduce(
+    (init, e) => ({
+      ...init,
+      [e.getContent().redacts as string]: e,
+    }),
+    {} as Record<string, MatrixEvent>,
+  );
 
 export const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
   ids.reduce(

@@ -82,7 +82,6 @@ const Event = ({
       return (
         <RoomEvent
           event={event}
-          replacements={replacements}
           redaction={redaction}
         />
       );
@@ -162,15 +161,14 @@ const Annotations = ({
 
   return (
     <div className="inline-flex justify-self-start">
-    {Object.entries(annotations).map(([annotation, annotators]) => (
-    <Annotation
-      key={annotation}
-      annotation={annotation}
-      annotators={annotators}
-      reply_id={reply_id}
-    />
-  ))
-    }
+      {Object.entries(annotations).map(([annotation, annotators]) => (
+        <Annotation
+          key={annotation}
+          annotation={annotation}
+          annotators={annotators}
+          reply_id={reply_id}
+        />
+      ))}
     </div>
   );
 };
@@ -218,6 +216,7 @@ type HistoryHandle = {
 
 const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
   (props, historyRef) => {
+    console.log(props);
     const { original, replacements } = props;
 
     const current = replacements.slice(-1)[0]!;
@@ -228,11 +227,12 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
       setShowHistory,
     }));
 
+    console.log([original, ...replacements.slice(-1)].map(e => e.getContent()))
     return (
       <>
         {showHistory ? (
-          <ul>
-            {[original, ...replacements.slice(-1)].map((e) => (
+          <ul className="bg-green-200 shadow-md p-2">
+            {[...replacements.slice(-1), original].map((e) => (
               <RoomEvent key={e.getId()!} event={e} />
             ))}
           </ul>
@@ -278,10 +278,7 @@ const RoomEvent = ({
 
       return (
         <p className="whitespace-normal break-all">
-          <span className="italic text-gray-600">{event.getId()}</span> <br />{" "}
-          {replacements
-            ? (content.body as string).split("\n\n")[1]
-            : content.body}{" "}
+          {content.body}
         </p>
       );
     }
@@ -401,7 +398,9 @@ export const DateMessage = ({ date }: { date: Date }) => {
     <div className="py-4 border-b-2 border-black">
       <li className="flex content-center justify-center gap-2">
         <div className="w-full h-[2px] translate-y-[500%] bg-black" />
-        <p className="whitespace-nowrap px-2">{date.toLocaleDateString("en-US")}</p>
+        <p className="whitespace-nowrap px-2">
+          {date.toLocaleDateString("en-US")}
+        </p>
         <div className="w-full h-[2px] translate-y-[500%] bg-black" />
       </li>
     </div>
@@ -548,7 +547,5 @@ const formatMembership = (event: MatrixEvent) => {
       return null;
   }
 };
-
-
 
 export default Message;
