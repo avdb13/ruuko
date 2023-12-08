@@ -10,6 +10,7 @@ import {
   PropsWithChildren,
   forwardRef,
   useContext,
+  useId,
   useImperativeHandle,
   useRef,
   useState,
@@ -56,15 +57,22 @@ const Event = ({
     case EventType.RoomMessage:
       if (replacements) {
         const historyButton = (
-          <button
-            onClick={() =>
-              historyRef.current?.setShowHistory(
-                !historyRef.current.showHistory,
-              )
-            }
-          >
-            (edited)
-          </button>
+          <>
+            <input
+            id={event.getId()!}
+            type="checkbox"
+            className="fixed opacity-0"
+              onClick={() =>
+                historyRef.current?.setShowHistory(
+                  !historyRef.current.showHistory,
+                )
+              }
+            >
+            </input>
+            <label className="text-gray-600 hover:text-gray-900 duration-300" htmlFor={event.getId()!}>
+              (edited)
+            </label>
+          </>
         );
 
         return (
@@ -216,8 +224,8 @@ type HistoryHandle = {
 
 const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
   (props, historyRef) => {
-    console.log(props);
     const { original, replacements } = props;
+    console.log(replacements.length, replacements.map(e => e.getContent()));
 
     const current = replacements.slice(-1)[0]!;
     const [showHistory, setShowHistory] = useState(false);
@@ -227,17 +235,19 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
       setShowHistory,
     }));
 
-    console.log([original, ...replacements.slice(-1)].map(e => e.getContent()))
     return (
       <>
         {showHistory ? (
-          <ul className="bg-green-200 shadow-md p-2">
-            {[...replacements.slice(-1), original].map((e) => (
-              <RoomEvent key={e.getId()!} event={e} />
+          <ul className={`bg-green-200 shadow-md p-2 opacity-0 [&>li:nth-child(n+2)]:mt-10] duration-300`}>
+            {[original, ...replacements.length > 1 ? replacements.slice(-1) : []].map((e, i) => (
+              i === 0 ?
+              <RoomEvent key={e.getId()!} event={e} originalContent />
+              :
+              <RoomEvent key={e.getId()!} event={e} replacement />
             ))}
           </ul>
         ) : null}
-        <RoomEvent event={current} />
+        <RoomEvent event={current} replacement />
       </>
     );
   },
@@ -245,15 +255,15 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
 
 const RoomEvent = ({
   event,
-  replacements,
-  redaction,
+  replacement = false,
+  originalContent = false,
 }: {
   event: MatrixEvent;
-  replacements?: MatrixEvent[];
-  redaction?: MatrixEvent;
+  replacement?: boolean;
+  originalContent?: boolean;
 }) => {
   const client = useContext(ClientContext);
-  const content = event.getContent();
+  const content = originalContent ? event.getOriginalContent() : event.getContent();
 
   switch (content.msgtype) {
     case MsgType.Text: {
@@ -276,9 +286,10 @@ const RoomEvent = ({
         );
       }
 
+      // check later if we can also change the event type with edits
       return (
         <p className="whitespace-normal break-all">
-          {content.body}
+          {replacement ? content["m.new_content"]?.body : content.body}
         </p>
       );
     }
