@@ -3,11 +3,7 @@ import { useCookies } from "react-cookie";
 import axios from "axios";
 import matrix, { Credentials } from "../lib/matrix";
 import ArrowIcon from "./icons/Arrow";
-import CrossIcon from "./icons/Cross";
-import OfflineIcon from "./icons/Offline";
-import Alert from "./Alert";
-
-type baseUrlState = "disconnected" | "valid" | "invalid";
+import Alert, { IconType } from "./Alert";
 
 // TODO: make sure we get logged out when the token is invalid
 
@@ -15,7 +11,7 @@ const Login = () => {
   const [credentials, setCredentials] = useState<Credentials>(
     {} as Credentials,
   );
-  const [error, setError] = useState<string | null>(
+  const [error, setError] = useState<{message: string, icon: IconType } | null>(
     null
   );
 
@@ -66,6 +62,7 @@ const Login = () => {
           <ServerForm
             credentials={credentials}
             setCredentials={setCredentials}
+            setError={setError}
           />
         )}
       </div>
@@ -80,7 +77,7 @@ const FinalForm = ({
 }: {
   credentials: Credentials;
   setCredentials: (_: Credentials) => void;
-  setError: (_: string | null) => void;
+  setError: (_: {message: string, icon: IconType} | null) => void;
 }) => {
   const [_cookies, setCookie] = useCookies(["session"]);
 
@@ -99,7 +96,7 @@ const FinalForm = ({
           username: usernameRef.current.value,
         })
         .then((session) => setCookie("session", session, { path: "/" }))
-        .catch(e => setError(e instanceof Error ? e.message : "an unknown error happened"))
+        .catch(e => setError({message: e instanceof Error ? e.message : "an unknown error happened", icon: "warning"}))
       ;
     }
   };
@@ -136,16 +133,19 @@ const FinalForm = ({
 const ServerForm = ({
   credentials,
   setCredentials,
+  setError,
 }: {
   credentials: Credentials;
   setCredentials: (_: Credentials) => void;
+  setError: (_:{message: string, icon: IconType} | null) => void;
 }) => {
   const [baseUrl, setServer] = useState("");
-  const [state, setState] = useState<baseUrlState | null>(null);
+  const [ok, setOk] = useState<boolean>(false);
 
   const testServer = async () => {
     if (!window.navigator.onLine) {
-      return "disconnected";
+      setError({message: "you appear to be disconnected", icon: "disconnected"});
+      return false;
     }
 
     try {
@@ -153,7 +153,8 @@ const ServerForm = ({
         timeout: 2000,
       });
     } catch (e) {
-      return "disconnected";
+      setError({message: "you appear to be disconnected", icon: "disconnected"});
+      return false;
     }
 
     try {
@@ -165,18 +166,20 @@ const ServerForm = ({
       );
 
       if (resp.status === 200) {
-        return "valid";
+        return true;
       }
     } catch (e) {}
 
+    setError({message: "please specify a valid server URL", icon: "disconnected"});
     return "invalid";
   };
 
   const handleClick = async () => {
     const status = await testServer();
-    setState(status);
 
-    if (status === "valid") {
+    if (status) {
+      setOk(true);
+
       setTimeout(() => {
         setCredentials({
           ...credentials,
@@ -191,7 +194,7 @@ const ServerForm = ({
   return (
     <form
       className={`server-form duration-300 transition-all ease-out basis-80 border-b-4 border-gray-400 bg-blue-50 p-2 rounded-md shadow-xl flex justify-center gap-2 z-10 ${
-        state === "valid"
+        ok
           ? "scale-50 blur-[4px] opacity-0"
           : "scale-1 blur-0 opacity-100"
       }`}
@@ -207,23 +210,10 @@ const ServerForm = ({
       />
       <button
         type="submit"
-        title={`${state ? state : "next"}`}
         onClick={handleClick}
-        className={`group rounded-md basis-16 bg-white border-4 shadow-md flex justify-center items-center duration-300 transition-all ${
-          state && state !== "valid"
-            ? "border-red-300 hover:border-red-500"
-            : "border-gray-300 hover:border-gray-500"
-        }`}
+        className={`border-gray-300 hover:border-gray-500 group rounded-md basis-16 bg-white border-4 shadow-md flex justify-center items-center duration-300 transition-all`}
       >
-        {!state ? (
-          <ArrowIcon class="duration-300 transition-all text-gray-300 group-hover:text-gray-500 fill-current" />
-        ) : null}
-        {state === "invalid" ? (
-          <CrossIcon class="duration-300 transition-all text-red-300 group-hover:text-red-500 fill-current" />
-        ) : null}
-        {state === "disconnected" ? (
-          <OfflineIcon class="duration-300 transition-all text-red-300 group-hover:text-red-500 fill-current" />
-        ) : null}
+        <ArrowIcon class="duration-300 transition-all text-gray-300 group-hover:text-gray-500 fill-current" />
       </button>
     </form>
   );
