@@ -14,6 +14,7 @@ import {
   useEffect,
   useId,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -93,14 +94,14 @@ const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent, setEditing
       <div className="group-hover:bg-green-200 duration-100 py-[2px] px-[8px]">
         {props.children}
       </div>
-      <div className="border-2 border-zinc-400 flex gap-4 p-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
+      <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
         <button title="edit">
           <EditIcon className="scale-75" onClick={handleEdit} />
         </button>
         <button title="reply" onClick={handleReply}>
           <ReplyIcon className="scale-75" />
         </button>
-        <button title="copy">
+        <button title="copy" onClick={() => {}}>
           <CopyIcon className="scale-75" />
         </button>
       </div>
@@ -449,6 +450,7 @@ export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
 
 export const ReplaceWindow = (props: MessageFrameProps & {event: MatrixEvent, setEditing: (_: boolean) => void}) => {
   const content = props.event.getContent();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [newBody, setNewBody] = useState(content.body);
 
   const handleSubmit = (e: React.SyntheticEvent) => {
@@ -458,8 +460,15 @@ export const ReplaceWindow = (props: MessageFrameProps & {event: MatrixEvent, se
     props.setEditing(false);
   }
 
+  useLayoutEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "inherit";
+      textareaRef.current.style.height = Math.max(textareaRef.current.scrollHeight, 24) + "px";
+    }
+  }, [newBody])
+
   return (
-    <div className="p-2 border-x-2 border-b-2 border-black w-full">
+    <div className="relative -translate-x-[80px] p-2 w-full">
       <div className="flex content-center gap-2">
         <Avatar id={props.userId} type="user" size={16} />
         <div className="flex flex-col gap-2 w-full">
@@ -472,7 +481,7 @@ export const ReplaceWindow = (props: MessageFrameProps & {event: MatrixEvent, se
             </p>
           </div>
           <form onSubmit={handleSubmit}>
-            <textarea onChange={(e) => setNewBody(e.target.value)} value={newBody} />
+            <textarea ref={textareaRef} className="resize-none outline-none min-h-[24px] w-full" rows={1} onChange={(e) => setNewBody(e.target.value)} value={newBody} />
             <div className="flex gap-2">
               <button onClick={() => props.setEditing(false)} type="button">cancel</button>
               <button type="submit">save</button>
