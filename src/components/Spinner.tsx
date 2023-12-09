@@ -6,7 +6,6 @@ const Spinner = () => {
   return (
     <>
       <div className="ripple"><div></div><div></div></div>
-      <img src="/logo.png" className="box-border scale-[50%] absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full" id="logo" />
     </>
   );
 };

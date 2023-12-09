@@ -8,6 +8,7 @@ import RoomProvider from "./providers/room.tsx";
 import SettingsProvider from "./providers/settings.tsx";
 import "@matrix-org/olm";
 import Background from "./components/Background.tsx";
+import InputProvider from "./providers/input.tsx";
 
 global.Olm = Olm;
 
@@ -17,9 +18,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ClientProvider>
       <SettingsProvider>
         <RoomProvider>
-          <Background>
-            <App />
-          </Background>
+          <InputProvider>
+            <Background>
+              <App />
+            </Background>
+          </InputProvider>
         </RoomProvider>
       </SettingsProvider>
     </ClientProvider>

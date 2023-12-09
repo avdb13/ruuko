@@ -24,6 +24,7 @@ import Avatar from "./Avatar";
 import EditIcon from "./icons/Edit";
 import ReplyIcon from "./icons/Reply";
 import CopyIcon from "./icons/Copy";
+import { InputContext } from "../providers/input";
 
 const Message = ({
   event,
@@ -42,7 +43,7 @@ const Message = ({
       <span id={event.getId()!} tabIndex={-1} className="peer"></span>
       <Reply relation={event.getContent()["m.relates_to"] ?? null} />
       {event.getType() === EventType.RoomMessage ? (
-        <MessageOptions>
+        <MessageOptions event={event}>
           <Event
             event={event}
             replacements={replacements}
@@ -61,7 +62,18 @@ const Message = ({
   );
 };
 
-const MessageOptions = (props: PropsWithChildren) => {
+// TODO: some buttons are only useful for certain events, i.e. images shouldn't be edited
+const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent}>) => {
+  const { setInReplyTo, setReplace } = useContext(InputContext)!;
+
+  const handleEdit = () => {
+    setReplace(props.event.getId()!);
+  }
+
+  const handleReply = () => {
+    setInReplyTo(props.event.getId()!);
+  }
+
   return (
     <div className="group relative w-full peer-focus:bg-green-200 duration-300 transition-all ease-in-out bg-transparent">
       <div className="group-hover:bg-green-200 duration-100 py-[2px] px-[8px]">
@@ -69,9 +81,9 @@ const MessageOptions = (props: PropsWithChildren) => {
       </div>
       <div className="border-2 border-zinc-400 flex gap-4 p-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
         <button title="edit">
-          <EditIcon className="scale-75" />
+          <EditIcon className="scale-75" onClick={handleEdit} />
         </button>
-        <button title="reply">
+        <button title="reply" onClick={handleReply}>
           <ReplyIcon className="scale-75" />
         </button>
         <button title="copy">

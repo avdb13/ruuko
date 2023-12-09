@@ -11,6 +11,11 @@ import FileIcon from "./icons/File";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import CrossIcon from "./icons/Cross";
 import { RoomContext } from "../providers/room";
+import { InputContext } from "../providers/input";
+import { MsgType } from "matrix-js-sdk";
+import { formatText } from "../lib/helpers";
+import Message from "./Message";
+import CrossNoCircleIcon from "./icons/CrossNoCircle";
 
 const FilePicker = ({
   files,
@@ -62,9 +67,14 @@ const FilePicker = ({
   );
 };
 
+// export interface
+
 const InputBar = ({ roomId }: { roomId: string }) => {
   const client = useContext(ClientContext);
-  const {currentRoom} = useContext(RoomContext)!;
+  const { currentRoom } = useContext(RoomContext)!;
+  const { inReplyTo, setInReplyTo } = useContext(InputContext)!;
+
+  const replyEvent = currentRoom?.findEventById(inReplyTo || "") ?? null;
 
   const [message, setMessage] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
@@ -73,7 +83,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
 
     if (files) {
       Promise.all([...files.map((f) => client.uploadContent(f))]).then(
@@ -86,6 +95,19 @@ const InputBar = ({ roomId }: { roomId: string }) => {
           setFiles(null);
         },
       );
+
+    // image replies are possible, careful
+    } else if (replyEvent) {
+      const member = currentRoom?.getMember(client.getUserId()!);
+
+      const content = {
+        msgtype: MsgType.Text,
+        avatar_url: member?.getMxcAvatarUrl(),
+        displayname: member?.rawDisplayName,
+        ["m.relates_to"]: { ["m.in_reply_to"]: {event_id: inReplyTo || undefined} },
+      };
+      client.sendMessage(roomId, content);
+      setInReplyTo(null);
     } else {
       client.sendTextMessage(roomId, message);
     }
@@ -95,14 +117,30 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   };
 
   const removeFile = (name: string) => {
-    setFiles(files ? files.filter(f => f.name !== name) : null) 
-  }
+    setFiles(files ? files.filter((f) => f.name !== name) : null);
+  };
   return (
     <>
-      {files ? (
-        files.map(file => <FilePreview file={file} removeFile={removeFile} />)
-      ) : null}
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 sticky h-12 mx-2 border-2">
+      {replyEvent ? (
+        <div className="p-2">
+          <div className="flex pb-2 justify-between border-dashed border-b-2">
+            <h1 className="pl-4">replying to <strong>{replyEvent.getContent().displayname || replyEvent.getSender()!}</strong></h1>
+            <button onClick={() => setInReplyTo(null)}><CrossNoCircleIcon className="scale-75" /></button>
+          </div>
+          <div className="pointer-events-none pt-2">
+            <Message event={replyEvent} />
+          </div>
+        </div>
+      ): null}
+      {files
+        ? files.map((file) => (
+            <FilePreview file={file} removeFile={removeFile} />
+          ))
+        : null}
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 sticky h-12 mx-2 border-2"
+      >
         <FilePicker files={files} setFiles={setFiles} />
         <div className="flex bg-green-200 grow rounded-md my-2 py-1">
           <input
@@ -113,11 +151,15 @@ const InputBar = ({ roomId }: { roomId: string }) => {
             value={message}
           />
           <span className="relative flex justify-center items-center basis-8">
-            <button className="peer" type="button" onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShowEmojis(!showEmojis);
-            }}>
+            <button
+              className="peer"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowEmojis(!showEmojis);
+              }}
+            >
               😺
             </button>
             <div className="absolute right-[0%] bottom-[100%]  translate-x-0 duration-300 ease-out">
@@ -137,22 +179,33 @@ const InputBar = ({ roomId }: { roomId: string }) => {
       </form>
     </>
   );
-            // peer-active:translate-y-[10%] peer-active:opacity-0 opacity-100
+  // peer-active:translate-y-[10%] peer-active:opacity-0 opacity-100
 };
 
-const FilePreview = ({ file, removeFile }: { file: File, removeFile: (_: string) => void }) => {
+const FilePreview = ({
+  file,
+  removeFile,
+}: {
+  file: File;
+  removeFile: (_: string) => void;
+}) => {
   // figure out how to truncate in the middle later
   const fileName = file.name.split(".");
 
   return (
     <div className="relative box-border flex flex-col justify-center w-48 h-48 border-2 p-2 m-4">
-      <button className="absolute -top-[12px] -right-[12px] text-sm font-bold bg-red-400 rounded-full" onClick={() => removeFile(file.name)}><CrossIcon /></button>
+      <button
+        className="absolute -top-[12px] -right-[12px] text-sm font-bold bg-red-400 rounded-full"
+        onClick={() => removeFile(file.name)}
+      >
+        <CrossIcon />
+      </button>
       <div className="flex items-center grow">
         <img src={URL.createObjectURL(file)} />
       </div>
       <p className="truncate">{file.name}</p>
     </div>
-  )
-}
+  );
+};
 
 export default InputBar;
