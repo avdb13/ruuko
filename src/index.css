@@ -81,20 +81,27 @@
     height: 300px;
   }
 
-  #server-input {
-    animation: server-input 1s cubic-bezier(0, 0.5, 0.25, 1);
+  .server-form {
+    animation: grow 1s cubic-bezier(0, 0.5, 0.25, 1);
+  }
+  .final-form {
+    animation: shrink 1s cubic-bezier(0, 0.5, 0.25, 1);
   }
 
-  #filler {
-    animation: opacity 2s cubic-bezier(0, 0, 0.25, 1);
-    opacity: 0;
+  .alert {
+    animation: fly 1s cubic-bezier(0, 0.5, 0.25, 1);
   }
 
-  @keyframes server-input {
+  .fade {
+    animation: opacity 2s cubic-bezier(0, 0.5, 0.25, 1);
+    opacity: 100%;
+  }
+
+  @keyframes grow {
     0% {
       filter: blur(4px);
       opacity: 0;
-      scale: 0.75;
+      scale: 0.5;
     }
     100% {
       filter: blur(0px);
@@ -103,12 +110,36 @@
     }
   }
 
-  @keyframes opacity {
+  @keyframes shrink {
     0% {
-      opacity: 100%;
+      filter: blur(4px);
+      opacity: 0.5;
+      scale: 1.5;
     }
     100% {
+      filter: blur(0px);
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
+  @keyframes fly {
+    0% {
+      bottom: 20px;
+      opacity: 0.5;
+    }
+    100% {
+      bottom: 0px;
+      opacity: 1;
+    }
+  }
+
+  @keyframes opacity {
+    0% {
       opacity: 0;
+    }
+    100% {
+      opacity: 100%;
     }
   }
 }

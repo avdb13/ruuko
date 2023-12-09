@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import axios from "axios";
 import matrix, { Credentials } from "../lib/matrix";
 import ArrowIcon from "./icons/Arrow";
 import CrossIcon from "./icons/Cross";
 import OfflineIcon from "./icons/Offline";
+import Alert from "./Alert";
 
 type baseUrlState = "disconnected" | "valid" | "invalid";
 
@@ -14,9 +15,13 @@ const Login = () => {
   const [credentials, setCredentials] = useState<Credentials>(
     {} as Credentials,
   );
+  const [error, setError] = useState<string | null>(
+    null
+  );
 
   return (
-    <div className="h-max w-max bg-[#222] overflow-hidden">
+    <div className="relative h-max w-max bg-[#222] fade overflow-hidden">
+      <Alert error={error} setError={setError} />
       <div
         className="chip"
         style={{
@@ -49,16 +54,21 @@ const Login = () => {
           width: "100%",
         }}
       ></div>
-      <div
-        id="filler"
-        className="absolute inset-0 h-full w-full bg-[#222]"
-      ></div>
 
-      {credentials.baseUrl ? (
-        <FinalForm credentials={credentials} setCredentials={setCredentials} />
-      ) : (
-        <ServerForm credentials={credentials} setCredentials={setCredentials} />
-      )}
+      <div className="flex justify-center items-center h-screen w-screen duration-300">
+        {credentials.baseUrl ? (
+          <FinalForm
+            credentials={credentials}
+            setCredentials={setCredentials}
+            setError={setError}
+          />
+        ) : (
+          <ServerForm
+            credentials={credentials}
+            setCredentials={setCredentials}
+          />
+        )}
+      </div>
     </div>
   );
 };
@@ -66,60 +76,58 @@ const Login = () => {
 const FinalForm = ({
   credentials,
   setCredentials,
+  setError,
 }: {
   credentials: Credentials;
   setCredentials: (_: Credentials) => void;
+  setError: (_: string | null) => void;
 }) => {
   const [_cookies, setCookie] = useCookies(["session"]);
 
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
+  const handleSubmit = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (passwordRef.current && usernameRef.current) {
+      matrix
+        .login({
+          baseUrl: credentials.baseUrl,
+          password: passwordRef.current.value,
+          username: usernameRef.current.value,
+        })
+        .then((session) => setCookie("session", session, { path: "/" }))
+        .catch(e => setError(e instanceof Error ? e.message : "an unknown error happened"))
+      ;
+    }
+  };
+
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (passwordRef.current && usernameRef.current) {
-          matrix
-            .login({
-              baseUrl: credentials.baseUrl,
-              password: passwordRef.current.value,
-              username: usernameRef.current.value,
-            })
-            .then((session) => setCookie("session", session, { path: "/" }));
-        }
-      }}
-      className="bg-transparent basis-72 flex flex-col justify-center items-center gap-1 h-screen w-screen opacity-0 -delay-500 duration-300 transition-all"
+      onSubmit={handleSubmit}
+      className="final-form gap-2 p-2 bg-blue-50 border-b-4 border-gray-500 shadow-xl rounded-md basis-80 flex flex-col justify-center items-center gap-1 duration-300 transition-all z-10"
     >
-      <div>
-        <label className="px-2 w-full text-sm text-gray-500 font-semibold">
-          username
-        </label>
-        <input
-          className="duration-300 placeholder:opacity-0 transition-all w-full basis-4 border-4 border-gray-400 focus:outline-none focus:border-4 focus:border-gray-500 rounded-md p-2 shadow-md"
-          placeholder="disconnected"
-          type="text"
-          ref={usernameRef}
-        />
-      </div>
-      <div>
-        <label className="px-2 w-full text-sm text-gray-500 font-semibold">
-          password
-        </label>
-        <input
-          className="duration-300 placeholder:opacity-0 transition-all w-full basis-4 border-4 border-gray-400 focus:outline-none focus:border-4 focus:border-gray-500 rounded-md p-2 shadow-md"
-          type="password"
-          ref={passwordRef}
-        />
-      </div>
-      <button type="submit" className="invisible"></button>
+      <input
+        className="placeholder:font-semibold w-full border-4 basis-8 border-gray-300 focus:border-gray-500 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
+        placeholder={`username (bob:${credentials.baseUrl.substring(
+          "https://".length,
+        )})`}
+        type="text"
+        ref={usernameRef}
+      />
+      <input
+        placeholder="password"
+        className="placeholder:font-semibold w-full border-4 basis-8 border-gray-300 focus:border-gray-500 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
+        type="password"
+        ref={passwordRef}
+      />
       <button
-        type="button"
-        className="w-24 font-bold text-white shadow-md my-2 py-2 rounded-md bg-gray-400"
-        onClick={() => setCredentials({} as Credentials)}
+        type="submit"
+        className="duration-300 transition-all group hover:border-gray-500 flex justify-center w-full shadow-md basis-8 p-2 mt-2 shadow-md border-4 border-gray-300 rounded-md bg-white"
       >
-        back
+        <ArrowIcon class="duration-300 transition-all text-red-500 group-hover:text-gray-500 fill-current" />
       </button>
     </form>
   );
@@ -134,17 +142,16 @@ const ServerForm = ({
 }) => {
   const [baseUrl, setServer] = useState("");
   const [state, setState] = useState<baseUrlState | null>(null);
-  const baseUrlRef = useRef<HTMLInputElement>(null);
 
   const testServer = async () => {
-    console.log(baseUrl);
-
     if (!window.navigator.onLine) {
       return "disconnected";
     }
 
     try {
-      await axios.get(`https://matrix.org/_matrix/client/versions`);
+      await axios.get(`https://matrix.org/_matrix/client/versions`, {
+        timeout: 2000,
+      });
     } catch (e) {
       return "disconnected";
     }
@@ -154,6 +161,7 @@ const ServerForm = ({
         baseUrl.startsWith("https://")
           ? baseUrl + "/_matrix/client/versions"
           : "https://" + baseUrl + "/_matrix/client/versions",
+        { timeout: 2000 },
       );
 
       if (resp.status === 200) {
@@ -170,53 +178,54 @@ const ServerForm = ({
 
     if (status === "valid") {
       setTimeout(() => {
-        baseUrlRef.current?.click();
         setCredentials({
           ...credentials,
           baseUrl: baseUrl.startsWith("https://")
             ? baseUrl
             : `https://${baseUrl}`,
         });
-      }, 500);
+      }, 300);
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen w-screen duration-300">
-      <div
-        className="relative basis-80 border-b-4 border-gray-400 bg-blue-50 p-2 rounded-md shadow-xl flex justify-center gap-2"
-        id="server-input"
+    <form
+      className={`server-form duration-300 transition-all ease-out basis-80 border-b-4 border-gray-400 bg-blue-50 p-2 rounded-md shadow-xl flex justify-center gap-2 z-10 ${
+        state === "valid"
+          ? "scale-50 blur-[4px] opacity-0"
+          : "scale-1 blur-0 opacity-100"
+      }`}
+      onSubmit={(e) => e.preventDefault()}
+    >
+      <input
+        placeholder="server"
+        className="placeholder:font-semibold w-full border-4 text-gray-600 border-gray-300 focus:border-gray-500 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
+        type="text"
+        pattern="(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?"
+        value={baseUrl}
+        onChange={(e) => setServer(e.target.value)}
+      />
+      <button
+        type="submit"
+        title={`${state ? state : "next"}`}
+        onClick={handleClick}
+        className={`group rounded-md basis-16 bg-white border-4 shadow-md flex justify-center items-center duration-300 transition-all ${
+          state && state !== "valid"
+            ? "border-red-300 hover:border-red-500"
+            : "border-gray-300 hover:border-gray-500"
+        }`}
       >
-        <input
-          placeholder="server"
-          className="placeholder:opacity-100 placeholder:font-semibold w-full border-4 border-gray-300 focus:border-gray-500 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
-          type="text"
-          pattern="(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?"
-          ref={baseUrlRef}
-          value={baseUrl}
-          onChange={(e) => setServer(e.target.value)}
-        />
-        <button
-          title={`${state ? state : "next"}`}
-          onClick={handleClick}
-          className={`group rounded-md basis-16 bg-white border-4 shadow-md flex justify-center items-center duration-300 transition-all ${
-            state && state !== "valid"
-              ? "border-red-300 hover:border-red-500"
-              : "border-gray-300 hover:border-gray-500"
-          }`}
-        >
-          {!state ? (
-            <ArrowIcon class="duration-300 transition-all text-gray-300 group-hover:text-gray-500 fill-current" />
-          ) : null}
-          {state === "invalid" ? (
-            <CrossIcon class="duration-300 transition-all text-red-300 group-hover:text-red-500 fill-current" />
-          ) : null}
-          {state === "disconnected" ? (
-            <OfflineIcon class="duration-300 transition-all text-red-300 group-hover:text-red-500 fill-current" />
-          ) : null}
-        </button>
-      </div>
-    </div>
+        {!state ? (
+          <ArrowIcon class="duration-300 transition-all text-gray-300 group-hover:text-gray-500 fill-current" />
+        ) : null}
+        {state === "invalid" ? (
+          <CrossIcon class="duration-300 transition-all text-red-300 group-hover:text-red-500 fill-current" />
+        ) : null}
+        {state === "disconnected" ? (
+          <OfflineIcon class="duration-300 transition-all text-red-300 group-hover:text-red-500 fill-current" />
+        ) : null}
+      </button>
+    </form>
   );
 };
 
