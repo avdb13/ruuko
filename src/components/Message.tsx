@@ -37,25 +37,38 @@ const Message = ({
   replacements?: MatrixEvent[];
   redaction?: MatrixEvent;
 }) => {
+  if (event.getType() !== EventType.RoomMessage) {
+    return (
+      <div>
+        <span id={event.getId()!} tabIndex={-1} className="peer"></span>
+        <Reply relation={event.getContent()["m.relates_to"] ?? null} />
+        <Event
+          event={event}
+          replacements={replacements}
+          redaction={redaction}
+        />
+        <Annotations annotations={annotations} reply_id={event.getId()!} />
+      </div>
+    );
+  }
+
+  const [editing, setEditing] = useState(false);
+
   return (
     // flash message on click
     <div>
       <span id={event.getId()!} tabIndex={-1} className="peer"></span>
       <Reply relation={event.getContent()["m.relates_to"] ?? null} />
-      {event.getType() === EventType.RoomMessage ? (
-        <MessageOptions event={event}>
+      {editing ? (
+        <ReplaceWindow setEditing={setEditing} userId={event.getSender()!} timestamp={event.getTs()} event={event} />
+      ) : (
+        <MessageOptions setEditing={setEditing} event={event}>
           <Event
             event={event}
             replacements={replacements}
             redaction={redaction}
           />
         </MessageOptions>
-      ): (
-          <Event
-            event={event}
-            replacements={replacements}
-            redaction={redaction}
-          />
       )}
       <Annotations annotations={annotations} reply_id={event.getId()!} />
     </div>
@@ -63,11 +76,12 @@ const Message = ({
 };
 
 // TODO: some buttons are only useful for certain events, i.e. images shouldn't be edited
-const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent}>) => {
+const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent, setEditing: (_: boolean) => void}>) => {
   const { setInReplyTo, setReplace } = useContext(InputContext)!;
 
   const handleEdit = () => {
     setReplace(props.event.getId()!);
+    props.setEditing(true);
   }
 
   const handleReply = () => {
@@ -432,6 +446,43 @@ export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
     </div>
   </div>
 );
+
+export const ReplaceWindow = (props: MessageFrameProps & {event: MatrixEvent, setEditing: (_: boolean) => void}) => {
+  const content = props.event.getContent();
+  const [newBody, setNewBody] = useState(content.body);
+
+  const handleSubmit = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    // send replacement event ...
+    props.setEditing(false);
+  }
+
+  return (
+    <div className="p-2 border-x-2 border-b-2 border-black w-full">
+      <div className="flex content-center gap-2">
+        <Avatar id={props.userId} type="user" size={16} />
+        <div className="flex flex-col gap-2 w-full">
+          <div className="flex gap-2">
+            <p className="whitespace-normal break-all font-bold">
+              {props.displayName || props.userId}
+            </p>
+            <p className="whitespace-normal break-all">
+              {new Date(props.timestamp).toLocaleString("en-US")}
+            </p>
+          </div>
+          <form onSubmit={handleSubmit}>
+            <textarea onChange={(e) => setNewBody(e.target.value)} value={newBody} />
+            <div className="flex gap-2">
+              <button onClick={() => props.setEditing(false)} type="button">cancel</button>
+              <button type="submit">save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // const Reply = ({
 //   eventId,

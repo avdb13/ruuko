@@ -186,16 +186,17 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
     if (list.length === 1 && firstEvent.getType() !== EventType.RoomMessage) {
       return (
         <>
+          <DayBreak previous={previous} current={firstEvent} />
           <StateFrame userId={firstEvent.getSender()!}>
             {list.map((id) => eventRecord[id]!)}
           </StateFrame>
-          <DayBreak previous={previous} current={firstEvent} />
         </>
       );
     }
 
     return (
       <>
+        <DayBreak previous={previous} current={firstEvent} />
         <MessageFrame
           userId={firstEvent.getSender()!}
           displayName={displayName}
@@ -203,7 +204,6 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
         >
           {list.map((id) => eventRecord[id]!)}
         </MessageFrame>
-        <DayBreak previous={previous} current={firstEvent} />
       </>
     );
   });

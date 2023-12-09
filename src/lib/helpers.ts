@@ -152,7 +152,7 @@ export const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
     {} as Record<string, T>,
   );
 
-export const formatText = (content: IContent) => {
+export const formatText = (content: IContent): string => {
   const inReplyTo = !!content["m.relates_to"]?.["m.in_reply_to"];
   const replacement =
     content["m.relates_to"]?.rel_type === RelationType.Replace;
