@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import axios from "axios";
-import { parse, tldExists } from "tldjs";
 import matrix, { Credentials } from "../lib/matrix";
-import Arrow from "./icons/ArrowBox";
 import ArrowIcon from "./icons/Arrow";
+import CrossIcon from "./icons/Cross";
+import OfflineIcon from "./icons/Offline";
 
-type baseUrlState = "disconnected" | "valid" | "invalid" | "loading";
+type baseUrlState = "disconnected" | "valid" | "invalid";
 
 // TODO: make sure we get logged out when the token is invalid
 
@@ -49,6 +49,10 @@ const Login = () => {
           width: "100%",
         }}
       ></div>
+      <div
+        id="filler"
+        className="absolute inset-0 h-full w-full bg-[#222]"
+      ></div>
 
       {credentials.baseUrl ? (
         <FinalForm credentials={credentials} setCredentials={setCredentials} />
@@ -86,25 +90,25 @@ const FinalForm = ({
             .then((session) => setCookie("session", session, { path: "/" }));
         }
       }}
-    className="bg-transparent basis-72 flex flex-col justify-center items-center gap-1 h-screen w-screen opacity-0 -delay-500 duration-300 transition-all"
+      className="bg-transparent basis-72 flex flex-col justify-center items-center gap-1 h-screen w-screen opacity-0 -delay-500 duration-300 transition-all"
     >
       <div>
-        <label className="px-2 w-full text-sm text-gray-600 font-semibold">
+        <label className="px-2 w-full text-sm text-gray-500 font-semibold">
           username
         </label>
         <input
-          className="duration-300 placeholder:opacity-0 transition-all w-full basis-4 border-4 border-gray-400 focus:outline-none focus:border-4 focus:border-gray-600 rounded-md p-2 shadow-md"
+          className="duration-300 placeholder:opacity-0 transition-all w-full basis-4 border-4 border-gray-400 focus:outline-none focus:border-4 focus:border-gray-500 rounded-md p-2 shadow-md"
           placeholder="disconnected"
           type="text"
           ref={usernameRef}
         />
       </div>
       <div>
-        <label className="px-2 w-full text-sm text-gray-600 font-semibold">
+        <label className="px-2 w-full text-sm text-gray-500 font-semibold">
           password
         </label>
         <input
-          className="duration-300 placeholder:opacity-0 transition-all w-full basis-4 border-4 border-gray-400 focus:outline-none focus:border-4 focus:border-gray-600 rounded-md p-2 shadow-md"
+          className="duration-300 placeholder:opacity-0 transition-all w-full basis-4 border-4 border-gray-400 focus:outline-none focus:border-4 focus:border-gray-500 rounded-md p-2 shadow-md"
           type="password"
           ref={passwordRef}
         />
@@ -133,6 +137,12 @@ const ServerForm = ({
   const baseUrlRef = useRef<HTMLInputElement>(null);
 
   const testServer = async () => {
+    console.log(baseUrl);
+
+    if (!window.navigator.onLine) {
+      return "disconnected";
+    }
+
     try {
       await axios.get(`https://matrix.org/_matrix/client/versions`);
     } catch (e) {
@@ -141,7 +151,9 @@ const ServerForm = ({
 
     try {
       const resp = await axios.get(
-        `https://${baseUrl}/_matrix/client/versions`,
+        baseUrl.startsWith("https://")
+          ? baseUrl + "/_matrix/client/versions"
+          : "https://" + baseUrl + "/_matrix/client/versions",
       );
 
       if (resp.status === 200) {
@@ -152,47 +164,56 @@ const ServerForm = ({
     return "invalid";
   };
 
-  useEffect(() => {
-    const split = baseUrl.split(".");
-    if (split[1] && split[1].length > 1 && tldExists(baseUrl)) {
-      setState("loading");
+  const handleClick = async () => {
+    const status = await testServer();
+    setState(status);
 
-      testServer().then((status) => {
-        setState(status);
-
-        if (status === "valid") {
-          setTimeout(() => {
-            baseUrlRef.current?.click();
-            setCredentials({
-              ...credentials,
-              baseUrl: baseUrl.startsWith("https://")
-                ? baseUrl
-                : `https://${baseUrl}`,
-            });
-          }, 2000);
-        }
-      });
+    if (status === "valid") {
+      setTimeout(() => {
+        baseUrlRef.current?.click();
+        setCredentials({
+          ...credentials,
+          baseUrl: baseUrl.startsWith("https://")
+            ? baseUrl
+            : `https://${baseUrl}`,
+        });
+      }, 500);
     }
-  }, [baseUrl]);
+  };
 
   return (
-    <div
-      className="flex justify-center items-center h-screen w-screen duration-300"
-    >
+    <div className="flex justify-center items-center h-screen w-screen duration-300">
       <div
         className="relative basis-80 border-b-4 border-gray-400 bg-blue-50 p-2 rounded-md shadow-xl flex justify-center gap-2"
+        id="server-input"
       >
         <input
           placeholder="server"
-    className="placeholder:opacity-100 placeholder:font-semibold w-full border-4 border-gray-300 focus:border-gray-600 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
-          type="url"
-          minLength={1}
+          className="placeholder:opacity-100 placeholder:font-semibold w-full border-4 border-gray-300 focus:border-gray-500 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
+          type="text"
+          pattern="(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?"
           ref={baseUrlRef}
           value={baseUrl}
           onChange={(e) => setServer(e.target.value)}
         />
-        <button onClick={testServer} className="rounded-md basis-16 bg-white border-4 border-gray-300 shadow-md flex justify-center items-center">
-          <ArrowIcon className="opacity-50" />
+        <button
+          title={`${state ? state : "next"}`}
+          onClick={handleClick}
+          className={`group rounded-md basis-16 bg-white border-4 shadow-md flex justify-center items-center duration-300 transition-all ${
+            state && state !== "valid"
+              ? "border-red-300 hover:border-red-500"
+              : "border-gray-300 hover:border-gray-500"
+          }`}
+        >
+          {!state ? (
+            <ArrowIcon class="duration-300 transition-all text-gray-300 group-hover:text-gray-500 fill-current" />
+          ) : null}
+          {state === "invalid" ? (
+            <CrossIcon class="duration-300 transition-all text-red-300 group-hover:text-red-500 fill-current" />
+          ) : null}
+          {state === "disconnected" ? (
+            <OfflineIcon class="duration-300 transition-all text-red-300 group-hover:text-red-500 fill-current" />
+          ) : null}
         </button>
       </div>
     </div>

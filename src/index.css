@@ -70,6 +70,7 @@
     }
   }
 
+
   .chip {
     animation: rotate 10s cubic-bezier(0.8, 0.2, 0.2, 0.8) infinite alternate;
     filter: blur(100px);
@@ -78,5 +79,36 @@
     inset: 40%;
     width: 300px;
     height: 300px;
+  }
+
+  #server-input {
+    animation: server-input 1s cubic-bezier(0, 0.5, 0.25, 1);
+  }
+
+  #filler {
+    animation: opacity 2s cubic-bezier(0, 0, 0.25, 1);
+    opacity: 0;
+  }
+
+  @keyframes server-input {
+    0% {
+      filter: blur(4px);
+      opacity: 0;
+      scale: 0.75;
+    }
+    100% {
+      filter: blur(0px);
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
+  @keyframes opacity {
+    0% {
+      opacity: 100%;
+    }
+    100% {
+      opacity: 0;
+    }
   }
 }
