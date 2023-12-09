@@ -1,19 +1,20 @@
 import React, { useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import axios from "axios";
-import matrix, { Credentials } from "../lib/matrix";
+import matrix from "../lib/matrix";
 import ArrowIcon from "./icons/Arrow";
 import Alert, { IconType } from "./Alert";
 
 // TODO: make sure we get logged out when the token is invalid
 
 const Login = () => {
-  const [credentials, setCredentials] = useState<Credentials>(
-    {} as Credentials,
+  const [baseUrl, setBaseUrl] = useState<string>(
+    ""
   );
-  const [error, setError] = useState<{message: string, icon: IconType } | null>(
-    null
-  );
+  const [error, setError] = useState<{
+    message: string;
+    icon: IconType;
+  } | null>(null);
 
   return (
     <div className="relative h-max w-max bg-[#222] fade overflow-hidden">
@@ -52,16 +53,15 @@ const Login = () => {
       ></div>
 
       <div className="flex justify-center items-center h-screen w-screen duration-300">
-        {credentials.baseUrl ? (
+        {baseUrl ? (
           <FinalForm
-            credentials={credentials}
-            setCredentials={setCredentials}
+            baseUrl={baseUrl}
             setError={setError}
           />
         ) : (
           <ServerForm
-            credentials={credentials}
-            setCredentials={setCredentials}
+            baseUrl={baseUrl}
+            setBaseUrl={setBaseUrl}
             setError={setError}
           />
         )}
@@ -71,13 +71,11 @@ const Login = () => {
 };
 
 const FinalForm = ({
-  credentials,
-  setCredentials,
+  baseUrl,
   setError,
 }: {
-  credentials: Credentials;
-  setCredentials: (_: Credentials) => void;
-  setError: (_: {message: string, icon: IconType} | null) => void;
+  baseUrl: string;
+  setError: (_: { message: string; icon: IconType } | null) => void;
 }) => {
   const [_cookies, setCookie] = useCookies(["session"]);
 
@@ -91,13 +89,18 @@ const FinalForm = ({
     if (passwordRef.current && usernameRef.current) {
       matrix
         .login({
-          baseUrl: credentials.baseUrl,
+          baseUrl: baseUrl,
           password: passwordRef.current.value,
           username: usernameRef.current.value,
         })
         .then((session) => setCookie("session", session, { path: "/" }))
-        .catch(e => setError({message: e instanceof Error ? e.message : "an unknown error happened", icon: "warning"}))
-      ;
+        .catch((e) =>
+          setError({
+            message:
+              e instanceof Error ? e.message : "an unknown error happened",
+            icon: "warning",
+          }),
+        );
     }
   };
 
@@ -108,9 +111,7 @@ const FinalForm = ({
     >
       <input
         className="placeholder:font-semibold w-full border-4 basis-8 border-gray-300 focus:border-gray-500 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
-        placeholder={`username (bob:${credentials.baseUrl.substring(
-          "https://".length,
-        )})`}
+        placeholder={`username`}
         type="text"
         ref={usernameRef}
       />
@@ -131,20 +132,27 @@ const FinalForm = ({
 };
 
 const ServerForm = ({
-  credentials,
-  setCredentials,
+  setBaseUrl,
   setError,
 }: {
-  credentials: Credentials;
-  setCredentials: (_: Credentials) => void;
-  setError: (_:{message: string, icon: IconType} | null) => void;
+  baseUrl: string;
+  setBaseUrl: (_: string) => void;
+  setError: (_: { message: string; icon: IconType } | null) => void;
 }) => {
-  const [baseUrl, setServer] = useState("");
+  const serverRef = useRef<HTMLInputElement>(null);
+  const server = serverRef.current?.value;
   const [ok, setOk] = useState<boolean>(false);
 
   const testServer = async () => {
+    if (!server) {
+      return false;
+    }
+
     if (!window.navigator.onLine) {
-      setError({message: "you appear to be disconnected", icon: "disconnected"});
+      setError({
+        message: "you appear to be disconnected",
+        icon: "disconnected",
+      });
       return false;
     }
 
@@ -153,15 +161,18 @@ const ServerForm = ({
         timeout: 2000,
       });
     } catch (e) {
-      setError({message: "you appear to be disconnected", icon: "disconnected"});
+      setError({
+        message: "you appear to be disconnected",
+        icon: "disconnected",
+      });
       return false;
     }
 
     try {
       const resp = await axios.get(
-        baseUrl.startsWith("https://")
-          ? baseUrl + "/_matrix/client/versions"
-          : "https://" + baseUrl + "/_matrix/client/versions",
+        server.startsWith("https://")
+          ? server + "/_matrix/client/versions"
+          : "https://" + server + "/_matrix/client/versions",
         { timeout: 2000 },
       );
 
@@ -170,23 +181,25 @@ const ServerForm = ({
       }
     } catch (e) {}
 
-    setError({message: "please specify a valid server URL", icon: "disconnected"});
-    return "invalid";
+    setError({
+      message: "please specify a valid server URL",
+      icon: "disconnected",
+    });
+    return false;
   };
 
   const handleClick = async () => {
     const status = await testServer();
 
-    if (status) {
+    if (status && server) {
       setOk(true);
 
       setTimeout(() => {
-        setCredentials({
-          ...credentials,
-          baseUrl: baseUrl.startsWith("https://")
-            ? baseUrl
-            : `https://${baseUrl}`,
-        });
+        setBaseUrl(
+          server.startsWith("https://")
+            ? server
+            : `https://${server}`
+        );
       }, 300);
     }
   };
@@ -194,19 +207,16 @@ const ServerForm = ({
   return (
     <form
       className={`server-form duration-300 transition-all ease-out basis-80 border-b-4 border-gray-400 bg-blue-50 p-2 rounded-md shadow-xl flex justify-center gap-2 z-10 ${
-        ok
-          ? "scale-50 blur-[4px] opacity-0"
-          : "scale-1 blur-0 opacity-100"
+        ok ? "scale-50 blur-[4px] opacity-0" : "scale-1 blur-0 opacity-100"
       }`}
       onSubmit={(e) => e.preventDefault()}
     >
       <input
+        ref={serverRef}
         placeholder="server"
         className="placeholder:font-semibold w-full border-4 text-gray-600 border-gray-300 focus:border-gray-500 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
         type="text"
         pattern="(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?"
-        value={baseUrl}
-        onChange={(e) => setServer(e.target.value)}
       />
       <button
         type="submit"
