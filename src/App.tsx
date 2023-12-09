@@ -4,13 +4,20 @@ import Spinner from "./components/Spinner";
 import MessageWindow from "./components/MessageWindow";
 import { RoomContext } from "./providers/room";
 import { ClientContext } from "./providers/client";
-import { SyncState } from "matrix-js-sdk";
+import { useCookies } from "react-cookie";
+import Login from "./components/Login";
 
 const App = () => {
-  const roomState = useContext(RoomContext);
+  const [cookies] = useCookies(["session"]);
   const client = useContext(ClientContext);
-  const _ = useContext(RoomContext);
 
+  if (!cookies["session"] && !client) {
+    return <Login />;
+  } else if (!client) {
+    return <Spinner />;
+  }
+
+  const roomState = useContext(RoomContext);
   const rooms = client.getRooms().length;
 
   // find out how we can make this more concise, we need to check if the store is ready somehow
@@ -24,7 +31,7 @@ const App = () => {
   }
 
   return (
-    <div className="flex min-w-0">
+    <div className="flex min-w-0 [&>*]:z-10">
       <Sidebar />
       {roomState.currentRoom ? <MessageWindow /> : <p>welcome</p>}
     </div>

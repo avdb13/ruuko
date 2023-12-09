@@ -90,27 +90,29 @@ const MessageWindow = () => {
   }
 
   return (
-    <div className="basis-1/2 justify-between grow">
-      <div className="flex">
-        <div className="flex flex-col max-h-screen grow">
-          <TitleBar
-            showMembers={showMembers}
-            setShowMembers={setShowMembers}
-            roomName={currentRoom.name}
-          />
-          <div ref={bottomDivRef} className="overflow-y-auto bg-green-100" id="bottom-div">
-            <Timeline events={Object.values(events)} />
-          </div>
-          <InputBar roomId={currentRoom.roomId} />
+    <div className="flex flex-col basis-1/2 justify-between max-h-screen grow">
+      <TitleBar
+        showMembers={showMembers}
+        setShowMembers={setShowMembers}
+        roomName={currentRoom.name}
+      />
+      <div>
+        <div
+          ref={bottomDivRef}
+          className="overflow-y-auto bg-green-100"
+          id="bottom-div"
+        >
+          <Timeline events={Object.values(events)} />
         </div>
-        {showMembers ? (
-          <MemberList
-            room={currentRoom}
-            presences={presences}
-            setShowMembers={setShowMembers}
-          />
-        ) : null}
+        <InputBar roomId={currentRoom.roomId} />
       </div>
+      {showMembers ? (
+        <MemberList
+          room={currentRoom}
+          presences={presences}
+          setShowMembers={setShowMembers}
+        />
+      ) : null}
     </div>
   );
 };

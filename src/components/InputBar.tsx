@@ -99,7 +99,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
     setFiles(files ? files.filter(f => f.name !== name) : null) 
   }
   return (
-    <div className="flex flex-col">
+    <>
       {files ? (
         files.map(file => <FilePreview file={file} removeFile={removeFile} />)
       ) : null}
@@ -136,7 +136,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
           </span>
         </div>
       </form>
-    </div>
+    </>
   );
             // peer-active:translate-y-[10%] peer-active:opacity-0 opacity-100
 };

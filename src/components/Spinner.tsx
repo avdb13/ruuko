@@ -4,11 +4,12 @@ const Spinner = () => {
 
       // <button className="text-center">logout</button>
   return (
-    <div>
-      <div id="bg" className="w-screen h-screen opacity-25"></div>
-      <img src="/logo.png" className="scale-[25%] opacity-90 drop-shadow-sm" id="logo" />
-    </div>
+    <>
+      <div className="ripple"><div></div><div></div></div>
+      <img src="/logo.png" className="box-border scale-[50%] absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full" id="logo" />
+    </>
   );
 };
+      // <img src="/logo-white.png" className="scale-[20%] absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-sm" id="logo" />
 
 export default Spinner;

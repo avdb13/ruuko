@@ -6,8 +6,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import Spinner from "../components/Spinner";
-import Login from "../components/Login";
 import { useCookies } from "react-cookie";
 
 const temporaryClient = () => {
@@ -47,17 +45,11 @@ const ClientProvider = (props: PropsWithChildren) => {
     }
   }, [cookies, session]);
 
-  if (!cookies["session"] && !client) {
-    return <Login />;
-  } else if (!client) {
-    return <Spinner />;
+  if (!client) {
+    return null;
+  } else {
+    return <ClientContext.Provider value={client}>{props.children}</ClientContext.Provider>
   }
-
-
-  return (
-    <ClientContext.Provider value={client}>{props.children}</ClientContext.Provider>
-  );
-
 };
 
 export default ClientProvider;
