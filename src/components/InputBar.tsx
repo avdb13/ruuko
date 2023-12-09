@@ -31,7 +31,6 @@ const FilePicker = ({
   }, []);
 
   const handleChange = (e: SyntheticEvent) => {
-    console.log("changed");
     const files = (e.target as HTMLInputElement).files;
 
     if (files) {

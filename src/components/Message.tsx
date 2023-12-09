@@ -67,15 +67,15 @@ const MessageOptions = (props: PropsWithChildren) => {
       <div className="group-hover:bg-green-200 duration-100 py-[2px] px-[8px]">
         {props.children}
       </div>
-      <div className="scale-75 border-2 border-zinc-400 flex gap-4 py-1 px-2 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-[80%] bottom-[75%]">
+      <div className="border-2 border-zinc-400 flex gap-4 p-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
         <button title="edit">
-          <EditIcon />
+          <EditIcon className="scale-75" />
         </button>
         <button title="reply">
-          <ReplyIcon />
+          <ReplyIcon className="scale-75" />
         </button>
         <button title="copy">
-          <CopyIcon />
+          <CopyIcon className="scale-75" />
         </button>
       </div>
     </div>
