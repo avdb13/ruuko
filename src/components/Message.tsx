@@ -78,6 +78,7 @@ const Message = ({
 
 // TODO: some buttons are only useful for certain events, i.e. images shouldn't be edited
 const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent, setEditing: (_: boolean) => void}>) => {
+  const [copied, setCopied] = useState(false);
   const { setInReplyTo, setReplace } = useContext(InputContext)!;
 
   const handleEdit = () => {
@@ -87,6 +88,26 @@ const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent, setEditing
 
   const handleReply = () => {
     setInReplyTo(props.event.getId()!);
+  }
+
+  const handleCopy = async () => {
+    const text = formatText(props.event.getContent());
+
+    if ('clipboard' in navigator) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => {
+          setCopied(false);
+        }, 5000);
+      });
+    } else {
+      document.execCommand('copy', true, text);
+
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 5000);
+    }
   }
 
   return (
@@ -101,7 +122,7 @@ const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent, setEditing
         <button title="reply" onClick={handleReply}>
           <ReplyIcon className="scale-75" />
         </button>
-        <button title="copy" onClick={() => {}}>
+        <button title="copy" onClick={handleCopy} className={`duration-300 transition-all ${copied ? "bg-green-200" : "bg-zinc-200" }`}>
           <CopyIcon className="scale-75" />
         </button>
       </div>
