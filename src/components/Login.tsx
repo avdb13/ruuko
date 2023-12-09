@@ -6,15 +6,57 @@ import matrix, { Credentials } from "../lib/matrix";
 
 type baseUrlState = "disconnected" | "valid" | "invalid" | "loading";
 
+// TODO: make sure we get logged out when the token is invalid
+
 const Login = () => {
   const [credentials, setCredentials] = useState<Credentials>(
     {} as Credentials,
   );
 
-  return credentials.baseUrl ? (
-    <FinalForm credentials={credentials} setCredentials={setCredentials} />
-  ) : (
-    <ServerForm credentials={credentials} setCredentials={setCredentials} />
+  return (
+    <div className="w-screen h-screen bg-[#222]">
+      <div>
+        <div
+          className="chip"
+          style={{
+            background: "linear-gradient(#855afc, #3ac8fc)",
+            filter: "hue-rotate(-15deg) blur(60px)",
+            translate: "10% 20%",
+            scale: "120%",
+            rotate: "45deg",
+            borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%",
+          }}
+        ></div>
+        <div
+          className="chip"
+          style={{
+            background: "linear-gradient(#855afc, #3ac8fc)",
+            filter: "hue-rotate(15deg) blur(60px)",
+            scale: "140%",
+            translate: "-10% -20%",
+            borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%",
+          }}
+        ></div>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          opacity: "40%",
+          filter: "blur(100px)",
+          inset: "0",
+          background: "radial-gradient(ellipse at top, #f8f8ff00, #000F)",
+          height: "100%",
+          width: "100%",
+        }}
+      ></div>
+
+      {credentials.baseUrl ? (
+        <FinalForm credentials={credentials} setCredentials={setCredentials} />
+      ) : (
+        <ServerForm credentials={credentials} setCredentials={setCredentials} />
+      )}
+    </div>
   );
 };
 
@@ -36,14 +78,16 @@ const FinalForm = ({
         e.preventDefault();
         e.stopPropagation();
         if (passwordRef.current && usernameRef.current) {
-          matrix.login({
-            baseUrl: credentials.baseUrl,
-            password: passwordRef.current.value,
-            username: usernameRef.current.value,
-          }).then(session => setCookie("session", session, { path: "/" }));
+          matrix
+            .login({
+              baseUrl: credentials.baseUrl,
+              password: passwordRef.current.value,
+              username: usernameRef.current.value,
+            })
+            .then((session) => setCookie("session", session, { path: "/" }));
         }
       }}
-      className={`basis-72 flex flex-col justify-center items-center gap-1 h-screen w-screen opacity-0 -delay-500 duration-300 transition-all ${
+      className={`bg-transparent basis-72 flex flex-col justify-center items-center gap-1 h-screen w-screen opacity-0 -delay-500 duration-300 transition-all ${
         credentials.baseUrl ? "-translate-x-[0px] opacity-100" : null
       }`}
     >
@@ -166,12 +210,7 @@ const ServerForm = ({
           onChange={(e) => setServer(e.target.value)}
         />
         {state === "loading" ? (
-          <div className="absolute left-[90px] bottom-[57.5px] lds-ellipsis scale-75 opacity-50">
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-          </div>
+          <div className="absolute left-[90px] bottom-[57.5px] lds-ellipsis scale-75 opacity-50"></div>
         ) : null}
         <button onClick={testServer} className="invisible">
           next

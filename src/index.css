@@ -60,4 +60,23 @@
   #modal::backdrop {
     background: hsl(0 0% 0% / 0.5);
   }
+
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .chip {
+    animation: rotate 10s cubic-bezier(0.8, 0.2, 0.2, 0.8) infinite alternate;
+    filter: blur(100px);
+    opacity: 0.4;
+    position: absolute;
+    inset: 40%;
+    width: 300px;
+    height: 300px;
+  }
 }
