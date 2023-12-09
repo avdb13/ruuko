@@ -6,7 +6,7 @@ import {
   MsgType,
   RelationType,
 } from "matrix-js-sdk";
-import { extractAttributes } from "../lib/helpers";
+import { extractAttributes, formatText } from "../lib/helpers";
 import {
   PropsWithChildren,
   forwardRef,
@@ -277,63 +277,42 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
       setShowHistory,
     }));
 
-    // <div
-    //   className={`[&>li]:list-none ease-in-out transition-all duration-500 bg-cyan-100 max-w-[75%] shadow-md px-4 py-2 my-1 ${
-    //     showHistory
-    //       ? `delay-100 origin-bottom opacity-100 scale-y-1 max-h-[${
-    //           replacements.length * 24
-    //         }px]`
-    //       : "opacity-0 scale-y-0 max-h-[0px]"
-    //   }`}
-    // >
-    //
-    // TODO: height transition
-        // <div
-        //   className={`[&>li]:list-none ease-in-out transition-all duration-500 max-w-[75%] px-4 py-2 my-1 ${
-        //     showHistory
-        //       ? `delay-100 origin-bottom opacity-100 scale-y-1 max-h-[${
-        //           replacements.length * 24
-        //         }px]`
-        //       : "opacity-0 scale-y-0 max-h-[0px] p-0 m-0"
-        //   }`}
-        // >
-        //   {showHistory
-        //     ? [
-        //         original,
-        //         ...(replacements.length > 1
-        //           ? replacements.slice(0, replacements.length - 1)
-        //           : []),
-        //       ].map((e, i) =>
-        //         i === 0 ? (
-        //           <li>
-        //             <RoomEvent key={e.getId()!} event={e} originalContent />
-        //           </li>
-        //         ) : (
-        //           <li>
-        //             <RoomEvent key={e.getId()!} event={e} replacement />
-        //           </li>
-        //         ),
-        //       )
-        //     : null}
-        // </div>
+    const history = () => {
+      return showHistory
+        ? [
+            original,
+            ...(replacements.length > 1
+              ? replacements.slice(0, replacements.length - 1)
+              : []),
+          ].map((e, i) =>
+            i === 0 ? (
+              <li>
+                <RoomEvent key={e.getId()!} event={e} originalContent />
+              </li>
+            ) : (
+              <li>
+                <RoomEvent key={e.getId()!} event={e} />
+              </li>
+            ),
+          )
+        : null;
+    };
+
     return (
       <>
+        <div className="list-none bg-green-200">
+          {showHistory ? history() : null}
+        </div>
         <RoomEvent event={current} />
         <label
+          onClick={() => {
+            setShowHistory(!showHistory);
+          }}
           className="align-top text-gray-600 hover:text-gray-900 duration-300"
-          htmlFor={original.getId()!}
         >
           {" "}
           (edited)
         </label>
-        <input
-          id={original.getId()!}
-          type="checkbox"
-          className="fixed opacity-0"
-          onClick={() => {
-            setShowHistory(!showHistory);
-          }}
-        ></input>
       </>
     );
   },
@@ -350,7 +329,6 @@ const RoomEvent = ({
   const content = originalContent
     ? event.getOriginalContent()
     : event.getContent();
-  const reply = event.getContent()["m.relates_to"]?.["m.in_reply_to"];
 
   switch (content.msgtype) {
     case MsgType.Text: {
@@ -373,17 +351,9 @@ const RoomEvent = ({
         );
       }
 
-      // ugly, fix later
-      const body = reply ? content.body?.split("\n\n")[1] : (content["m.relates_to"]?.rel_type === RelationType.Replace ?
-        content["m.new_content"].body : content.body
-      );
 
       // check later if we can also change the event type with edits
-      return (
-        <p className="inline-block whitespace-normal break-all">
-        {body}
-        </p>
-      );
+      return <p className="inline-block whitespace-normal break-all">{formatText(content)}</p>;
     }
     case MsgType.Image:
       return (

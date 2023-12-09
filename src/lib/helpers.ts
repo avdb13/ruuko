@@ -1,5 +1,6 @@
 import {
   EventType,
+  IContent,
   MatrixClient,
   MatrixEvent,
   RelationType,
@@ -150,3 +151,17 @@ export const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
     (init, id) => (record[id] ? { ...init, [id]: record[id]! } : init),
     {} as Record<string, T>,
   );
+
+export const formatText = (content: IContent) => {
+  const inReplyTo = !!content["m.relates_to"]?.["m.in_reply_to"];
+  const replacement =
+    content["m.relates_to"]?.rel_type === RelationType.Replace;
+
+  return inReplyTo && replacement
+    ? content["m.new_content"].body?.split("\n\n")[1]
+    : inReplyTo
+    ? content.body?.split("\n\n")[1]
+    : replacement
+    ? content["m.new_content"].body
+    : content.body;
+};
