@@ -96,14 +96,14 @@ const MessageWindow = () => {
         setShowMembers={setShowMembers}
         roomName={currentRoom.name}
       />
-      <div>
-        <div
-          ref={bottomDivRef}
-          className="overflow-y-auto bg-green-100"
-          id="bottom-div"
-        >
-          <Timeline events={Object.values(events)} />
-        </div>
+      <div
+        ref={bottomDivRef}
+        className="flex flex-col justify-end overflow-y-auto bg-green-100 grow"
+        id="bottom-div"
+      >
+        <Timeline events={Object.values(events)} />
+      </div>
+      <div className="">
         <InputBar roomId={currentRoom.roomId} />
       </div>
       {showMembers ? (
@@ -241,7 +241,7 @@ const TitleBar = ({
 }) => {
   return (
     <div
-      className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4"
+      className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4 grow-0"
       id="header"
     >
       <p className="whitespace-normal break-all">{roomName}</p>

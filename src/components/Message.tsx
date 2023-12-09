@@ -41,13 +41,21 @@ const Message = ({
     <div>
       <span id={event.getId()!} tabIndex={-1} className="peer"></span>
       <Reply relation={event.getContent()["m.relates_to"] ?? null} />
-      <MessageOptions>
-        <Event
-          event={event}
-          replacements={replacements}
-          redaction={redaction}
-        />
-      </MessageOptions>
+      {event.getType() === EventType.RoomMessage ? (
+        <MessageOptions>
+          <Event
+            event={event}
+            replacements={replacements}
+            redaction={redaction}
+          />
+        </MessageOptions>
+      ): (
+          <Event
+            event={event}
+            replacements={replacements}
+            redaction={redaction}
+          />
+      )}
       <Annotations annotations={annotations} reply_id={event.getId()!} />
     </div>
   );
