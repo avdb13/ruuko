@@ -43,7 +43,7 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
   
   const children = (
       <div
-        className={"max-h-screen flex flex-col shrink-0 grow-0 basis-1/2 bg-indigo-50 overflow-y-auto scrollbar w-min-0  " + props.className}
+        className={"max-h-screen overflow-y-auto scrollbar w-min-0  " + props.className}
         onMouseDown={(e) => e.preventDefault()}
         style={{ flexBasis: sidebarWidth }}
         ref={sidebarRef}
@@ -54,6 +54,9 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
 
   return props.side === "right" ? (
     <>
+      <div
+        className="p-1 bg-indigo-50"
+      ></div>
       {children}
       <div
         className="p-1 cursor-col-resize resize-x bg-indigo-50"
@@ -67,6 +70,9 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
         onMouseDown={startResizing}
       ></div>
       {children}
+      <div
+        className="p-1 bg-indigo-50"
+      ></div>
     </>
 
   );

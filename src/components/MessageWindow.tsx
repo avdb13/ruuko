@@ -101,7 +101,7 @@ const MessageWindow = () => {
       />
       <div
         ref={bottomDivRef}
-        className="flex flex-col justify-end overflow-y-auto bg-transparent grow scrollbar"
+        className="flex flex-col justify-end overflow-y-auto bg-transparent grow"
         id="bottom-div"
       >
         <Timeline events={Object.values(events)} />
@@ -267,12 +267,12 @@ const TitleBar = ({
 }) => {
   return (
     <div
-      className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4 grow-0"
+      className="flex basis-8 justify-between items-center text-gray-800 bg-opacity-50 bg-blue-300 px-4 grow-0"
       id="header"
     >
-      <p className="whitespace-normal break-all flex items-center">{roomName}<span className="border-l-2"/>{roomState?.events.get(EventType.RoomTopic)?.get("")?.getContent().topic ?? ""}</p>
-      <div>
-        <button className="invert" onClick={() => setShowMembers(!showMembers)}>
+      <div className="truncate shrink items-center">{roomName}<span className="ml-[5px] border-l-[1px] mr-[4px]"/>{roomState?.events.get(EventType.RoomTopic)?.get("")?.getContent().topic ?? ""}</div>
+      <div className="relative grow basis-4 flex justify-end">
+        <button className="invert bg-inherit" onClick={() => setShowMembers(!showMembers)}>
           <MembersIcon />
         </button>
       </div>

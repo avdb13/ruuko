@@ -9,17 +9,15 @@ const Togglable = (
   const modalRef = useRef<ModalProps>(null);
 
   return (
-    <div>
+    <>
       <Modal title={props.title} ref={modalRef}>
         {props.modal}
       </Modal>
-      <div className="flex justify-between">
-        <div className="flex gap-2">
-          <button className={degrees} onClick={() => setToggled(!toggled)}>
-            {">"}
-          </button>
-          <p>{props.sidebarWidth < 120 ? "" : props.title}</p>
-        </div>
+      <div className="flex justify-between w-full">
+        <button className={degrees} onClick={() => setToggled(!toggled)}>
+          {">"}
+        </button>
+        <p className="text-center">{props.sidebarWidth < 120 ? "" : props.title}</p>
         <button
           onClick={() =>
             modalRef.current?.toggleVisibility()
@@ -29,7 +27,7 @@ const Togglable = (
         </button>
       </div>
       {toggled ? <>{props.children}</> : null}
-    </div>
+    </>
   );
 };
 

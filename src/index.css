@@ -14,7 +14,7 @@
   }
 
   .scrollbar::-webkit-scrollbar-thumb {
-    background-color: transparent;
+    background-color: inherit;
     border-radius: 100vh;
   }
   .scrollbar:hover .scrollbar::-webkit-scrollbar-thumb {
