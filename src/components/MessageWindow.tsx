@@ -1,8 +1,10 @@
 import {
+  Direction,
   EventType,
   IStatusResponse,
   MatrixEvent,
   RelationType,
+  RoomState,
 } from "matrix-js-sdk";
 import Message, { DateMessage, MessageFrame, StateFrame } from "./Message";
 import InputBar from "./InputBar";
@@ -43,7 +45,7 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
 
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
-  const { currentRoom, roomEvents } = useContext(RoomContext)!;
+  const { currentRoom, roomEvents, roomStates } = useContext(RoomContext)!;
 
   const bottomDivRef = useRef<HTMLDivElement>(null);
   const [presences, setPresences] = useState<
@@ -94,6 +96,7 @@ const MessageWindow = () => {
       <TitleBar
         showMembers={showMembers}
         setShowMembers={setShowMembers}
+        roomState={roomStates[currentRoom.roomId]}
         roomName={currentRoom.name}
       />
       <div
@@ -254,10 +257,12 @@ const DayBreak = ({
 
 const TitleBar = ({
   roomName,
+  roomState,
   showMembers,
   setShowMembers,
 }: {
   roomName: string;
+  roomState: RoomState | null;
   showMembers: boolean;
   setShowMembers: (_: boolean) => void;
 }) => {
@@ -267,6 +272,7 @@ const TitleBar = ({
       id="header"
     >
       <p className="whitespace-normal break-all">{roomName}</p>
+      <p>{roomState?.events.get(EventType.RoomTopic)?.get("")?.getContent().topic ?? ""}</p>
       <div>
         <button className="invert" onClick={() => setShowMembers(!showMembers)}>
           <MembersIcon />

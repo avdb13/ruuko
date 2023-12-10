@@ -1,4 +1,4 @@
-import { ClientEvent, MatrixEvent, Room, RoomEvent } from "matrix-js-sdk";
+import { ClientEvent, Direction, MatrixEvent, Room, RoomEvent, RoomState } from "matrix-js-sdk";
 import {
   PropsWithChildren,
   createContext,
@@ -8,14 +8,16 @@ import {
 } from "react";
 import { ClientContext } from "./client";
 
-export const RoomContext = createContext<RoomState | null>(null);
+export const RoomContext = createContext<MyRoomState | null>(null);
 
 // Map in javascript has O(n) access time but object is constant
-interface RoomState {
+interface MyRoomState {
   rooms: Room[] | null;
+  roomStates: Record<string, RoomState>;
   currentRoom: Room | null;
   roomEvents: Record<string, Record<string, MatrixEvent>>;
   setRooms: (_: Room[]) => void;
+  setRoomStates: (_: Record<string, RoomState>) => void;
   setCurrentRoom: (_: Room) => void;
   setRoomEvents: (_: Record<string, Record<string, MatrixEvent>>) => void;
 }
@@ -24,18 +26,22 @@ const RoomProvider = (props: PropsWithChildren) => {
   const client = useContext(ClientContext);
   client.once(ClientEvent.Sync, (state, previousState, res) => {});
 
+  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   // null because otherwise we can't distinguish between no rooms and not done preparing the store
   const [rooms, setRooms] = useState<Room[] | null>(null);
+
   const [roomEvents, setRoomEvents] = useState<
     Record<string, Record<string, MatrixEvent>>
   >({});
-  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
+  const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
 
-  const roomState: RoomState = {
+  const roomState: MyRoomState = {
     rooms,
+    roomStates,
     currentRoom,
     roomEvents,
     setRooms,
+    setRoomStates,
     setCurrentRoom,
     setRoomEvents,
   };
@@ -67,6 +73,12 @@ const RoomProvider = (props: PropsWithChildren) => {
               {} as Record<string, MatrixEvent>,
             ),
         }));
+      });
+
+      setRoomStates(previous => {
+        const state = r.getLiveTimeline().getState(Direction.Backward);
+        return state ?
+          ({...previous, [r.roomId]: state }) : previous;
       });
     }
   }, [rooms ? rooms.length : null]);

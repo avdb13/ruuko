@@ -334,8 +334,9 @@ const ReplacedRoomEvent = (props: ReplacedRoomEventProps) => {
       }
     }, [bottomDiv]);
 
-  const detailsRef = useRef<HTMLDetailsElement>(null);
-  console.log(detailsRef.current.open)
+    // add diff to history later
+    const detailsRef = useRef<HTMLDetailsElement>(null);
+
     return (
       <>
         <RoomEvent event={current} />{" "}
@@ -431,7 +432,7 @@ const RoomEvent = ({
       //     className="h-16 w-16"
       //   />
       // ) : (
-      console.log(`unsupported: `, content);
+      // console.log(`unsupported: `, content);
       return null;
     // );
   }
@@ -473,14 +474,12 @@ export const ReplaceWindow = (
   const client = useContext(ClientContext);
   const { currentRoom } = useContext(RoomContext)!;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  console.log(content["m.relates_to"], formatText(content.body));
   const [newBody, setNewBody] = useState(formatText(content));
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     const replacement = createReplaceEvent(newBody, props.event.getId()!);
-    console.log(replacement);
 
     client.sendMessage(currentRoom!.roomId, replacement);
 
