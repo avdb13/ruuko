@@ -98,7 +98,7 @@ const MessageWindow = () => {
       />
       <div
         ref={bottomDivRef}
-        className="flex flex-col justify-end overflow-y-auto bg-green-100 grow"
+        className="flex flex-col justify-end overflow-y-auto bg-transparent grow"
         id="bottom-div"
       >
         <Timeline events={Object.values(events)} />
@@ -120,6 +120,7 @@ const MessageWindow = () => {
 const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
+  // what if we have a replaced reaction???
   const filteredEvents = events.reduce(
     (init, e) => {
       switch (e.getType()) {
@@ -134,18 +135,27 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
             [EventType.RoomRedaction]: [...init[EventType.RoomRedaction]!, e],
           };
         default:
-          return e.getRelation()?.rel_type === RelationType.Replace
-            ? {
+          switch (e.getRelation()?.rel_type) {
+            case RelationType.Replace:
+              return {
                 ...init,
                 [RelationType.Replace]: [...init[RelationType.Replace]!, e],
-              }
-            : { ...init, ["rest"]: [...init["rest"]!, e] };
+              };
+            case RelationType.Thread:
+              return {
+                ...init,
+                [RelationType.Thread]: [...init[RelationType.Thread]!, e],
+              };
+            default:
+              return { ...init, ["rest"]: [...init["rest"]!, e] };
+          }
       }
     },
     {
       [EventType.Reaction]: [],
       [EventType.RoomRedaction]: [],
       [RelationType.Replace]: [],
+      [RelationType.Thread]: [],
       ["rest"]: [],
     } as Record<string, MatrixEvent[]>,
   );
@@ -202,6 +212,16 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
           displayName={displayName}
           timestamp={firstEvent.getTs()}
         >
+          <button
+            className="p-1 bg-indigo-200 border-2 border-gray-400 rounded-md mb-2"
+            onClick={() =>
+              console.log(
+                list.map((id) => currentRoom?.findEventById(id)?.getContent()),
+              )
+            }
+          >
+            events
+          </button>
           {list.map((id) => eventRecord[id]!)}
         </MessageFrame>
       </>

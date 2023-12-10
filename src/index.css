@@ -140,14 +140,15 @@
     height: 160px;
   }
   .ripple div {
+    transform: scale(200%);
     position: absolute;
     border: 4px solid #fff;
-    opacity: 0.5;
+    opacity: 0.66;
     border-radius: 50%;
-    animation: ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+    animation: ripple 1.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
   }
   .ripple div:nth-child(2) {
-    animation-delay: -0.5s;
+    animation-delay: -0.75s;
   }
 
   @keyframes ripple {

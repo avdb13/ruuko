@@ -49,11 +49,11 @@ const RoomWidget = ({ room }: { room: Room }) => {
   return (
     <button
       onClick={() => setCurrentRoom(room)}
-      className="flex items-center shrink gap-2 p-4 w-full border-2 rounded-md hover:bg-green-300"
+      className="flex items-center shrink gap-2 p-4 w-full border-2 rounded-md hover:bg-indigo-200"
       key={room.name}
     >
       <Avatar id={room.roomId} type="room" size={16} />
-      <div className="flex flex-col items-start bg-green-200 min-w-0">
+      <div className="flex flex-col items-start min-w-0">
         <p className="max-w-full truncate font-bold">{room.name}</p>
         <p className="max-w-full truncate text-sm">
           {latestEvent

@@ -4,28 +4,24 @@ import axios from "axios";
 import matrix from "../lib/matrix";
 import ArrowIcon from "./icons/Arrow";
 import Alert, { IconType } from "./Alert";
+import Background from "./Background";
 
 // TODO: make sure we get logged out when the token is invalid
 
 const Login = () => {
-  const [baseUrl, setBaseUrl] = useState<string>(
-    ""
-  );
+  const [baseUrl, setBaseUrl] = useState<string>("");
   const [error, setError] = useState<{
     message: string;
     icon: IconType;
   } | null>(null);
 
   return (
-    <>
+    <Background>
       <Alert error={error} setError={setError} />
 
       <div className="flex justify-center items-center h-screen w-screen duration-300">
         {baseUrl ? (
-          <FinalForm
-            baseUrl={baseUrl}
-            setError={setError}
-          />
+          <FinalForm baseUrl={baseUrl} setError={setError} />
         ) : (
           <ServerForm
             baseUrl={baseUrl}
@@ -34,7 +30,7 @@ const Login = () => {
           />
         )}
       </div>
-    </>
+    </Background>
   );
 };
 
@@ -156,20 +152,21 @@ const ServerForm = ({
     return false;
   };
 
-  const handleClick = async () => {
-    const status = await testServer();
+  const handleSubmit = (e: React.SyntheticEvent) => {
+    e.preventDefault();
 
-    if (status && server) {
-      setOk(true);
+    testServer().then(status => {
+      if (status && server) {
+        setOk(true);
 
-      setTimeout(() => {
-        setBaseUrl(
-          server.startsWith("https://")
-            ? server
-            : `https://${server}`
-        );
-      }, 300);
-    }
+        setTimeout(() => {
+          setBaseUrl(
+            server.startsWith("https://") ? server : `https://${server}`,
+          );
+        }, 300);
+      }
+    });
+
   };
 
   return (
@@ -177,7 +174,7 @@ const ServerForm = ({
       className={`server-form duration-300 transition-all ease-out basis-80 border-b-4 border-gray-400 bg-blue-50 p-2 rounded-md shadow-xl flex justify-center gap-2 z-10 ${
         ok ? "scale-50 blur-[4px] opacity-0" : "scale-1 blur-0 opacity-100"
       }`}
-      onSubmit={(e) => e.preventDefault()}
+      onSubmit={handleSubmit}
     >
       <input
         ref={serverRef}
@@ -188,7 +185,6 @@ const ServerForm = ({
       />
       <button
         type="submit"
-        onClick={handleClick}
         className={`border-gray-300 hover:border-gray-500 group rounded-md basis-16 bg-white border-4 shadow-md flex justify-center items-center duration-300 transition-all`}
       >
         <ArrowIcon class="duration-300 transition-all text-gray-300 group-hover:text-gray-500 fill-current" />

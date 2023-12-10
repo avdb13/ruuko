@@ -7,6 +7,8 @@ import {
   useState,
 } from "react";
 import { useCookies } from "react-cookie";
+import Spinner from "../components/Spinner";
+import Login from "../components/Login";
 
 const temporaryClient = () => {
   return createClient({ baseUrl: "https://matrix.org" });
@@ -45,11 +47,13 @@ const ClientProvider = (props: PropsWithChildren) => {
     }
   }, [cookies, session]);
 
-  if (!client) {
-    return null;
-  } else {
-    return <ClientContext.Provider value={client}>{props.children}</ClientContext.Provider>
+  if (!cookies["session"] && !client) {
+    return <Login />;
+  } else if (!client) {
+    return <Spinner />;
   }
+
+  return <ClientContext.Provider value={client}>{props.children}</ClientContext.Provider>
 };
 
 export default ClientProvider;

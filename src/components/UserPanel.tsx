@@ -85,7 +85,7 @@ const PrivacyTab = () => {
             <span>recovery key</span>
           </label>
           <button
-            className="col-span-2 pointer-events-none [.group:has(:checked)_&]:pointer-events-auto [.group:has(:checked)_&]:bg-green-200 bg-gray-200 rounded-md p-2"
+            className="col-span-2 pointer-events-none [.group:has(:checked)_&]:pointer-events-auto [.group:has(:checked)_&]:bg-indigo-200 bg-gray-200 rounded-md p-2"
             onClick={generateBackupKey}
           >
             reset backup

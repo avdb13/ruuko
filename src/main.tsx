@@ -12,7 +12,6 @@ import InputProvider from "./providers/input.tsx";
 
 global.Olm = Olm;
 
-
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <CookiesProvider>
     <ClientProvider>

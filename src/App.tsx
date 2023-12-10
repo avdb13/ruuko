@@ -11,12 +11,6 @@ const App = () => {
   const [cookies] = useCookies(["session"]);
   const client = useContext(ClientContext);
 
-  if (!cookies["session"] && !client) {
-    return <Login />;
-  } else if (!client) {
-    return <Spinner />;
-  }
-
   const roomState = useContext(RoomContext);
   const rooms = client.getRooms().length;
 

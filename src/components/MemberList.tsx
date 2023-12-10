@@ -50,8 +50,8 @@ const MemberList = ({
             className="self-center"
           />
           <div className="flex gap-2">
-            <p className="bg-green-400 py-1 px-4 rounded-full">public room</p>
-            <p className="bg-green-400 py-1 px-4 rounded-full">encrypted</p>
+            <p className="bg-indigo-400 py-1 px-4 rounded-full">public room</p>
+            <p className="bg-indigo-400 py-1 px-4 rounded-full">encrypted</p>
           </div>
           <h1 className="text-xl font-bold">{room.name}</h1>
           <h2>{room.getDefaultRoomName()}</h2>

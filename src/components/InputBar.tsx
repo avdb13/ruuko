@@ -55,7 +55,7 @@ const FilePicker = ({
       <button
         type="button"
         className={`flex justify-center items-center w-8 h-8 my-2 absolute rounded-md border-2 ${
-          files ? "bg-green-100" : ""
+          files ? "bg-indigo-100" : ""
         }`}
         onClick={() => {
           inputRef.current?.click();
@@ -142,7 +142,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         className="flex items-center gap-2 sticky h-12 mx-2 border-2"
       >
         <FilePicker files={files} setFiles={setFiles} />
-        <div className="flex bg-green-200 grow rounded-md my-2 py-1">
+        <div className="flex bg-indigo-200 grow rounded-md my-2 py-1">
           <input
             id="input-panel"
             className="grow bg-transparent focus:outline-none mx-2"

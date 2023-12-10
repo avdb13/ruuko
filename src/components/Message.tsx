@@ -26,6 +26,7 @@ import EditIcon from "./icons/Edit";
 import ReplyIcon from "./icons/Reply";
 import CopyIcon from "./icons/Copy";
 import { InputContext } from "../providers/input";
+import { createReplaceEvent } from "../lib/content";
 
 const Message = ({
   event,
@@ -61,7 +62,12 @@ const Message = ({
       <span id={event.getId()!} tabIndex={-1} className="peer"></span>
       <Reply relation={event.getContent()["m.relates_to"] ?? null} />
       {editing ? (
-        <ReplaceWindow setEditing={setEditing} userId={event.getSender()!} timestamp={event.getTs()} event={event} />
+        <ReplaceWindow
+          setEditing={setEditing}
+          userId={event.getSender()!}
+          timestamp={event.getTs()}
+          event={event}
+        />
       ) : (
         <MessageOptions setEditing={setEditing} event={event}>
           <Event
@@ -77,23 +83,29 @@ const Message = ({
 };
 
 // TODO: some buttons are only useful for certain events, i.e. images shouldn't be edited
-const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent, setEditing: (_: boolean) => void}>) => {
+const MessageOptions = (
+  props: PropsWithChildren<{
+    event: MatrixEvent;
+    setEditing: (_: boolean) => void;
+  }>,
+) => {
   const [copied, setCopied] = useState(false);
   const { setInReplyTo, setReplace } = useContext(InputContext)!;
 
   const handleEdit = () => {
+    // do we need setReplace?
     setReplace(props.event.getId()!);
     props.setEditing(true);
-  }
+  };
 
   const handleReply = () => {
     setInReplyTo(props.event.getId()!);
-  }
+  };
 
   const handleCopy = async () => {
     const text = formatText(props.event.getContent());
 
-    if ('clipboard' in navigator) {
+    if ("clipboard" in navigator) {
       navigator.clipboard.writeText(text).then(() => {
         setCopied(true);
         setTimeout(() => {
@@ -101,18 +113,18 @@ const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent, setEditing
         }, 5000);
       });
     } else {
-      document.execCommand('copy', true, text);
+      document.execCommand("copy", true, text);
 
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
       }, 5000);
     }
-  }
+  };
 
   return (
-    <div className="group relative w-full peer-focus:bg-green-200 duration-300 transition-all ease-in-out bg-transparent">
-      <div className="group-hover:bg-green-200 duration-100 py-[2px] px-[8px]">
+    <div className="group relative w-full peer-focus:bg-indigo-200 duration-300 transition-all ease-in-out bg-transparent">
+      <div className="group-hover:bg-indigo-200 duration-100 py-[2px] px-[8px]">
         {props.children}
       </div>
       <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
@@ -122,7 +134,13 @@ const MessageOptions = (props: PropsWithChildren<{event: MatrixEvent, setEditing
         <button title="reply" onClick={handleReply}>
           <ReplyIcon className="scale-75" />
         </button>
-        <button title="copy" onClick={handleCopy} className={`duration-300 transition-all ${copied ? "bg-green-200" : "bg-zinc-200" }`}>
+        <button
+          title="copy"
+          onClick={handleCopy}
+          className={`duration-300 transition-all ${
+            copied ? "bg-indigo-200" : "bg-zinc-200"
+          }`}
+        >
           <CopyIcon className="scale-75" />
         </button>
       </div>
@@ -239,7 +257,7 @@ const Reply = ({ relation }: { relation: IEventRelation | null }) => {
   return (
     <button
       onClick={handleClick}
-      className="shadow-sm px-2 py-1 border-l-4 border-white bg-green-200"
+      className="shadow-sm px-2 py-1 border-l-4 border-white bg-indigo-200"
     >
       <Event event={original} />
     </button>
@@ -356,7 +374,7 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
 
     return (
       <>
-        <div className="list-none bg-green-200">
+        <div className="list-none bg-indigo-200">
           {showHistory ? history() : null}
         </div>
         <RoomEvent event={current} />
@@ -407,9 +425,12 @@ const RoomEvent = ({
         );
       }
 
-
       // check later if we can also change the event type with edits
-      return <p className="inline-block whitespace-normal break-all">{formatText(content)}</p>;
+      return (
+        <p className="inline-block whitespace-normal break-all">
+          {formatText(content)}
+        </p>
+      );
     }
     case MsgType.Image:
       return (
@@ -469,24 +490,38 @@ export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
   </div>
 );
 
-export const ReplaceWindow = (props: MessageFrameProps & {event: MatrixEvent, setEditing: (_: boolean) => void}) => {
+export const ReplaceWindow = (
+  props: MessageFrameProps & {
+    event: MatrixEvent;
+    setEditing: (_: boolean) => void;
+  },
+) => {
   const content = props.event.getContent();
+
+  const client = useContext(ClientContext);
+  const { currentRoom } = useContext(RoomContext)!;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [newBody, setNewBody] = useState(content.body);
+  console.log(content["m.relates_to"], formatText(content.body))
+  const [newBody, setNewBody] = useState(formatText(content));
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
 
-    // send replacement event ...
+    const replacement = createReplaceEvent(newBody, props.event.getId()!);
+    console.log(replacement);
+
+    client.sendMessage(currentRoom!.roomId, replacement);
+
     props.setEditing(false);
-  }
+  };
 
   useLayoutEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "inherit";
-      textareaRef.current.style.height = Math.max(textareaRef.current.scrollHeight, 24) + "px";
+      textareaRef.current.style.height =
+        Math.max(textareaRef.current.scrollHeight, 24) + "px";
     }
-  }, [newBody])
+  }, [newBody]);
 
   return (
     <div className="relative -translate-x-[80px] p-2 w-full">
@@ -501,18 +536,29 @@ export const ReplaceWindow = (props: MessageFrameProps & {event: MatrixEvent, se
               {new Date(props.timestamp).toLocaleString("en-US")}
             </p>
           </div>
-          <form onSubmit={handleSubmit}>
-            <textarea ref={textareaRef} className="resize-none outline-none min-h-[24px] w-full" rows={1} onChange={(e) => setNewBody(e.target.value)} value={newBody} />
-            <div className="flex gap-2">
-              <button onClick={() => props.setEditing(false)} type="button">cancel</button>
-              <button type="submit">save</button>
-            </div>
-          </form>
+          <textarea
+            onKeyDown={(e) =>
+              e.key === "Enter" && e.shiftKey ? handleSubmit(e) : null
+            }
+            ref={textareaRef}
+            className="resize-none outline-none min-h-[24px] w-full"
+            rows={1}
+            onChange={(e) => setNewBody(e.target.value)}
+            value={newBody}
+          />
+          <div className="flex gap-2">
+            <button onClick={() => props.setEditing(false)} type="button">
+              cancel
+            </button>
+            <button type="button" onClick={handleSubmit}>
+              save
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // const Reply = ({
 //   eventId,
