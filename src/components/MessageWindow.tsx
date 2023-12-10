@@ -184,6 +184,8 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
     {} as Record<string, JSX.Element>,
   );
 
+  console.log(sortedEvents[sortedEvents.length-1]);
+
   return sortedEvents.map((list, i) => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;
     const displayName = firstEvent.getContent().displayname;

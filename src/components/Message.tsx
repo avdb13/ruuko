@@ -39,6 +39,7 @@ const Message = ({
   replacements?: MatrixEvent[];
   redaction?: MatrixEvent;
 }) => {
+
   if (event.getType() !== EventType.RoomMessage) {
     return (
       <div>
@@ -128,13 +129,14 @@ const MessageOptions = (
         {props.children}
       </div>
       <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
-        <button title="edit">
+        <button type="button" title="edit">
           <EditIcon className="scale-75" onClick={handleEdit} />
         </button>
-        <button title="reply" onClick={handleReply}>
+        <button type="button" title="reply" onClick={handleReply}>
           <ReplyIcon className="scale-75" />
         </button>
         <button
+          type="button"
           title="copy"
           onClick={handleCopy}
           className={`duration-300 transition-all ${

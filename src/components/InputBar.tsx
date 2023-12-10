@@ -12,7 +12,7 @@ import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import CrossIcon from "./icons/Cross";
 import { RoomContext } from "../providers/room";
 import { InputContext } from "../providers/input";
-import { MsgType } from "matrix-js-sdk";
+import { EventType, MsgType, RelationType } from "matrix-js-sdk";
 import { formatText } from "../lib/helpers";
 import Message from "./Message";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
@@ -71,7 +71,7 @@ const FilePicker = ({
 
 const InputBar = ({ roomId }: { roomId: string }) => {
   const client = useContext(ClientContext);
-  const { currentRoom } = useContext(RoomContext)!;
+  const { currentRoom, roomEvents } = useContext(RoomContext)!;
   const { inReplyTo, setInReplyTo } = useContext(InputContext)!;
 
   const replyEvent = currentRoom?.findEventById(inReplyTo || "") ?? null;
@@ -96,7 +96,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         },
       );
 
-    // image replies are possible, careful
+      // image replies are possible, careful
     } else if (replyEvent) {
       const member = currentRoom?.getMember(client.getUserId()!);
 
@@ -104,7 +104,9 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         msgtype: MsgType.Text,
         avatar_url: member?.getMxcAvatarUrl(),
         displayname: member?.rawDisplayName,
-        ["m.relates_to"]: { ["m.in_reply_to"]: {event_id: inReplyTo || undefined} },
+        ["m.relates_to"]: {
+          ["m.in_reply_to"]: { event_id: inReplyTo || undefined },
+        },
       };
       client.sendMessage(roomId, content);
       setInReplyTo(null);
@@ -119,19 +121,68 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const removeFile = (name: string) => {
     setFiles(files ? files.filter((f) => f.name !== name) : null);
   };
+
+  const handleKeys = (e: React.KeyboardEvent) => {
+    console.log(e.key);
+
+    switch (e.key) {
+      case "ArrowUp":
+        const events = Object.values(roomEvents[currentRoom!.roomId]!);
+
+        for (let i = events.length; i > 0; i -= 1) {
+          const currentEvent = events[i];
+          const currentRelation = events[i]?.getRelation();
+
+          const sentByUser = currentEvent?.getSender() === client.getUserId()!;
+          const isTextMessage = currentEvent
+            ? formatText(currentEvent.getContent())
+            : false;
+
+          if (sentByUser && isTextMessage) {
+            const spanId =
+              currentRelation?.rel_type === RelationType.Replace
+                ? currentRelation?.event_id
+                : currentEvent.getId();
+            const toClickEl = document.getElementById(spanId!)!.parentNode!;
+
+            // not working but a good start nontheless ...
+
+            const editButton =
+              (toClickEl?.querySelector("[title=edit]") as HTMLButtonElement) ??
+              null;
+
+            console.log(editButton)
+            editButton.focus();
+            editButton.click();
+
+            return;
+          }
+        }
+
+        return;
+    }
+  };
+
   return (
     <>
       {replyEvent ? (
         <div className="p-2">
           <div className="flex pb-2 justify-between border-dashed border-b-2">
-            <h1 className="pl-4">replying to <strong>{replyEvent.getContent().displayname || replyEvent.getSender()!}</strong></h1>
-            <button onClick={() => setInReplyTo(null)}><CrossNoCircleIcon className="scale-75" /></button>
+            <h1 className="pl-4">
+              replying to{" "}
+              <strong>
+                {replyEvent.getContent().displayname || replyEvent.getSender()!}
+              </strong>
+            </h1>
+            <button onClick={() => setInReplyTo(null)}>
+              <CrossNoCircleIcon className="scale-75" />
+            </button>
           </div>
           <div className="pointer-events-none pt-2">
             <Message event={replyEvent} />
           </div>
         </div>
-      ): null}
+      ) : null}
       {files
         ? files.map((file) => (
             <FilePreview file={file} removeFile={removeFile} />
@@ -147,6 +198,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
             id="input-panel"
             className="grow bg-transparent focus:outline-none mx-2"
             placeholder={`Message ${client.getRoom(roomId)?.name}`}
+            onKeyDown={handleKeys}
             onChange={(e) => setMessage(e.target.value)}
             value={message}
           />
