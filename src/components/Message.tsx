@@ -158,6 +158,7 @@ const Event = ({
   replacements?: MatrixEvent[];
   redaction?: MatrixEvent;
 }) => {
+
   switch (event.getType()) {
     case EventType.RoomMember:
       return <MemberEvent event={event} />;
@@ -229,6 +230,11 @@ const Reply = ({ relation }: { relation: IEventRelation | null }) => {
   // do we need to check for this?
   // const emote = original.getContent().msgtype === MsgType.Emote;
   const original = events[inReplyTo!]!;
+
+  // users might send an ID for a non-existent ID
+  if (!original) {
+    return null;
+  }
 
   const handleClick = () => {
     const element = document.getElementById(inReplyTo);

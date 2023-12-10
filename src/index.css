@@ -3,24 +3,24 @@
 @tailwind utilities;
 
 @layer utilities {
-  /* .scrollbar::-webkit-scrollbar { */
-  /*   background-color: white; */
-  /*   width: 10px; */
-  /* } */
+  .scrollbar::-webkit-scrollbar {
+    background-color: white;
+    width: 10px;
+  }
 
-  /* .scrollbar::-webkit-scrollbar-track { */
-  /*   border-radius: 100vh; */
-  /*   background-color: transparent; */
-  /* } */
+  .scrollbar::-webkit-scrollbar-track {
+    border-radius: 100vh;
+    background-color: transparent;
+  }
 
-  /* .scrollbar::-webkit-scrollbar-thumb { */
-  /*   background-color: transparent; */
-  /*   border-radius: 100vh; */
-  /* } */
-  /* .scrollbar::-webkit-scrollbar-thumb:hover { */
-  /*   background: #d4d4d8; */
-  /*   border-radius: 100vh; */
-  /* } */
+  .scrollbar::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 100vh;
+  }
+  .scrollbar:hover .scrollbar::-webkit-scrollbar-thumb {
+    background: #d4d4d8;
+    border-radius: 100vh;
+  }
 
   #logo {
     transition-property: opacity;

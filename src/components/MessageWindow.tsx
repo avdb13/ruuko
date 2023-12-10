@@ -101,7 +101,7 @@ const MessageWindow = () => {
       />
       <div
         ref={bottomDivRef}
-        className="flex flex-col justify-end overflow-y-auto bg-transparent grow"
+        className="flex flex-col justify-end overflow-y-auto bg-transparent grow scrollbar"
         id="bottom-div"
       >
         <Timeline events={Object.values(events)} />
@@ -187,10 +187,9 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
     {} as Record<string, JSX.Element>,
   );
 
-  console.log(sortedEvents[sortedEvents.length-1]);
-
   return sortedEvents.map((list, i) => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;
+
     const displayName = firstEvent.getContent().displayname;
 
     const previous =
@@ -271,8 +270,7 @@ const TitleBar = ({
       className="flex basis-8 justify-between items-center text-white bg-slate-600 px-4 grow-0"
       id="header"
     >
-      <p className="whitespace-normal break-all">{roomName}</p>
-      <p>{roomState?.events.get(EventType.RoomTopic)?.get("")?.getContent().topic ?? ""}</p>
+      <p className="whitespace-normal break-all flex items-center">{roomName}<span className="border-l-2"/>{roomState?.events.get(EventType.RoomTopic)?.get("")?.getContent().topic ?? ""}</p>
       <div>
         <button className="invert" onClick={() => setShowMembers(!showMembers)}>
           <MembersIcon />
