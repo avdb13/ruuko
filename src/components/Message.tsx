@@ -39,7 +39,6 @@ const Message = ({
   replacements?: MatrixEvent[];
   redaction?: MatrixEvent;
 }) => {
-
   if (event.getType() !== EventType.RoomMessage) {
     return (
       <div>
@@ -159,23 +158,17 @@ const Event = ({
   replacements?: MatrixEvent[];
   redaction?: MatrixEvent;
 }) => {
-  const historyRef = useRef<HistoryHandle>(null);
-
   switch (event.getType()) {
     case EventType.RoomMember:
       return <MemberEvent event={event} />;
     case EventType.RoomMessage:
       if (replacements) {
-        const historyButton = <></>;
-
         return (
           <>
             <ReplacedRoomEvent
-              ref={historyRef}
               original={event}
               replacements={replacements}
             />{" "}
-            {historyButton}
           </>
         );
       }
@@ -327,17 +320,10 @@ type ReplacedRoomEventProps = {
   replacements: MatrixEvent[];
 };
 
-type HistoryHandle = {
-  showHistory: boolean;
-  setShowHistory: (_: boolean) => void;
-};
-
-const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
-  (props, historyRef) => {
+const ReplacedRoomEvent = (props: ReplacedRoomEventProps) => {
     const { original, replacements } = props;
 
     const current = replacements.slice(-1)[0]!;
-    const [showHistory, setShowHistory] = useState(false);
 
     const bottomDiv = document.getElementById("bottom-div");
 
@@ -346,53 +332,37 @@ const ReplacedRoomEvent = forwardRef<HistoryHandle, ReplacedRoomEventProps>(
         const scroll = bottomDiv.scrollHeight - bottomDiv.clientHeight;
         bottomDiv.scrollTo(0, scroll);
       }
-    }, [showHistory, bottomDiv]);
+    }, [bottomDiv]);
 
-    useImperativeHandle(historyRef, () => ({
-      showHistory,
-      setShowHistory,
-    }));
-
-    const history = () => {
-      return showHistory
-        ? [
-            original,
-            ...(replacements.length > 1
-              ? replacements.slice(0, replacements.length - 1)
-              : []),
-          ].map((e, i) =>
-            i === 0 ? (
-              <li>
-                <RoomEvent key={e.getId()!} event={e} originalContent />
-              </li>
-            ) : (
-              <li>
-                <RoomEvent key={e.getId()!} event={e} />
-              </li>
-            ),
-          )
-        : null;
-    };
-
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  console.log(detailsRef.current.open)
     return (
       <>
-        <div className="list-none bg-indigo-200">
-          {showHistory ? history() : null}
-        </div>
-        <RoomEvent event={current} />
-        <label
-          onClick={() => {
-            setShowHistory(!showHistory);
-          }}
-          className="align-top text-gray-600 hover:text-gray-900 duration-300"
-        >
-          {" "}
-          (edited)
-        </label>
+        <RoomEvent event={current} />{" "}
+        <details ref={detailsRef} className="group list-none">
+          <summary className="text-gray-600 hover:text-gray-800 duration-300 list-none cursor-pointer">{detailsRef.current?.open ? "close" : "(edited)"}</summary>
+          <ul className="block">
+            {[
+              original,
+              ...(replacements.length > 1
+                ? replacements.slice(0, replacements.length - 1)
+                : []),
+            ].map((e, i) =>
+              i === 0 ? (
+                <li>
+                  <RoomEvent key={e.getId()!} event={e} originalContent />
+                </li>
+              ) : (
+                <li>
+                  <RoomEvent key={e.getId()!} event={e} />
+                </li>
+              ),
+            )}
+          </ul>
+        </details>
       </>
     );
-  },
-);
+  };
 
 const RoomEvent = ({
   event,
@@ -503,7 +473,7 @@ export const ReplaceWindow = (
   const client = useContext(ClientContext);
   const { currentRoom } = useContext(RoomContext)!;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  console.log(content["m.relates_to"], formatText(content.body))
+  console.log(content["m.relates_to"], formatText(content.body));
   const [newBody, setNewBody] = useState(formatText(content));
 
   const handleSubmit = (e: React.SyntheticEvent) => {
