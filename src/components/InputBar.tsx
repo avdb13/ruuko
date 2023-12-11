@@ -123,8 +123,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   };
 
   const handleKeys = (e: React.KeyboardEvent) => {
-    console.log(e.key);
-
     switch (e.key) {
       case "ArrowUp":
         const events = Object.values(roomEvents[currentRoom!.roomId]!);

@@ -71,23 +71,29 @@ const MessageWindow = () => {
     }
   }, []);
 
-  const events = useMemo(
-    () => roomEvents[currentRoom!.roomId],
+  // needed?
+  const eventsMemo = useMemo(
+    () => {
+      // default value not good
+      const arr = Object.values(roomEvents[currentRoom!.roomId] || {});
+      // show first 50 events for now
+      return arr.length < 50 ? arr : arr.slice(arr.length-50);
+    },
     [currentRoom, roomEvents],
   );
 
   useEffect(() => {
     console.log("scroll to bottom " + currentRoom?.name);
-    if (events) {
+    if (eventsMemo) {
       if (bottomDivRef.current) {
         const scroll =
           bottomDivRef.current.scrollHeight - bottomDivRef.current.clientHeight;
         bottomDivRef.current.scrollTo(0, scroll);
       }
     }
-  }, [events]);
+  }, [eventsMemo]);
 
-  if (!events || !currentRoom) {
+  if (!eventsMemo || !currentRoom) {
     return <div></div>;
   }
 
@@ -96,7 +102,7 @@ const MessageWindow = () => {
       <TitleBar
         showMembers={showMembers}
         setShowMembers={setShowMembers}
-        roomState={roomStates[currentRoom.roomId]}
+        roomState={roomStates[currentRoom.roomId] || null}
         roomName={currentRoom.name}
       />
       <div
@@ -104,7 +110,7 @@ const MessageWindow = () => {
         className="flex flex-col justify-end overflow-y-auto bg-transparent grow"
         id="bottom-div"
       >
-        <Timeline events={Object.values(events)} />
+        <Timeline events={eventsMemo} />
       </div>
       <div className="">
         <InputBar roomId={currentRoom.roomId} />
@@ -216,22 +222,23 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
           displayName={displayName}
           timestamp={firstEvent.getTs()}
         >
-          <button
-            className="p-1 bg-indigo-200 border-2 border-gray-400 rounded-md mb-2"
-            onClick={() =>
-              console.log(
-                list.map((id) => currentRoom?.findEventById(id)?.getContent()),
-              )
-            }
-          >
-            events
-          </button>
           {list.map((id) => eventRecord[id]!)}
         </MessageFrame>
       </>
     );
   });
 };
+
+          // <button
+          //   className="p-1 bg-indigo-200 border-2 border-gray-400 rounded-md mb-2"
+          //   onClick={() =>
+          //     console.log(
+          //       list.map((id) => currentRoom?.findEventById(id)?.getContent()),
+          //     )
+          //   }
+          // >
+          //   events
+          // </button>
 
 const isDifferentDay = (previous: MatrixEvent, current: MatrixEvent) => {
   const previousDate = new Date(previous.getTs());
@@ -267,10 +274,10 @@ const TitleBar = ({
 }) => {
   return (
     <div
-      className="flex basis-8 justify-between items-center text-gray-800 bg-opacity-50 bg-blue-300 px-4 grow-0"
+      className="flex min-h-[42px] items-center justify-between text-gray-800 bg-opacity-50 bg-blue-300 px-4"
       id="header"
     >
-      <div className="truncate shrink items-center">{roomName}<span className="ml-[5px] border-l-[1px] mr-[4px]"/>{roomState?.events.get(EventType.RoomTopic)?.get("")?.getContent().topic ?? ""}</div>
+      <div className="truncate shrink"><span className="font-bold">{roomName}</span><span className="border-indigo-800 ml-[6px] min-h-[150%] border-l-[2px] mr-[4px]"/>{roomState?.events.get(EventType.RoomTopic)?.get("")?.getContent().topic ?? ""}</div>
       <div className="relative grow basis-4 flex justify-end">
         <button className="invert bg-inherit" onClick={() => setShowMembers(!showMembers)}>
           <MembersIcon />

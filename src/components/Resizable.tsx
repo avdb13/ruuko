@@ -43,7 +43,7 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
   
   const children = (
       <div
-        className={"max-h-screen overflow-y-auto scrollbar w-min-0  " + props.className}
+        className={"max-h-screen overflow-y-auto scrollbar w-min-0 " + props.className}
         onMouseDown={(e) => e.preventDefault()}
         style={{ flexBasis: sidebarWidth }}
         ref={sidebarRef}

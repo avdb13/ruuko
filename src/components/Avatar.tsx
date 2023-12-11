@@ -21,7 +21,7 @@ const Avatar = ({
     <img
       src={getAvatarUrl(client, id, type) || "/public/anonymous.jpg"}
       className={
-        `object-cover self-start rounded-full border-4` + " " + className
+        `bg-white object-cover self-start rounded-full border-4` + " " + className
       }
       style={{ height: size * 4, width: size * 4, minWidth: size * 4 }}
     />
@@ -46,7 +46,7 @@ export const DirectAvatar = ({
         "/public/anonymous.jpg" : "/public/anonymous.jpg"
       }
       className={
-        `object-cover self-start rounded-full border-4` + " " + className
+        `bg-white object-cover self-start rounded-full border-4` + " " + className
       }
       style={{ height: size * 4, width: size * 4, minWidth: size * 4 }}
     />

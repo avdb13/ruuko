@@ -49,7 +49,7 @@ const RoomWidget = ({ room }: { room: Room }) => {
   return (
     <button
       onClick={() => setCurrentRoom(room)}
-      className="flex items-center shrink gap-4 p-2 w-full border-2 rounded-md hover:bg-indigo-200 duration-300"
+      className="flex items-center shrink gap-4 p-2 w-full border-b-4 shadow-md rounded-md hover:bg-indigo-200 duration-300"
       key={room.name}
     >
       <Avatar id={room.roomId} type="room" size={16} />
