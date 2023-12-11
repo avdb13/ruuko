@@ -107,7 +107,7 @@ const MessageWindow = () => {
       />
       <div
         ref={bottomDivRef}
-        className="overflow-y-auto scrollbar"
+        className="overflow-y-auto scrollbar flex flex-col justify-end grow"
         id="bottom-div"
       >
         <Timeline events={eventsMemo} />
