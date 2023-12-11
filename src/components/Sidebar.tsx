@@ -48,7 +48,7 @@ const RoomWidget = ({ room }: { room: Room }) => {
   return (
     <button
       onClick={() => setCurrentRoom(room)}
-      className="flex items-center shrink gap-4 p-2 w-full border-b-4 shadow-md rounded-md hover:bg-indigo-200 duration-300"
+      className="flex items-center gap-4 p-2 w-full border-b-4 shadow-md rounded-md hover:bg-indigo-200 duration-300"
       key={room.name}
     >
       <Avatar id={room.roomId} type="room" size={16} />
@@ -71,9 +71,9 @@ const RoomList = ({
   sidebarWidth: number;
   rooms: Room[];
 }) => {
-  return sidebarWidth < 120
+  return <ul>{sidebarWidth < 120
     ? rooms.map((room) => <RoomIconWidget room={room} key={room.roomId} />)
-    : rooms.map((room) => <RoomWidget room={room} />);
+    : rooms.map((room) => <RoomWidget room={room} />)}</ul>;
 };
 
 const Sidebar = () => {
@@ -86,14 +86,14 @@ const Sidebar = () => {
   const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
   const [sidebarWidth, setSidebarWidth] = useState(300);
 
+      // width={sidebarWidth}
+      // setWidth={setSidebarWidth}
+      // minWidth={180}
+      // side="right"
   return (
     <>
-    <Resizable
-      className="flex flex-col items-center gap-2 py-2 shrink-0 grow-0 basis-1/2 bg-opacity-50 bg-indigo-50 scrollbar overflow-y-auto"
-      width={sidebarWidth}
-      setWidth={setSidebarWidth}
-      minWidth={180}
-      side="right"
+    <div
+      className="flex flex-col items-center gap-2 py-2 shrink-0 grow-0 basis-1/4 bg-opacity-50 bg-indigo-50 scrollbar overflow-y-auto"
     >
         <Togglable
           modal={<SearchUserForm />}
@@ -115,7 +115,7 @@ const Sidebar = () => {
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
-    </Resizable>
+    </div>
     <UserPanel />
     </>
   );

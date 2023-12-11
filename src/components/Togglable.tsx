@@ -9,11 +9,11 @@ const Togglable = (
   const modalRef = useRef<ModalProps>(null);
 
   return (
-    <>
+    <div className="w-full">
       <Modal title={props.title} ref={modalRef}>
         {props.modal}
       </Modal>
-      <div className="flex justify-between w-full">
+      <div className="flex justify-between">
         <button className={degrees} onClick={() => setToggled(!toggled)}>
           {">"}
         </button>
@@ -27,7 +27,7 @@ const Togglable = (
         </button>
       </div>
       {toggled ? <>{props.children}</> : null}
-    </>
+    </div>
   );
 };
 
