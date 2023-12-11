@@ -1,12 +1,11 @@
-import { useRef } from "react";
 import Modal from "../Modal";
 
-const RoomInfo = () => {
-  const modalRef = useRef<ModalProps>(null);
-
+const RoomInfo = (props: Omit<ModalProps, "title">) => {
   return (
-    <Modal title="settings" ref={modalRef}>
+    <Modal title="" visible={props.visible} setVisible={props.setVisible} width={300} height={200}>
       <p>hello</p>
     </Modal>
   );
 }
+
+export default RoomInfo;

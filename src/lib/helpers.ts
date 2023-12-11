@@ -156,6 +156,13 @@ export const formatText = (content: IContent): string => {
   const replacement =
     content["m.relates_to"]?.rel_type === RelationType.Replace;
 
+  // support inline images
+  if (content.formatted_body) {
+    const start = (content.formatted_body as string).indexOf("<img");
+
+    (content.formatted_body as string).slice(0, start);
+  }
+
   return inReplyTo && replacement
     ? content["m.new_content"].body?.split("\n\n")[1]
     : inReplyTo

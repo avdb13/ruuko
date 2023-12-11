@@ -124,7 +124,7 @@ const MessageOptions = (
 
   return (
     <div className="group relative w-full peer-focus:bg-indigo-200 duration-300 transition-all ease-in-out bg-transparent">
-      <div className="group-hover:bg-indigo-200 duration-100 py-[2px] px-[8px]">
+    <div className="group-hover:bg-indigo-200 group-hover:bg-opacity-50 duration-100 py-[2px] px-[8px]">
         {props.children}
       </div>
       <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
@@ -170,11 +170,15 @@ const Event = ({
               original={event}
               replacements={replacements}
             />{" "}
+              <button onClick={() => console.log(event.getContent())} className="bg-zinc-100 rounded-md border-2 border-zinc-400">content</button>
           </>
         );
       }
 
-      return <RoomEvent event={event} redaction={redaction} />;
+      return (<><RoomEvent event={event} redaction={redaction} />
+
+        <button onClick={() => console.log(event.getContent())} className="bg-transparent px-2 rounded-md border-2 border-zinc-400">content</button></>
+      );
     case EventType.RoomRedaction:
       return <RedactionEvent event={event} />;
     case EventType.Reaction:
@@ -405,9 +409,12 @@ const RoomEvent = ({
       }
 
       // check later if we can also change the event type with edits
+      const text =formatText(content);
+      const match = extractAttributes(content.body, ["src", "alt"])
+
       return (
         <p className="inline-block whitespace-normal break-all">
-          {formatText(content)}
+        {match ? text : text.split("<img")[0]}{match ? <img src={match[0]} alt={match[1]} height={4} width={4} /> : null}
         </p>
       );
     }

@@ -13,7 +13,10 @@ declare global {
 
   interface ModalProps {
     title: string;
+    width?: number;
+    height?: number;
     visible: boolean;
+    className?: string;
     setVisible: (_: boolean) => void;
   }
 

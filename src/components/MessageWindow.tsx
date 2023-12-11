@@ -13,6 +13,8 @@ import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
 import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
+import RoomInfo from "./modals/RoomInfo";
+import Modal from "./Modal";
 
 // in case we have performance issues later
 // type SortingMetadata = {
@@ -262,12 +264,27 @@ const TitleBar = ({
   showMembers: boolean;
   setShowMembers: (_: boolean) => void;
 }) => {
+  const [visible, setVisible] = useState(false);
+
   return (
     <div
       className="flex min-h-[42px] items-center justify-between text-gray-800 bg-opacity-50 bg-blue-300 px-4"
       id="header"
     >
-      <button className="truncate shrink" onClick={() => {}}>
+      <Modal
+        title={roomName}
+        visible={visible}
+        setVisible={setVisible}
+        className="p-4"
+      >
+        <p>
+          {
+            roomState?.events.get(EventType.RoomTopic)?.get("")?.getContent()
+              .topic
+          }
+        </p>
+      </Modal>
+      <button className="truncate shrink" onClick={() => setVisible(true)}>
         <span className="font-bold">{roomName}</span>
         {(
           <>
