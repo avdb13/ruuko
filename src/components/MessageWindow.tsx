@@ -77,6 +77,7 @@ const MessageWindow = () => {
       // default value not good
       const arr = Object.values(roomEvents[currentRoom!.roomId] || {});
       // show first 50 events for now
+      // Array.slice copies the array, might be a bad idea
       return arr.length < 50 ? arr : arr.slice(arr.length-50);
     },
     [currentRoom, roomEvents],
@@ -98,7 +99,7 @@ const MessageWindow = () => {
   }
 
   return (
-    <div className="flex flex-col basis-1/2 justify-between max-h-screen grow">
+    <div className="min-w-0 flex flex-col basis-1/2 justify-between max-h-screen grow">
       <TitleBar
         showMembers={showMembers}
         setShowMembers={setShowMembers}
@@ -107,14 +108,15 @@ const MessageWindow = () => {
       />
       <div
         ref={bottomDivRef}
-        className="flex flex-col justify-end overflow-y-auto bg-transparent grow"
+        className="flex flex-col justify-end bg-transparent overflow-y-scroll grow"
         id="bottom-div"
       >
-        <Timeline events={eventsMemo} />
+        {/* why doesn't overflow work above? */}
+        <div className="overflow-y-auto">
+          <Timeline events={eventsMemo} />
+        </div>
       </div>
-      <div className="">
         <InputBar roomId={currentRoom.roomId} />
-      </div>
       {showMembers ? (
         <MemberList
           room={currentRoom}
@@ -214,6 +216,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
       );
     }
 
+          // ref={latestMessage ? ref : null}
     return (
       <>
         <DayBreak previous={previous} current={firstEvent} />

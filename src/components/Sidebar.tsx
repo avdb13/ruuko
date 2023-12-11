@@ -3,7 +3,6 @@ import { useState, useContext } from "react";
 import { RoomContext } from "../providers/room";
 import formatEvent from "../lib/eventFormatter";
 import Resizable from "./Resizable";
-import Scrollbar from "./Scrollbar";
 import UserPanel from "./UserPanel";
 import Avatar from "./Avatar";
 import Togglable from "./Togglable";
@@ -89,13 +88,12 @@ const Sidebar = () => {
 
   return (
     <Resizable
-      className=" shrink-0 grow-0 basis-1/2 bg-opacity-50 bg-indigo-50"
+      className="flex flex-col items-center gap-2 py-2 shrink-0 grow-0 basis-1/2 bg-opacity-50 bg-indigo-50 scrollbar overflow-y-auto"
       width={sidebarWidth}
       setWidth={setSidebarWidth}
       minWidth={180}
       side="right"
     >
-      <Scrollbar className="flex flex-col items-center gap-2 py-2" width={sidebarWidth} minWidth={180}>
         <Togglable
           modal={<SearchUserForm />}
           title="friends"
@@ -116,7 +114,6 @@ const Sidebar = () => {
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
-      </Scrollbar>
       {sidebarWidth > 180 ? <UserPanel /> : null}
     </Resizable>
   );

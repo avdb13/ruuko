@@ -13,7 +13,7 @@ import CrossIcon from "./icons/Cross";
 import { RoomContext } from "../providers/room";
 import { InputContext } from "../providers/input";
 import { EventType, MsgType, RelationType } from "matrix-js-sdk";
-import { formatText } from "../lib/helpers";
+import { findLastTextEvent, formatText } from "../lib/helpers";
 import Message from "./Message";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
 
@@ -72,7 +72,7 @@ const FilePicker = ({
 const InputBar = ({ roomId }: { roomId: string }) => {
   const client = useContext(ClientContext);
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
-  const { inReplyTo, setInReplyTo } = useContext(InputContext)!;
+  const { inReplyTo, setInReplyTo, setReplace } = useContext(InputContext)!;
 
   const replyEvent = currentRoom?.findEventById(inReplyTo || "") ?? null;
 
@@ -127,34 +127,10 @@ const InputBar = ({ roomId }: { roomId: string }) => {
       case "ArrowUp":
         const events = Object.values(roomEvents[currentRoom!.roomId]!);
 
-        for (let i = events.length; i > 0; i -= 1) {
-          const currentEvent = events[i];
-          const currentRelation = events[i]?.getRelation();
-
-          const sentByUser = currentEvent?.getSender() === client.getUserId()!;
-          const isTextMessage = currentEvent
-            ? formatText(currentEvent.getContent())
-            : false;
-
-          if (sentByUser && isTextMessage) {
-            const spanId =
-              currentRelation?.rel_type === RelationType.Replace
-                ? currentRelation?.event_id
-                : currentEvent.getId();
-            const toClickEl = document.getElementById(spanId!)!.parentNode!;
-
-            // not working but a good start nontheless ...
-
-            const editButton =
-              (toClickEl?.querySelector("[title=edit]") as HTMLButtonElement) ??
-              null;
-
-            console.log(editButton)
-            editButton.focus();
-            editButton.click();
-
-            return;
-          }
+        const lastEvent = findLastTextEvent(events, client.getUserId()!);
+        console.log(lastEvent);
+        if (lastEvent) {
+          setReplace(lastEvent);
         }
 
         return;

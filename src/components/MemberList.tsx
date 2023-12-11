@@ -3,7 +3,6 @@ import Resizable from "./Resizable";
 import { IStatusResponse, Room, RoomMember } from "matrix-js-sdk";
 import Avatar from "./Avatar";
 import CrossIcon from "./icons/Cross";
-import Scrollbar from "./Scrollbar";
 
 const sortMembers = (prev: RoomMember, next: RoomMember) => {
   return prev
@@ -38,8 +37,7 @@ const MemberList = ({
       side="left"
       className="content-center basis-1/4"
     >
-      <Scrollbar>
-        <div className="flex flex-col gap-2 items-center py-2">
+        <div className="flex flex-col gap-2 items-center py-2 overflow-y-auto">
           <button className="self-end" onClick={() => setShowMembers(false)}>
             <CrossIcon />
           </button>
@@ -74,7 +72,6 @@ const MemberList = ({
               ))}
           </ul>
         </div>
-      </Scrollbar>
     </Resizable>
   );
 };

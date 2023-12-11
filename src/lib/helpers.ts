@@ -1,5 +1,4 @@
 import {
-  EventType,
   IContent,
   MatrixClient,
   MatrixEvent,
@@ -164,4 +163,25 @@ export const formatText = (content: IContent): string => {
     : replacement
     ? content["m.new_content"].body
     : content.body;
+};
+
+export const findLastTextEvent = (events: MatrixEvent[], myUserId: string) => {
+  for (let i = events.length; i > 0; i -= 1) {
+    const currentEvent = events[i];
+    const currentRelation = currentEvent?.getRelation();
+
+    const sentByUser = currentEvent?.getSender() === myUserId;
+    const isTextMessage = currentEvent
+      ? formatText(currentEvent.getContent())
+      : false;
+
+    if (isTextMessage && sentByUser) {
+      const replaceId =
+        currentRelation?.rel_type === RelationType.Replace
+          ? currentRelation?.event_id
+          : currentEvent.getId();
+
+      return replaceId;
+    }
+  }
 };

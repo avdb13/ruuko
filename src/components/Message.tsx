@@ -39,6 +39,8 @@ const Message = ({
   replacements?: MatrixEvent[];
   redaction?: MatrixEvent;
 }) => {
+  const { setReplace, replace } = useContext(InputContext)!;
+
   if (event.getType() !== EventType.RoomMessage) {
     return (
       <div>
@@ -54,22 +56,20 @@ const Message = ({
     );
   }
 
-  const [editing, setEditing] = useState(false);
-
   return (
     // flash message on click
     <div>
       <span id={event.getId()!} tabIndex={-1} className="peer"></span>
       <Reply relation={event.getContent()["m.relates_to"] ?? null} />
-      {editing ? (
+      {replace === event.getId()! ? (
         <ReplaceWindow
-          setEditing={setEditing}
+          setReplace={setReplace}
           userId={event.getSender()!}
           timestamp={event.getTs()}
           event={event}
         />
       ) : (
-        <MessageOptions setEditing={setEditing} event={event}>
+        <MessageOptions setReplace={setReplace} event={event}>
           <Event
             event={event}
             replacements={replacements}
@@ -86,7 +86,7 @@ const Message = ({
 const MessageOptions = (
   props: PropsWithChildren<{
     event: MatrixEvent;
-    setEditing: (_: boolean) => void;
+    setReplace: (_: string | null) => void;
   }>,
 ) => {
   const [copied, setCopied] = useState(false);
@@ -95,7 +95,7 @@ const MessageOptions = (
   const handleEdit = () => {
     // do we need setReplace?
     setReplace(props.event.getId()!);
-    props.setEditing(true);
+    props.setReplace(props.event.getId()!);
   };
 
   const handleReply = () => {
@@ -472,7 +472,7 @@ export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
 export const ReplaceWindow = (
   props: MessageFrameProps & {
     event: MatrixEvent;
-    setEditing: (_: boolean) => void;
+    setReplace: (_: string | null) => void;
   },
 ) => {
   const content = props.event.getContent();
@@ -489,7 +489,7 @@ export const ReplaceWindow = (
 
     client.sendMessage(currentRoom!.roomId, replacement);
 
-    props.setEditing(false);
+    props.setReplace(null);
   };
 
   useLayoutEffect(() => {
@@ -524,7 +524,7 @@ export const ReplaceWindow = (
             value={newBody}
           />
           <div className="flex gap-2">
-            <button onClick={() => props.setEditing(false)} type="button">
+            <button onClick={() => props.setReplace(null)} type="button">
               cancel
             </button>
             <button type="button" onClick={handleSubmit}>
