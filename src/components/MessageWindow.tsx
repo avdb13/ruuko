@@ -108,22 +108,12 @@ const MessageWindow = () => {
       />
       <div
         ref={bottomDivRef}
-        className="flex flex-col justify-end bg-transparent overflow-y-scroll grow"
+        className="overflow-y-auto scrollbar"
         id="bottom-div"
       >
-        {/* why doesn't overflow work above? */}
-        <div className="overflow-y-auto">
-          <Timeline events={eventsMemo} />
-        </div>
+        <Timeline events={eventsMemo} />
       </div>
         <InputBar roomId={currentRoom.roomId} />
-      {showMembers ? (
-        <MemberList
-          room={currentRoom}
-          presences={presences}
-          setShowMembers={setShowMembers}
-        />
-      ) : null}
     </div>
   );
 };
