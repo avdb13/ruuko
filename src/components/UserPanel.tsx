@@ -263,7 +263,7 @@ const UserPanel = () => {
   const userId = client.getUserId();
 
   return (
-    <div className="w-full flex justify-between basis-12 bg-cyan-100 gap-2 p-2">
+    <div className="min-w-0 w-full flex justify-between basis-12 bg-opacity-50 bg-indigo-200 rounded-sm gap-2 p-2">
       <Settings visible={visible} setVisible={setVisible} />
       <Avatar id={userId!} type="user" size={16} />
       <div className="flex flex-col justify-center min-w-0">

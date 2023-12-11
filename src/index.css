@@ -4,25 +4,20 @@
 
 @layer utilities {
   .scrollbar::-webkit-scrollbar {
-    background-color: white;
     width: 10px;
+    background-color: transparent;
   }
 
   .scrollbar::-webkit-scrollbar-track {
     border-radius: 100vh;
-    background-color: transparent;
   }
 
   .scrollbar::-webkit-scrollbar-thumb {
-    background-color: white;
+    background-color: transparent;
     border-radius: 100vh;
   }
 
   .scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #BBB;
-  }
-
-  .scrollbar::-webkit-slider-runnable-track {
     background: #BBB;
   }
 

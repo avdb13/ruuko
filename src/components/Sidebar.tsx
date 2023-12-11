@@ -84,17 +84,17 @@ const Sidebar = () => {
   }
 
   const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
-  const [sidebarWidth, setSidebarWidth] = useState(300);
+  const [sidebarWidth, setSidebarWidth] = useState(400);
 
-      // width={sidebarWidth}
-      // setWidth={setSidebarWidth}
-      // minWidth={180}
-      // side="right"
   return (
-    <div
-      className="flex flex-col items-center gap-2 py-2 basis-1/2 bg-opacity-50 bg-indigo-50 min-w-0 h-screen"
+    <Resizable
+      width={sidebarWidth}
+      setWidth={setSidebarWidth}
+      minWidth={200}
+      side="right"
+      className="flex flex-col items-center gap-2 py-2 bg-opacity-50 bg-indigo-50 min-w-0 h-screen"
     >
-      <div className="flex flex-col w-full overflow-y-scroll">
+      <div className="flex flex-col w-full overflow-y-auto scrollbar">
         <Togglable
           modal={<SearchUserForm />}
           title="friends"
@@ -117,7 +117,7 @@ const Sidebar = () => {
         </Togglable>
       </div>
       <UserPanel />
-    </div>
+    </Resizable>
 
   );
 };

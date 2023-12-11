@@ -1,10 +1,16 @@
-import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "react";
+import {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 interface ResizableProps {
   width: number;
   minWidth: number;
   setWidth: (_: number) => void;
-  side: "left" | "right";
+  side?: "left" | "right";
   className?: string;
 }
 
@@ -23,9 +29,14 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
   const resize = useCallback(
     (mouseMoveEvent: MouseEvent) => {
       if (isResizing) {
-        setSidebarWidth(props.side === "right" ? mouseMoveEvent.clientX : window.outerWidth - sidebarWidth - mouseMoveEvent.clientX);
-        if (mouseMoveEvent.clientX < (props.minWidth)) {
-          setSidebarWidth(props.minWidth / 1.5);
+        console.log(mouseMoveEvent.clientX, props.minWidth)
+        setSidebarWidth(
+          props.side === "right"
+            ? mouseMoveEvent.clientX
+            : window.outerWidth - sidebarWidth - mouseMoveEvent.clientX,
+        );
+        if (mouseMoveEvent.clientX < props.minWidth) {
+          setSidebarWidth(props.minWidth / 2);
         }
       }
     },
@@ -40,41 +51,23 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
       window.removeEventListener("mouseup", stopResizing);
     };
   }, [resize, stopResizing]);
-  
-  const children = (
+
+  const resizerStyle = "px-[2px] h-full cursor-col-resize bg-inherit shadow-md resize-x";
+  return (
+    <>
       <div
-        className={"max-h-screen overflow-y-auto scrollbar w-min-0 " + props.className}
-        onMouseDown={(e) => e.preventDefault()}
-        style={{ flexBasis: sidebarWidth }}
         ref={sidebarRef}
+        style={{ width: sidebarWidth }}
+        onMouseDown={(e) => e.preventDefault()}
+        className="flex"
       >
-        {props.children}
+        {!props.side || props.side === "left" ? (
+          <div onMouseDown={startResizing} className={resizerStyle} />
+        ) : null}
+        <div className={props.className}>{props.children}</div>
+        {props.side === "right" ? <div onMouseDown={startResizing} className={resizerStyle} /> : null}
       </div>
-  )
-
-  return props.side === "right" ? (
-    <>
-      <div
-        className="p-1 bg-indigo-50"
-      ></div>
-      {children}
-      <div
-        className="p-1 cursor-col-resize resize-x bg-indigo-50"
-        onMouseDown={startResizing}
-      ></div>
     </>
-  ) : (
-    <>
-      <div
-        className="p-1 cursor-col-resize resize-x bg-indigo-50"
-        onMouseDown={startResizing}
-      ></div>
-      {children}
-      <div
-        className="p-1 bg-indigo-50"
-      ></div>
-    </>
-
   );
 };
 
