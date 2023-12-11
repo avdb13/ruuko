@@ -71,7 +71,7 @@ const RoomList = ({
   sidebarWidth: number;
   rooms: Room[];
 }) => {
-  return <ul>{sidebarWidth < 120
+  return <ul className="flex flex-col gap-2">{sidebarWidth < 120
     ? rooms.map((room) => <RoomIconWidget room={room} key={room.roomId} />)
     : rooms.map((room) => <RoomWidget room={room} />)}</ul>;
 };
@@ -91,10 +91,10 @@ const Sidebar = () => {
       // minWidth={180}
       // side="right"
   return (
-    <>
     <div
-      className="flex flex-col items-center gap-2 py-2 shrink-0 grow-0 basis-1/4 bg-opacity-50 bg-indigo-50 scrollbar overflow-y-auto"
+      className="flex flex-col items-center gap-2 py-2 basis-1/2 bg-opacity-50 bg-indigo-50 min-w-0 h-screen"
     >
+      <div className="flex flex-col w-full overflow-y-scroll">
         <Togglable
           modal={<SearchUserForm />}
           title="friends"
@@ -115,9 +115,10 @@ const Sidebar = () => {
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
+      </div>
+      <UserPanel />
     </div>
-    <UserPanel />
-    </>
+
   );
 };
 
