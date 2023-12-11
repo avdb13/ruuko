@@ -12,7 +12,9 @@ declare global {
 
 
   interface ModalProps {
-    toggleVisibility: () => void;
+    title: string;
+    visible: boolean;
+    setVisible: (_: boolean) => void;
   }
 
   interface Metadata {

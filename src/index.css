@@ -17,12 +17,13 @@
     background-color: white;
     border-radius: 100vh;
   }
-  .scrollbar::-webkit-scrollbar-thumb:hover  {
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
     background: #BBB;
   }
 
-  .scrollbar::-webkit-scrollbar-track:hover .scrollbar::-webkit-scrollbar-thumb  {
-    background: black;
+  .scrollbar::-webkit-slider-runnable-track {
+    background: #BBB;
   }
 
   #logo {

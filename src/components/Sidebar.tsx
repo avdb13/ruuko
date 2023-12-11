@@ -87,6 +87,7 @@ const Sidebar = () => {
   const [sidebarWidth, setSidebarWidth] = useState(300);
 
   return (
+    <>
     <Resizable
       className="flex flex-col items-center gap-2 py-2 shrink-0 grow-0 basis-1/2 bg-opacity-50 bg-indigo-50 scrollbar overflow-y-auto"
       width={sidebarWidth}
@@ -114,8 +115,9 @@ const Sidebar = () => {
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
-      {sidebarWidth > 180 ? <UserPanel /> : null}
     </Resizable>
+    <UserPanel />
+    </>
   );
 };
 

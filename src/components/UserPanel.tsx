@@ -1,10 +1,8 @@
-import React, {
+import {
   ChangeEvent,
-  ReactNode,
-  Ref,
-  useContext,
+  ReactNode, useContext,
   useRef,
-  useState,
+  useState
 } from "react";
 import { ClientContext } from "../providers/client";
 import countries from "../../data/countries.json";
@@ -39,7 +37,7 @@ type backupMethod = "recoveryKey" | "password";
 const PrivacyTab = () => {
   const [backupMethod, setBackupMethod] = useState<backupMethod | null>(null);
   const [backupInputVisibility, setbackupInputVisibility] = useState(false);
-  const backupRef = useRef<HTMLInputElement>();
+  const backupRef = useRef<HTMLInputElement>(null);
   const client = useContext(ClientContext);
   client.restoreKeyBackupWithSecretStorage;
 
@@ -181,7 +179,7 @@ const AccountTab = () => {
 
 const EditableAvatar = () => {
   const client = useContext(ClientContext);
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [avatar, setAvatar] = useState<File | null>(null);
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) =>
@@ -260,13 +258,14 @@ type Submenu = SubmenusReadOnly[number];
 
 const UserPanel = () => {
   const client = useContext(ClientContext);
-  const modalRef = useRef<ModalProps>(null);
+  const [visible, setVisible] = useState(false);
 
   const userId = client.getUserId();
 
   return (
-    <div className="flex justify-between basis-12 bg-cyan-100 gap-2 p-2">
-      <Settings modalRef={modalRef} />
+    // temporary fix
+    <div className="absolute top-[100%] -translate-y-full flex justify-between basis-12 bg-cyan-100 gap-2 p-2">
+      <Settings visible={visible} setVisible={setVisible} />
       <Avatar id={userId!} type="user" size={16} />
       <div className="flex flex-col justify-center min-w-0">
         <p className="whitespace-nowrap truncate font-bold">
@@ -278,7 +277,7 @@ const UserPanel = () => {
         <button onClick={() => client.logout(true)}>
           <Exit />
         </button>
-        <button onClick={() => modalRef.current?.toggleVisibility()}>
+        <button onClick={() => setVisible(true)}>
           <Gear />
         </button>
       </div>
@@ -286,11 +285,17 @@ const UserPanel = () => {
   );
 };
 
-const Settings = ({ modalRef }: { modalRef: Ref<ModalProps> }) => {
+const Settings = ({
+  visible,
+  setVisible,
+}: {
+  visible: boolean;
+  setVisible: (_: boolean) => void;
+}) => {
   const [selection, setSelection] = useState<Submenu>("Account");
 
   return (
-    <Modal title="settings" ref={modalRef} className="flex gap-2">
+    <Modal title="settings" visible={visible} setVisible={setVisible}>
       <ul className="flex flex-col justify-self-start gap-2 basis-1/4 bg-gray-100">
         {submenus.map((menu) => (
           <button
