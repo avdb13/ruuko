@@ -20,7 +20,7 @@ interface MyRoomState {
   setRoomStates: (_: Record<string, RoomState>) => void;
   setCurrentRoom: (_: Room) => void;
   setRoomEvents: (_: Record<string, Record<string, MatrixEvent>>) => void;
-  fallbackImage: Blob;
+  // fallbackImage: Blob;
 }
 
 const RoomProvider = (props: PropsWithChildren) => {
@@ -37,11 +37,11 @@ const RoomProvider = (props: PropsWithChildren) => {
     Record<string, Record<string, MatrixEvent>>
   >({});
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
-  const [fallbackImage, setFallbackImage] = useState<Blob>(new Blob());
+  // const [fallbackImage, setFallbackImage] = useState<Blob>(new Blob());
 
-  useEffect(() => {
-    fetch("/img-error.png").then(resp => resp.blob().then(blob => setFallbackImage(blob)));
-  }, [])
+  // useEffect(() => {
+  //   fetch("/img-error.png").then(resp => resp.blob().then(blob => setFallbackImage(blob)));
+  // }, [])
 
   const roomState: MyRoomState = {
     rooms,
@@ -52,7 +52,7 @@ const RoomProvider = (props: PropsWithChildren) => {
     setRoomStates,
     setCurrentRoom,
     setRoomEvents,
-    fallbackImage,
+    // fallbackImage,
   };
 
   useEffect(() => {

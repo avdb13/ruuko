@@ -8,10 +8,10 @@ import { AvatarType } from "../components/Avatar";
 import { Annotator } from "../components/chips/Annotation";
 
 
-export const onImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>, blob: Blob) => {
-  e.currentTarget.onerror = null; // prevents looping
-  e.currentTarget.src = URL.createObjectURL(blob);
-}
+// export const onImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>, blob: Blob) => {
+//   e.currentTarget.onerror = null; // prevents looping
+//   e.currentTarget.src = URL.createObjectURL(blob);
+// }
 
 export const extractAttributes = (s: string, attributes: Array<string>) =>
   attributes.reduce(

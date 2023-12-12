@@ -1,22 +1,14 @@
 import {
-  EventType,
-  IContent,
-  IEventRelation,
+  EventType, IEventRelation,
   MatrixEvent,
-  MsgType,
-  RelationType,
+  MsgType
 } from "matrix-js-sdk";
-import { extractAttributes, formatText, onImgError } from "../lib/helpers";
+import { extractAttributes, formatText } from "../lib/helpers";
 import {
-  PropsWithChildren,
-  forwardRef,
-  useContext,
-  useEffect,
-  useId,
-  useImperativeHandle,
-  useLayoutEffect,
+  PropsWithChildren, useContext,
+  useEffect, useLayoutEffect,
   useRef,
-  useState,
+  useState
 } from "react";
 import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
@@ -651,6 +643,17 @@ export const StateFrame = (props: PropsWithChildren<StateFrameProps>) => (
 const MemberEvent = ({ event }: { event: MatrixEvent }) => (
   <p>{formatMembership(event)}</p>
 );
+
+export const formatEvent = (event: MatrixEvent) => {
+  switch (event.getType()) {
+      case EventType.RoomMember:
+        return formatMembership(event);
+      case EventType.RoomMessage:
+        return formatText(event.getContent());
+      default:
+        return "";
+  }
+}
 
 export enum Membership {
   Invite = "invite",

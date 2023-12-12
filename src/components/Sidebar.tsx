@@ -1,12 +1,13 @@
-import { Room } from "matrix-js-sdk";
+import { EventType, MatrixEvent, Room } from "matrix-js-sdk";
 import { useState, useContext } from "react";
 import { RoomContext } from "../providers/room";
-import formatEvent from "../lib/eventFormatter";
+import { formatEvent } from "./Message";
 import Resizable from "./Resizable";
 import UserPanel from "./UserPanel";
 import Avatar from "./Avatar";
 import Togglable from "./Togglable";
 import { SearchRoomForm, SearchUserForm } from "./Search";
+import { Membership } from "./Message";
 
 const sortRooms = (prev: Room, next: Room) => {
   const prevEvents = prev.getLiveTimeline().getEvents();
@@ -43,7 +44,13 @@ const RoomWidget = ({ room }: { room: Room }) => {
   const { setCurrentRoom, roomEvents } = useContext(RoomContext)!;
 
   const events = Object.values(roomEvents[room.roomId] || {});
-  const latestEvent = events ? events[events.length - 1] : null;
+  const f = (e: MatrixEvent) =>
+          e.getType() === EventType.RoomMessage ||
+          e.getType() === EventType.RoomMember;
+
+  const latestEvent = events
+    ? events.filter(f)[events.filter(f).length - 1]
+    : null;
 
   return (
     <button
@@ -56,7 +63,12 @@ const RoomWidget = ({ room }: { room: Room }) => {
         <p className="max-w-full truncate font-bold">{room.name}</p>
         <p className="max-w-full truncate text-sm">
           {latestEvent
-            ? formatEvent(latestEvent, room.getMembers().length)
+            ? `${
+                room.getMembers().length > 2
+                  ? (latestEvent.getContent().displayname ||
+                      latestEvent.getSender()) + ": "
+                  : ""
+              } ${formatEvent(latestEvent)}`
             : null}
         </p>
       </div>
@@ -72,9 +84,13 @@ const RoomList = ({
   sidebarWidth: number;
   rooms: Room[];
 }) => {
-  return rooms.length > 0 ? <ul className="flex flex-col gap-2">{sidebarWidth < 120
-    ? rooms.map((room) => <RoomIconWidget room={room} key={room.roomId} />)
-    : rooms.map((room) => <RoomWidget room={room} />)}</ul> : null;
+  return rooms.length > 0 ? (
+    <ul className="flex flex-col gap-2">
+      {sidebarWidth < 120
+        ? rooms.map((room) => <RoomIconWidget room={room} key={room.roomId} />)
+        : rooms.map((room) => <RoomWidget room={room} />)}
+    </ul>
+  ) : null;
 };
 
 const Sidebar = () => {
@@ -84,6 +100,7 @@ const Sidebar = () => {
     return null;
   }
 
+  const memberships = rooms.map((r) => r.getMyMembership());
   const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
   const [sidebarWidth, setSidebarWidth] = useState(400);
 
@@ -116,19 +133,19 @@ const Sidebar = () => {
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
-        <Togglable
-          title="historical rooms"
-          sidebarWidth={sidebarWidth}
-        >
+        <Togglable title="historical rooms" sidebarWidth={sidebarWidth}>
           <RoomList
-            rooms={sortedRooms.filter(r => !r)}
+            rooms={sortedRooms.filter(
+              (r) =>
+                r.getMyMembership() === Membership.Ban ||
+                r.getMyMembership() === Membership.Leave,
+            )}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
       </div>
       <UserPanel />
     </Resizable>
-
   );
 };
 
