@@ -121,9 +121,11 @@ const InputBar = ({ roomId }: { roomId: string }) => {
           ["m.in_reply_to"]: { event_id: inReplyTo || undefined },
         },
       };
+
       client.sendMessage(roomId, content);
       setInReplyTo(null);
     } else {
+
       client.sendTextMessage(roomId, message);
     }
 

@@ -29,16 +29,16 @@ const Modal = (props: PropsWithChildren<ModalProps>) => {
     <dialog
       ref={modalRef}
       className={
-        "open:animate-modal close:animate-hide modal " + props.className || ""
+        "p-4 open:animate-modal close:animate-hide modal " + props.className || ""
       }
       onKeyDown={handleKeyDown}
     >
-        <div className="flex justify-between m-4 items-center h-8">
+        <div className="flex justify-between items-center h-8 w-full">
           <h1 className="bg-zinc-100 rounded-md py-1 font-bold text-xl">
             {props.title}
           </h1>
           <button
-            className="m-4 w-8 h-8 flex justify-center items-center"
+            className="w-8 h-8 flex justify-center items-center"
             onClick={() => setVisible(false)}
           >
             <CrossNoCircleIcon />

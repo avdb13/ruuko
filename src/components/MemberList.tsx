@@ -4,13 +4,14 @@ import {
   EventType,
   IContent,
   IStatusResponse,
-  Room,
   RoomMember,
 } from "matrix-js-sdk";
 import Avatar from "./Avatar";
 import { RoomContext } from "../providers/room";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
 import { ClientContext } from "../providers/client";
+import Modal from "./Modal";
+import moment from "moment";
 
 const sortMembers = (prev: RoomMember, next: RoomMember) => {
   return prev
@@ -133,32 +134,42 @@ const MemberChip = ({
   presenceEvent?: IContent;
   presencePromise: Promise<IStatusResponse>;
 }) => {
+  const [open, setOpen] = useState(false);
   const [presence, setPresence] = useState<IStatusResponse | null>(
     (presenceEvent as IStatusResponse) ?? null,
   );
 
-  useEffect(() => {
-    presencePromise
-      .then((resp) => {
-        setPresence(resp);
-      })
-      .catch(() => setPresence(null));
-  }, [])
+  // cache this per User
+  // useEffect(() => {
+  //   presencePromise
+  //     .then((resp) => {
+  //       setPresence(resp);
+  //     })
+  //     .catch(() => setPresence(null));
+  // }, []);
 
-  if (!presence?.status_msg) {
-    return null;
-  }
-
+  console.log(open);
   return (
     <button
+      onClick={() => setOpen(true)}
       className={`flex gap-4 items-center min-w-0 border-b-4 p-4 rounded-md shadow-md`}
     >
+      <MemberInfo
+        presence={presence ?? undefined}
+        visible={open}
+        setVisible={setOpen}
+        member={member}
+      />
       <Avatar
         id={member.userId}
         type="user"
         size={16}
         className={`shadow-sm ${
-          presence?.presence === "online" ? "border-green-200" : presence?.presence === "unavailable" ? "border-red-300" : "border-gray-300"
+          presence?.presence === "online"
+            ? "border-green-200"
+            : presence?.presence === "unavailable"
+            ? "border-red-300"
+            : "border-gray-300"
         }`}
       />
       <div className="text-start min-w-0">
@@ -168,6 +179,44 @@ const MemberChip = ({
         ) : null}
       </div>
     </button>
+  );
+};
+
+const MemberInfo = ({
+  member,
+  presence,
+  visible,
+  setVisible,
+}: {
+  member: RoomMember;
+  presence?: IStatusResponse;
+  visible: boolean;
+  setVisible: (_: boolean) => void;
+}) => {
+  return (
+    <Modal
+      title=""
+      key={member.name}
+      visible={visible}
+      setVisible={setVisible}
+      className="w-[30%]"
+    >
+      <div className="flex flex-col flex-wrap justify-center content-center gap-4 m-4 pb-[30px]">
+        <Avatar
+          id={member.userId}
+          type="user"
+          size={32}
+          className={`shadow-md self-center`}
+        />
+        <div className="text-center">
+          <h1 className="text-2xl">{member.rawDisplayName}</h1>
+          <button onClick={() => {/* start DM */}} className="bg-gray-200 shadow-sm text-gray-800 py-1 m-2 px-4 rounded-full">{member.userId}</button>
+          {presence?.last_active_ago ? (
+            <p>last seen {moment(+ new Date() - presence.last_active_ago).fromNow()}</p>
+          ) : null}
+        </div>
+      </div>
+    </Modal>
   );
 };
 

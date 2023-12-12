@@ -41,6 +41,7 @@
 
   .modal::backdrop {
     background: hsl(0 0% 0% / 0.5);
+    filter: blur(1px);
   }
 
   @keyframes rotate {

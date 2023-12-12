@@ -6,6 +6,6 @@ export default defineConfig({
   publicDir: "./public",
   plugins: [react()],
     optimizeDeps: {
-    exclude: ['@matrix-org/olm']
+    exclude: ['@matrix-org/olm', 'moment']
   }
 })
