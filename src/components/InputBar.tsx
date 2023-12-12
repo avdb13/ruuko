@@ -1,22 +1,21 @@
 import {
-  Ref,
   SyntheticEvent,
   useContext,
   useEffect,
   useRef,
-  useState,
+  useState
 } from "react";
 import { ClientContext } from "../providers/client";
-import FileIcon from "./icons/File";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import CrossIcon from "./icons/Cross";
 import { RoomContext } from "../providers/room";
 import { InputContext } from "../providers/input";
-import { EventType, MsgType, RelationType } from "matrix-js-sdk";
-import { findLastTextEvent, formatText } from "../lib/helpers";
-import Message from "./Message";
+import { MsgType } from "matrix-js-sdk";
+import { findLastTextEvent } from "../lib/helpers";
+import Message, { Membership } from "./Message";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
 import CloudIcon from "./icons/Cloud";
+import KnobIcon from "./icons/Knob";
 
 const FilePicker = ({
   files,
@@ -92,6 +91,19 @@ const InputBar = ({ roomId }: { roomId: string }) => {
       document.removeEventListener("mousedown", handleClickOutsidePicker);
     }
   }, [pickerRef])
+
+  if (!currentRoom) {
+    return null;
+  }
+
+  if (currentRoom?.getMyMembership() === Membership.Leave) {
+    return (
+      <div
+        className="flex items-center gap-2 sticky h-16 mx-2 px-4"
+      >
+      <p title="join" className="font-semibold text-xl">you left this room, click here to join again</p><button className="py-1 px-4 rounded-md bg-violet-200 border-gray-600 fill-current stroke-2 text-gray-600 border-4 shadow-md scale-75"><KnobIcon /></button></div>
+    )
+  }
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
