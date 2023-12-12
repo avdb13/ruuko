@@ -27,7 +27,7 @@ const MemberList = ({
     return null;
   }
 
-  const [memberListWidth, setMemberListWidth] = useState(300);
+  const [memberListWidth, setMemberListWidth] = useState(200);
 
   const sortedMembers = currentRoom.getMembers().sort(sortMembers);
   const admins = sortedMembers.filter((m) => m.powerLevel === 100);
@@ -35,11 +35,12 @@ const MemberList = ({
   return (
     <Resizable
       width={memberListWidth}
-      minWidth={150}
+      minWidth={100}
       setWidth={setMemberListWidth}
       side="left"
-      className="flex flex-col gap-2 items-center py-2 overflow-y-auto content-center basis-1/4 grow"
+      className="min-w-0 flex flex-col gap-2 py-4 grow h-screen"
     >
+        <div className="flex flex-col items-center gap-2 grow px-4">
           <button className="self-end" onClick={() => setVisible(false)}>
             <CrossNoCircleIcon />
           </button>
@@ -54,25 +55,28 @@ const MemberList = ({
             <p className="bg-indigo-400 py-1 px-4 rounded-full">encrypted</p>
           </div>
           <h1 className="text-xl font-bold">{currentRoom.name}</h1>
-          <h2>{currentRoom.getDefaultRoomName()}</h2>
+          <h2 className="bg-gray-200 shadow-sm text-gray-800 py-1 px-4 rounded-full">{currentRoom.getDefaultRoomName()}</h2>
           <p>created by {currentRoom.getCreator()}</p>
+        </div>
+        <button className="capitalize font-bold border-4 py-2 rounded-md border-indigo-600 border-opacity-50 bg-transparent mx-4">invite</button>
+        <div className="overflow-y-scroll scrollbar">
+          <ul className="flex flex-col gap-2 mx-4">
+            {admins.length > 0 ? <p className="font-bold capitalize text-gray-600">admins ({admins.length})</p> : null}
+            {admins.length > 0
+              ? admins.map((m) => (
+                  <MemberChip key={m.name} member={m} />
+                ))
+              : null}
+            <p className="font-bold capitalize text-gray-600">members ({sortedMembers.filter(m => m.powerLevel < 100).length})</p>
+            {sortedMembers
+              .filter((m) => m.powerLevel < 100)
+              .map((m) => (
+                <MemberChip key={m.name} member={m} />
+              ))}
+          </ul>
+        </div>
     </Resizable>
   );
-          // <ul className="flex flex-col">
-          //   <button className="basis-8">invite</button>
-          //   {admins.length > 0 ? <p>admins</p> : null}
-          //   {admins.length > 0
-          //     ? admins.map((m) => (
-          //         <MemberChip presence={presences[m.userId]} member={m} />
-          //       ))
-          //     : null}
-          //   <p>members</p>
-          //   {sortedMembers
-          //     .filter((m) => m.powerLevel < 100)
-          //     .map((m) => (
-          //       <MemberChip presence={presences[m.userId]} member={m} />
-          //     ))}
-          // </ul>
 };
 
 const MemberChip = ({
@@ -84,20 +88,14 @@ const MemberChip = ({
 }) => {
   return (
     <li
-      className={`border-2 ${
+      className={`flex gap-4 items-center min-w-0 border-2 ${
         presence && presence.presence === "offline" ? "opacity-50" : null
       }`}
     >
-      <div className="flex gap-4 items-center">
-        <div className="relative">
-          <Avatar id={member.userId} type="user" size={16} className="z-0" />
-        </div>
-        <div>
-          <p>
-            {member.name} {member.powerLevel}
-          </p>
-        </div>
-      </div>
+      <Avatar id={member.userId} type="user" size={16} className="z-0" />
+      <p className="truncate max-w-full">
+        {member.name} {member.powerLevel}
+      </p>
     </li>
   );
 };
