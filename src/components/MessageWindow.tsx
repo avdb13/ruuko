@@ -7,7 +7,7 @@ import {
   RelationType,
   RoomState,
 } from "matrix-js-sdk";
-import Message, { DateMessage, MessageFrame, StateFrame } from "./Message";
+import Message, { DateMessage, Membership, MessageFrame, StateFrame } from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
@@ -75,6 +75,16 @@ const MessageWindow = () => {
 
   if (!eventsMemo || !currentRoom) {
     return <div></div>;
+  }
+
+  console.log(roomEvents[currentRoom.roomId])
+  if (currentRoom?.getMyMembership() === Membership.Ban) {
+    return (
+      <div
+        className="absolute w-[40%] border-2 border-indigo-50 bg-white shadow-md rounded-sm top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 py-8"
+      >
+      <p className="py-2 text-lg text-gray-800 font-bold text-center">you were banned from this room</p><p className="py-2 text-center text-gray-800">reason: {eventsMemo[eventsMemo.length-1]?.getContent().reason ?? "unknown"}</p></div>
+    )
   }
 
   return (
