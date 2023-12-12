@@ -1,6 +1,7 @@
 import {
   Direction,
   EventType,
+  IContent,
   IStatusResponse,
   MatrixEvent,
   RelationType,
@@ -51,24 +52,6 @@ const MessageWindow = () => {
 
   const bottomDivRef = useRef<HTMLDivElement>(null);
   const [showMembers, setShowMembers] = useState(false);
-
-  useEffect(() => {
-    if (currentRoom) {
-      currentRoom.loadMembersIfNeeded().then((ok) => {
-        if (currentRoom.membersLoaded() && ok) {
-          const users = currentRoom.getMembers().map((m) => m.userId);
-
-          // for (let user of users) {
-          //   console.log("presence", Object.values(presences).length);
-          //   client
-          //     .getPresence(user)
-          //     .then((resp) => setPresences({ ...presences, [user]: resp }))
-          //     .catch(() => setPresences({ ...presences, [user]: null }));
-          // }
-        }
-      });
-    }
-  }, []);
 
   // needed?
   const eventsMemo = useMemo(() => {
@@ -121,6 +104,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
   // what if we have a replaced reaction???
+  // reduce a step earlier?
   const filteredEvents = events.reduce(
     (init, e) => {
       switch (e.getType()) {
@@ -266,16 +250,13 @@ const TitleBar = ({
 }) => {
   const [visible, setVisible] = useState(false);
 
+  console.log(roomState?.events);
   return (
     <div
       className="flex min-h-[42px] items-center justify-between text-gray-800 bg-opacity-50 bg-blue-300 px-4"
       id="header"
     >
-      <Modal
-        title={roomName}
-        visible={visible}
-        setVisible={setVisible}
-      >
+      <Modal title={roomName} visible={visible} setVisible={setVisible}>
         <p>
           {
             roomState?.events.get(EventType.RoomTopic)?.get("")?.getContent()
@@ -283,7 +264,10 @@ const TitleBar = ({
           }
         </p>
       </Modal>
-      <button className="truncate shrink outline-none" onClick={() => setVisible(true)}>
+      <button
+        className="truncate shrink outline-none"
+        onClick={() => setVisible(true)}
+      >
         <span className="font-bold">{roomName}</span>
         {(
           <>

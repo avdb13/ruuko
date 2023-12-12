@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import Resizable from "./Resizable";
-import { IStatusResponse, Room, RoomMember } from "matrix-js-sdk";
+import { EventType, IContent, IStatusResponse, Room, RoomMember } from "matrix-js-sdk";
 import Avatar from "./Avatar";
 import { RoomContext } from "../providers/room";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
@@ -22,12 +22,29 @@ const MemberList = ({
 }: {
   setVisible: (_: boolean) => void;
 }) => {
-  const { currentRoom } = useContext(RoomContext)!;
+  const { currentRoom, roomEvents } = useContext(RoomContext)!;
+
   if (!currentRoom) {
     return null;
   }
 
-  const [memberListWidth, setMemberListWidth] = useState(200);
+  const [memberListWidth, setMemberListWidth] = useState(400);
+  const [presence, setPresence] = useState<Record<string, IContent>>({});
+
+  useEffect(() => {
+    if (currentRoom) {
+      currentRoom.loadMembersIfNeeded().then((ok) => {
+        if (currentRoom.membersLoaded() && ok) {
+          const presences = Object.values(roomEvents[currentRoom.roomId]!)
+            .filter((e) => e.getType() === EventType.Presence)
+            .reduce((init, e) => ({...init, [e.getSender()!]: e.getContent()}), {});
+
+          setPresence(presences);
+        }
+      });
+    }
+  }, []);
+
 
   const sortedMembers = currentRoom.getMembers().sort(sortMembers);
   const admins = sortedMembers.filter((m) => m.powerLevel === 100);
@@ -35,7 +52,7 @@ const MemberList = ({
   return (
     <Resizable
       width={memberListWidth}
-      minWidth={100}
+      minWidth={200}
       setWidth={setMemberListWidth}
       side="left"
       className="min-w-0 flex flex-col gap-2 py-4 grow h-screen"
@@ -58,7 +75,7 @@ const MemberList = ({
           <h2 className="bg-gray-200 shadow-sm text-gray-800 py-1 px-4 rounded-full">{currentRoom.getDefaultRoomName()}</h2>
           <p>created by {currentRoom.getCreator()}</p>
         </div>
-        <button className="capitalize font-bold border-4 py-2 rounded-md border-indigo-600 border-opacity-50 bg-transparent mx-4">invite</button>
+        <button className="capitalize font-bold border-4 py-2 rounded-md border-indigo-400 text-gray-800 border-opacity-50 bg-transparent mx-4">invite</button>
         <div className="overflow-y-scroll scrollbar">
           <ul className="flex flex-col gap-2 mx-4">
             {admins.length > 0 ? <p className="font-bold capitalize text-gray-600">admins ({admins.length})</p> : null}
