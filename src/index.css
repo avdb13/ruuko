@@ -39,7 +39,7 @@
     }
   }
 
-  #modal::backdrop {
+  .modal::backdrop {
     background: hsl(0 0% 0% / 0.5);
   }
 

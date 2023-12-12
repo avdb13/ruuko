@@ -124,7 +124,7 @@ const MessageOptions = (
 
   return (
     <div className="group relative w-full peer-focus:bg-indigo-200 duration-300 transition-all ease-in-out bg-transparent">
-    <div className="group-hover:bg-indigo-200 group-hover:bg-opacity-50 duration-100 py-[2px] px-[8px]">
+      <div className="group-hover:bg-indigo-200 group-hover:bg-opacity-50 duration-100 py-[2px] px-[8px]">
         {props.children}
       </div>
       <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
@@ -158,7 +158,6 @@ const Event = ({
   replacements?: MatrixEvent[];
   redaction?: MatrixEvent;
 }) => {
-
   switch (event.getType()) {
     case EventType.RoomMember:
       return <MemberEvent event={event} />;
@@ -166,18 +165,28 @@ const Event = ({
       if (replacements) {
         return (
           <>
-            <ReplacedRoomEvent
-              original={event}
-              replacements={replacements}
-            />{" "}
-              <button onClick={() => console.log(event.getContent())} className="bg-zinc-100 rounded-md border-2 border-zinc-400">content</button>
+            <ReplacedRoomEvent original={event} replacements={replacements} />{" "}
+            <button
+              onClick={() => console.log(event.getContent())}
+              className="bg-zinc-100 rounded-md border-2 border-zinc-400"
+            >
+              content
+            </button>
           </>
         );
       }
 
-      return (<><RoomEvent event={event} redaction={redaction} />
+      return (
+        <>
+          <RoomEvent event={event} redaction={redaction} />
 
-        <button onClick={() => console.log(event.getContent())} className="bg-transparent px-2 rounded-md border-2 border-zinc-400">content</button></>
+          <button
+            onClick={() => console.log(event.getContent())}
+            className="bg-transparent px-2 rounded-md border-2 border-zinc-400"
+          >
+            content
+          </button>
+        </>
       );
     case EventType.RoomRedaction:
       return <RedactionEvent event={event} />;
@@ -331,49 +340,51 @@ type ReplacedRoomEventProps = {
 };
 
 const ReplacedRoomEvent = (props: ReplacedRoomEventProps) => {
-    const { original, replacements } = props;
+  const { original, replacements } = props;
 
-    const current = replacements.slice(-1)[0]!;
+  const current = replacements.slice(-1)[0]!;
 
-    const bottomDiv = document.getElementById("bottom-div");
+  const bottomDiv = document.getElementById("bottom-div");
 
-    useEffect(() => {
-      if (bottomDiv) {
-        const scroll = bottomDiv.scrollHeight - bottomDiv.clientHeight;
-        bottomDiv.scrollTo(0, scroll);
-      }
-    }, [bottomDiv]);
+  useEffect(() => {
+    if (bottomDiv) {
+      const scroll = bottomDiv.scrollHeight - bottomDiv.clientHeight;
+      bottomDiv.scrollTo(0, scroll);
+    }
+  }, [bottomDiv]);
 
-    // add diff to history later
-    const detailsRef = useRef<HTMLDetailsElement>(null);
+  // add diff to history later
+  const detailsRef = useRef<HTMLDetailsElement>(null);
 
-    return (
-      <>
-        <RoomEvent event={current} />{" "}
-        <details ref={detailsRef} className="group list-none">
-          <summary className="text-gray-600 hover:text-gray-800 duration-300 list-none cursor-pointer">{detailsRef.current?.open ? "close" : "(edited)"}</summary>
-          <ul className="block">
-            {[
-              original,
-              ...(replacements.length > 1
-                ? replacements.slice(0, replacements.length - 1)
-                : []),
-            ].map((e, i) =>
-              i === 0 ? (
-                <li>
-                  <RoomEvent key={e.getId()!} event={e} originalContent />
-                </li>
-              ) : (
-                <li>
-                  <RoomEvent key={e.getId()!} event={e} />
-                </li>
-              ),
-            )}
-          </ul>
-        </details>
-      </>
-    );
-  };
+  return (
+    <>
+      <RoomEvent event={current} />{" "}
+      <details ref={detailsRef} className="group list-none">
+        <summary className="text-gray-600 hover:text-gray-800 duration-300 list-none cursor-pointer">
+          {detailsRef.current?.open ? "close" : "(edited)"}
+        </summary>
+        <ul className="block">
+          {[
+            original,
+            ...(replacements.length > 1
+              ? replacements.slice(0, replacements.length - 1)
+              : []),
+          ].map((e, i) =>
+            i === 0 ? (
+              <li>
+                <RoomEvent key={e.getId()!} event={e} originalContent />
+              </li>
+            ) : (
+              <li>
+                <RoomEvent key={e.getId()!} event={e} />
+              </li>
+            ),
+          )}
+        </ul>
+      </details>
+    </>
+  );
+};
 
 const RoomEvent = ({
   event,
@@ -390,31 +401,71 @@ const RoomEvent = ({
   switch (content.msgtype) {
     case MsgType.Text: {
       if (
-        content.formatted_body &&
-        (content.formatted_body as string).startsWith("<img")
+        content.formatted_body
       ) {
-        const attributes = extractAttributes(content.formatted_body, [
-          "src",
-          "alt",
-        ]);
+        if ((content.formatted_body as string).search("<img") > 0) {
+          const attributes = extractAttributes(content.formatted_body, [
+            "src",
+            "alt",
+          ]);
+          const start = (content.formatted_body as string).indexOf("<img");
 
-        return (
-          <img
-            src={
-              client.mxcUrlToHttp(attributes["src"]!, 1200, 120, "scale", true)!
-            }
-            alt={attributes["alt"]!}
-          />
-        );
+          if (start > 0) {
+            return (
+              <p className="inline-block whitespace-normal break-all">
+                {formatText({
+                  ...content,
+                  body: content.body.slice(0, start),
+                })}{" "}
+                <img
+                  src={
+                    client.mxcUrlToHttp(
+                      attributes["src"]!,
+                      1200,
+                      1200,
+                      "scale",
+                      true,
+                    )!
+                  }
+                  className="inline-block"
+                  alt={attributes["alt"]!}
+                  height={32}
+                  width={32}
+                />
+              </p>
+            );
+          } else {
+            return (
+              <img
+                src={
+                  client.mxcUrlToHttp(
+                    attributes["src"]!,
+                    1200,
+                    1200,
+                    "scale",
+                    true,
+                  )!
+                }
+                className="inline-block"
+                alt={attributes["alt"]!}
+                height={64}
+                width={64}
+              />
+            );
+          }
+        } else {
+          return (
+            <p className="inline-block whitespace-normal break-all">
+              {formatText(content)}
+            </p>
+          )
+        }
       }
 
       // check later if we can also change the event type with edits
-      const text =formatText(content);
-      const match = extractAttributes(content.body, ["src", "alt"])
-
       return (
         <p className="inline-block whitespace-normal break-all">
-        {match ? text : text.split("<img")[0]}{match ? <img src={match[0]} alt={match[1]} height={4} width={4} /> : null}
+          {formatText(content)}
         </p>
       );
     }

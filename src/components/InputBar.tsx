@@ -128,7 +128,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         const events = Object.values(roomEvents[currentRoom!.roomId]!);
 
         const lastEvent = findLastTextEvent(events, client.getUserId()!);
-        console.log(lastEvent);
         if (lastEvent) {
           setReplace(lastEvent);
         }
@@ -191,6 +190,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
             <div className="absolute right-[0%] bottom-[100%]  translate-x-0 duration-300 ease-out">
               {showEmojis ? (
                 <EmojiPicker
+                  emojiStyle={EmojiStyle.NATIVE}
                   skinTonesDisabled={true}
                   previewConfig={{ showPreview: false }}
                   onEmojiClick={(e, _) => {

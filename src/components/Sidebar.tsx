@@ -64,6 +64,7 @@ const RoomWidget = ({ room }: { room: Room }) => {
   );
 };
 
+// TODO: remove rooms where the user got banned
 const RoomList = ({
   sidebarWidth,
   rooms,

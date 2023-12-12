@@ -139,7 +139,7 @@ const AccountTab = () => {
           ))}
           <div className="flex">
             <input
-              type="email"
+              type="text"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               className="bg-gray-100 h-6 focus:outline-none invalid:bg-red-100"
@@ -262,6 +262,7 @@ const UserPanel = () => {
 
   const userId = client.getUserId();
 
+  console.log(visible)
   return (
     <div className="min-w-0 w-full flex justify-between basis-12 bg-opacity-50 bg-indigo-200 rounded-sm gap-2 p-2">
       <Settings visible={visible} setVisible={setVisible} />
@@ -276,7 +277,7 @@ const UserPanel = () => {
         <button onClick={() => client.logout(true)}>
           <Exit />
         </button>
-        <button onClick={() => setVisible(true)}>
+        <button onClick={() => setVisible(!visible)}>
           <Gear />
         </button>
       </div>
@@ -294,21 +295,21 @@ const Settings = ({
   const [selection, setSelection] = useState<Submenu>("Account");
 
   return (
-    <Modal title="settings" visible={visible} setVisible={setVisible}>
-      <ul className="flex flex-col justify-self-start gap-2 basis-1/4 bg-gray-100">
-        {submenus.map((menu) => (
-          <button
-            key={menu}
-            onClick={() => setSelection(menu)}
-            className="bg-gray-300 hover:bg-gray-400 duration-100 rounded-md text-center p-2"
-          >
-            {menu}
-          </button>
-        ))}
-      </ul>
-      <div className="flex-1 basis-3/4 grow">{submenusObj[selection]}</div>
+    <Modal title="settings" visible={visible} setVisible={setVisible} className="flex gap-4 items-stretch">
+      {submenusObj[selection]}
     </Modal>
   );
 };
+      // <ul className="flex flex-col justify-self-start gap-2 basis-1/4 bg-gray-100">
+      //   {submenus.map((menu) => (
+      //     <button
+      //       key={menu}
+      //       onClick={() => setSelection(menu)}
+      //       className="bg-gray-300 hover:bg-gray-400 duration-100 rounded-md text-center p-2"
+      //     >
+      //       {menu}
+      //     </button>
+      //   ))}
+      // </ul>
 
 export default UserPanel;
