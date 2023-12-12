@@ -64,9 +64,9 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
       minWidth={200}
       setWidth={setMemberListWidth}
       side="left"
-      className="min-w-0 flex flex-col gap-2 py-4 grow h-screen"
+      className="min-w-0 flex flex-col gap-8 py-4 grow h-screen"
     >
-      <div className="flex flex-col items-center gap-2 grow px-4">
+      <div className="flex flex-col items-center gap-2 px-4">
         <button className="self-end" onClick={() => setVisible(false)}>
           <CrossNoCircleIcon />
         </button>
@@ -74,19 +74,25 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
           id={currentRoom.roomId}
           type="room"
           size={32}
-          className="self-center"
+          className="self-center shadow-sm my-2"
         />
-        <div className="flex gap-2">
-          <p className="bg-indigo-400 py-1 px-4 rounded-full">public room</p>
-          <p className="bg-indigo-400 py-1 px-4 rounded-full">encrypted</p>
+
+        <div className="text-center">
+          <h1 className="text-xl font-bold">{currentRoom.name}</h1>
+          {currentRoom.getMembers().length > 2 ? (
+            <h2 className="bg-gray-200 shadow-sm text-gray-800 px-4 rounded-full">
+              {currentRoom.getDefaultRoomName()}
+            </h2>
+          ) : null}
+          <p className="text-sm text-gray-800">created by {currentRoom.getCreator()}</p>
         </div>
-        <h1 className="text-xl font-bold">{currentRoom.name}</h1>
-        <h2 className="bg-gray-200 shadow-sm text-gray-800 py-1 px-4 rounded-full">
-          {currentRoom.getDefaultRoomName()}
-        </h2>
-        <p>created by {currentRoom.getCreator()}</p>
+
+        <div className="flex gap-2">
+          <p className="bg-indigo-200 shadow-sm text-gray-600 border-2 py-1 px-4 rounded-full">public room</p>
+          <p className="bg-indigo-200 shadow-sm text-gray-600 border-2 py-1 px-4 rounded-full">encrypted</p>
+        </div>
       </div>
-      <button className="capitalize font-bold border-4 py-2 rounded-md border-indigo-400 text-gray-800 border-opacity-50 bg-transparent mx-4">
+    <button className="scale-95 hover:scale-100 capitalize font-bold border-4 py-2 rounded-md border-indigo-200 text-gray-600 border-opacity-50 bg-transparent mx-4 shadow-sm duration-300 hover:border-indigo-300 hover:text-gray-800">
         invite
       </button>
       <div className="overflow-y-scroll scrollbar">
