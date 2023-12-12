@@ -16,6 +16,7 @@ import { EventType, MsgType, RelationType } from "matrix-js-sdk";
 import { findLastTextEvent, formatText } from "../lib/helpers";
 import Message from "./Message";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
+import CloudIcon from "./icons/Cloud";
 
 const FilePicker = ({
   files,
@@ -24,7 +25,7 @@ const FilePicker = ({
   files: File[] | null;
   setFiles: (_: File[] | null) => void;
 }) => {
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement>(null);
   // useEffect(() => {
   //   if (inputRef.current) {
   //     inputRef.current.fil
@@ -54,14 +55,12 @@ const FilePicker = ({
       />
       <button
         type="button"
-        className={`flex justify-center items-center w-8 h-8 my-2 absolute rounded-md border-2 ${
-          files ? "bg-indigo-100" : ""
-        }`}
+        className={`flex justify-center items-center w-8 h-8 my-2 absolute`}
         onClick={() => {
           inputRef.current?.click();
         }}
       >
-        <FileIcon />
+        <CloudIcon />
       </button>
     </>
   );
@@ -79,6 +78,20 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const [message, setMessage] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
   const [files, setFiles] = useState<File[] | null>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutsidePicker = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setShowEmojis(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutsidePicker);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsidePicker);
+    }
+  }, [pickerRef])
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
@@ -163,10 +176,10 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         : null}
       <form
         onSubmit={handleSubmit}
-        className="flex items-center gap-2 sticky h-12 mx-2 border-2"
+        className="flex items-center gap-2 sticky h-12 mx-2"
       >
         <FilePicker files={files} setFiles={setFiles} />
-        <div className="flex bg-indigo-200 grow rounded-md my-2 py-1">
+        <div className="flex bg-transparent grow rounded-md my-2 py-1">
           <input
             id="input-panel"
             className="grow bg-transparent focus:outline-none mx-2"
@@ -187,7 +200,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
             >
               😺
             </button>
-            <div className="absolute right-[0%] bottom-[100%]  translate-x-0 duration-300 ease-out">
+            <div ref={pickerRef} className="absolute right-[0%] bottom-[100%]  translate-x-0 duration-300 ease-out">
               {showEmojis ? (
                 <EmojiPicker
                   emojiStyle={EmojiStyle.NATIVE}
