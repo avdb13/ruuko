@@ -89,7 +89,7 @@ const FinalForm = ({
         type="submit"
         className="duration-300 transition-all group hover:border-gray-500 flex justify-center w-full shadow-md basis-8 p-2 mt-2 shadow-md border-4 border-gray-300 rounded-md bg-white"
       >
-        <ArrowIcon class="duration-300 transition-all text-red-500 group-hover:text-gray-500 fill-current" />
+        <ArrowIcon className="duration-300 transition-all text-red-500 group-hover:text-gray-500 fill-current" />
       </button>
     </form>
   );
@@ -103,23 +103,25 @@ const ServerForm = ({
   setBaseUrl: (_: string) => void;
   setError: (_: { message: string; icon: IconType } | null) => void;
 }) => {
-  const serverRef = useRef<HTMLInputElement>(null);
-  const server = serverRef.current?.value;
+  const [server, setServer] = useState("");
   const [ok, setOk] = useState<boolean>(false);
 
   const testServer = async () => {
-    if (!server) {
-      return false;
-    }
+    console.log(server)
+    // if (!server) {
+    //   return false;
+    // }
 
-    if (!window.navigator.onLine) {
-      setError({
-        message: "you appear to be disconnected",
-        icon: "disconnected",
-      });
-      return false;
-    }
+    console.log("window.navigator")
+    // if (!window.navigator.onLine) {
+    //   setError({
+    //     message: "you appear to be disconnected",
+    //     icon: "disconnected",
+    //   });
+    //   return false;
+    // }
 
+    console.log("ping default")
     try {
       await axios.get(`https://matrix.org/_matrix/client/versions`, {
         timeout: 2000,
@@ -132,6 +134,7 @@ const ServerForm = ({
       return false;
     }
 
+    console.log("ping baseUrl")
     try {
       const resp = await axios.get(
         server.startsWith("https://")
@@ -177,7 +180,8 @@ const ServerForm = ({
       onSubmit={handleSubmit}
     >
       <input
-        ref={serverRef}
+        value={server}
+        onChange={(e) => setServer(e.target.value)}
         placeholder="server"
         className="placeholder:font-semibold w-full border-4 text-gray-600 border-gray-300 focus:border-gray-500 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
         type="text"
@@ -187,7 +191,7 @@ const ServerForm = ({
         type="submit"
         className={`border-gray-300 hover:border-gray-500 group rounded-md basis-16 bg-white border-4 shadow-md flex justify-center items-center duration-300 transition-all`}
       >
-        <ArrowIcon class="duration-300 transition-all text-gray-300 group-hover:text-gray-500 fill-current" />
+        <ArrowIcon className="duration-300 transition-all text-gray-300 group-hover:text-gray-500 fill-current" />
       </button>
     </form>
   );

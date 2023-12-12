@@ -1,4 +1,5 @@
-import { PropsWithChildren, useEffect, useRef } from "react";
+import { ComponentProps, PropsWithChildren, useEffect, useRef } from "react";
+import CrossNoCircleIcon from "./icons/CrossNoCircle";
 
 const Modal = (props: PropsWithChildren<ModalProps>) => {
   const modalRef = useRef<HTMLDialogElement>(null);
@@ -10,8 +11,8 @@ const Modal = (props: PropsWithChildren<ModalProps>) => {
 
       if (visible) {
         modal.close();
+
         modal.showModal();
-        modal.focus();
       } else {
         modal.close();
       }
@@ -27,27 +28,29 @@ const Modal = (props: PropsWithChildren<ModalProps>) => {
   return (
     <dialog
       ref={modalRef}
-      className="relative open:animate-modal close:animate-hide modal z-10"
+      className={
+        "open:animate-modal close:animate-hide modal " + props.className || ""
+      }
       onKeyDown={handleKeyDown}
-      onClick={() => console.log("clicked")}
     >
-      <div className="flex flex-col">
-        <div className="flex justify-between m-4 items-center">
+        <div className="flex justify-between m-4 items-center h-8">
           <h1 className="bg-zinc-100 rounded-md py-1 font-bold text-xl">
             {props.title}
           </h1>
-          <input type="text" className="bg-gray-200" />
           <button
-            className="m-4 border-2 border-black w-8 h-8"
+            className="m-4 w-8 h-8 flex justify-center items-center"
             onClick={() => setVisible(false)}
           >
-            {"x"}
+            <CrossNoCircleIcon />
           </button>
         </div>
-        <div>{props.children}</div>
-      </div>
+        {props.children}
     </dialog>
   );
+};
+
+export const Input = (props: ComponentProps<"input">) => {
+  return <input {...props} autoFocus />;
 };
 
 export default Modal;

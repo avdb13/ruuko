@@ -8,7 +8,7 @@ import { ClientContext } from "../providers/client";
 import countries from "../../data/countries.json";
 import Avatar from "./Avatar";
 import Gear from "./icons/Gear";
-import Modal from "./Modal";
+import Modal, { Input } from "./Modal";
 import Exit from "./icons/Exit";
 import Pencil from "./icons/Pencil";
 import { SettingsContext } from "../providers/settings";
@@ -121,7 +121,7 @@ const AccountTab = () => {
   };
 
   return (
-    <div className="flex grow border-2 gap-2 basis-4">
+    <div className="flex grow gap-2">
       <EditableAvatar />
       <div className="flex flex-col gap-2">
         <div>
@@ -137,17 +137,17 @@ const AccountTab = () => {
           {settings.emails.map((email) => (
             <p key={email}>{email}</p>
           ))}
-          <div className="flex">
-            <input
-              type="text"
+          <form method="dialog" className="flex">
+            <Input
+              type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              className="bg-gray-100 h-6 focus:outline-none invalid:bg-red-100"
+              className="bg-gray-100 h-6 invalid:bg-red-100"
             />
             <button className="bg-gray-300 w-6 h-6" onClick={addEmail}>
               +
             </button>
-          </div>
+          </form>
           {requested ? <p>check your email</p> : null}
         </div>
         <div>
@@ -156,16 +156,16 @@ const AccountTab = () => {
             <p key={number}>{number}</p>
           ))}
           <div className="flex">
-            <select>
+            <select onClick={(e) => console.log(e)}>
               {countries.map((c) => (
-                <option>{getFlagEmoji(c.code) + " " + c.dial_code}</option>
+                <option key={c.code}>{getFlagEmoji(c.code) + " " + c.dial_code}</option>
               ))}
             </select>
-            <input
+            <Input
               type="text"
               value={newNumber}
               onChange={(e) => setNewNumber(e.target.value)}
-              className="bg-gray-100 h-6 focus:outline-none invalid:bg-red-100"
+              className="bg-gray-100 h-6 invalid:bg-red-100"
             />
             <button className="bg-gray-300 w-6 h-6" onClick={addEmail}>
               +
@@ -262,7 +262,6 @@ const UserPanel = () => {
 
   const userId = client.getUserId();
 
-  console.log(visible)
   return (
     <div className="min-w-0 w-full flex justify-between basis-12 bg-opacity-50 bg-indigo-200 rounded-sm gap-2 p-2">
       <Settings visible={visible} setVisible={setVisible} />
@@ -295,21 +294,23 @@ const Settings = ({
   const [selection, setSelection] = useState<Submenu>("Account");
 
   return (
-    <Modal title="settings" visible={visible} setVisible={setVisible} className="flex gap-4 items-stretch">
-      {submenusObj[selection]}
+    <Modal title="settings" visible={visible} setVisible={setVisible}>
+      <div className="flex gap-2 m-4">
+        <ul className="flex flex-col justify-self-start gap-2 basis-1/4 bg-gray-100">
+          {submenus.map((menu) => (
+            <button
+              key={menu}
+              onClick={() => setSelection(menu)}
+              className="bg-gray-300 hover:bg-gray-400 duration-100 rounded-md text-center p-2"
+            >
+              {menu}
+            </button>
+          ))}
+        </ul>
+        {submenusObj[selection]}
+      </div>
     </Modal>
   );
 };
-      // <ul className="flex flex-col justify-self-start gap-2 basis-1/4 bg-gray-100">
-      //   {submenus.map((menu) => (
-      //     <button
-      //       key={menu}
-      //       onClick={() => setSelection(menu)}
-      //       className="bg-gray-300 hover:bg-gray-400 duration-100 rounded-md text-center p-2"
-      //     >
-      //       {menu}
-      //     </button>
-      //   ))}
-      // </ul>
 
 export default UserPanel;

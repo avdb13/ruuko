@@ -9,21 +9,24 @@ import SettingsProvider from "./providers/settings.tsx";
 import "@matrix-org/olm";
 import Background from "./components/Background.tsx";
 import InputProvider from "./providers/input.tsx";
+import { StrictMode } from "react";
 
 global.Olm = Olm;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <CookiesProvider>
-    <ClientProvider>
-      <SettingsProvider>
-        <RoomProvider>
-          <InputProvider>
-            <Background>
-              <App />
-            </Background>
-          </InputProvider>
-        </RoomProvider>
-      </SettingsProvider>
-    </ClientProvider>
-  </CookiesProvider>,
+  <StrictMode>
+    <CookiesProvider>
+      <ClientProvider>
+        <SettingsProvider>
+          <RoomProvider>
+            <InputProvider>
+              <Background>
+                <App />
+              </Background>
+            </InputProvider>
+          </RoomProvider>
+        </SettingsProvider>
+      </ClientProvider>
+    </CookiesProvider>
+  </StrictMode>,
 );

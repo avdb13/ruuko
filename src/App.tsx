@@ -25,7 +25,7 @@ const App = () => {
   }
 
   return (
-    <div className="flex min-w-0 [&>*]:z-10">
+    <div className="flex min-w-0" id="app">
       <Sidebar />
       {roomState.currentRoom ? <MessageWindow /> : <p>welcome</p>}
     </div>
