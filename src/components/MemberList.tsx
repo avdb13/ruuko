@@ -136,26 +136,38 @@ const MemberChip = ({
   const [presence, setPresence] = useState<IStatusResponse | null>(
     (presenceEvent as IStatusResponse) ?? null,
   );
-  presencePromise
-    .then((resp) => {
-      setPresence(resp);
-    })
-    .catch(() => setPresence(null));
+
+  useEffect(() => {
+    presencePromise
+      .then((resp) => {
+        setPresence(resp);
+      })
+      .catch(() => setPresence(null));
+  }, [])
+
+  if (!presence?.status_msg) {
+    return null;
+  }
 
   return (
-    <li
+    <button
       className={`flex gap-4 items-center min-w-0 border-b-4 p-4 rounded-md shadow-md`}
     >
       <Avatar
         id={member.userId}
         type="user"
         size={16}
-        className={`${
-          presence?.presence === "online" ? "border-green-200" : presence?.presence === "unavailable" ? "border-red-200" : "border-gray-200"
+        className={`shadow-sm ${
+          presence?.presence === "online" ? "border-green-200" : presence?.presence === "unavailable" ? "border-red-300" : "border-gray-300"
         }`}
       />
-      <p className="truncate max-w-full">{member.name}</p>
-    </li>
+      <div className="text-start min-w-0">
+        <p className="truncate max-w-full font-bold">{member.name}</p>
+        {presence?.status_msg ? (
+          <p className="text-sm truncate max-w-full">{presence.status_msg}</p>
+        ) : null}
+      </div>
+    </button>
   );
 };
 
