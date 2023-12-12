@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Resizable from "./Resizable";
 import { IStatusResponse, Room, RoomMember } from "matrix-js-sdk";
 import Avatar from "./Avatar";
-import CrossIcon from "./icons/Cross";
+import { RoomContext } from "../providers/room";
+import CrossNoCircleIcon from "./icons/CrossNoCircle";
 
 const sortMembers = (prev: RoomMember, next: RoomMember) => {
   return prev
@@ -17,32 +18,33 @@ const sortMembers = (prev: RoomMember, next: RoomMember) => {
 };
 
 const MemberList = ({
-  room,
-  presences,
-  setShowMembers,
+  setVisible,
 }: {
-  room: Room;
-  presences: Record<string, IStatusResponse | null>;
-  setShowMembers: (_: boolean) => void;
+  setVisible: (_: boolean) => void;
 }) => {
+  const { currentRoom } = useContext(RoomContext)!;
+  if (!currentRoom) {
+    return null;
+  }
+
   const [memberListWidth, setMemberListWidth] = useState(300);
 
-  const sortedMembers = room.getMembers().sort(sortMembers);
+  const sortedMembers = currentRoom.getMembers().sort(sortMembers);
   const admins = sortedMembers.filter((m) => m.powerLevel === 100);
 
   return (
     <Resizable
       width={memberListWidth}
+      minWidth={150}
       setWidth={setMemberListWidth}
       side="left"
-      className="content-center basis-1/4"
+      className="flex flex-col gap-2 items-center py-2 overflow-y-auto content-center basis-1/4 grow"
     >
-        <div className="flex flex-col gap-2 items-center py-2 overflow-y-auto">
-          <button className="self-end" onClick={() => setShowMembers(false)}>
-            <CrossIcon />
+          <button className="self-end" onClick={() => setVisible(false)}>
+            <CrossNoCircleIcon />
           </button>
           <Avatar
-            id={room.roomId}
+            id={currentRoom.roomId}
             type="room"
             size={32}
             className="self-center"
@@ -51,29 +53,26 @@ const MemberList = ({
             <p className="bg-indigo-400 py-1 px-4 rounded-full">public room</p>
             <p className="bg-indigo-400 py-1 px-4 rounded-full">encrypted</p>
           </div>
-          <h1 className="text-xl font-bold">{room.name}</h1>
-          <h2>{room.getDefaultRoomName()}</h2>
-          <p>created by {room.getCreator()}</p>
-        </div>
-        <div className="basis-1/4">
-          <ul className="flex flex-col">
-            <button className="basis-8">invite</button>
-            {admins.length > 0 ? <p>admins</p> : null}
-            {admins.length > 0
-              ? admins.map((m) => (
-                  <MemberChip presence={presences[m.userId]} member={m} />
-                ))
-              : null}
-            <p>members</p>
-            {sortedMembers
-              .filter((m) => m.powerLevel < 100)
-              .map((m) => (
-                <MemberChip presence={presences[m.userId]} member={m} />
-              ))}
-          </ul>
-        </div>
+          <h1 className="text-xl font-bold">{currentRoom.name}</h1>
+          <h2>{currentRoom.getDefaultRoomName()}</h2>
+          <p>created by {currentRoom.getCreator()}</p>
     </Resizable>
   );
+          // <ul className="flex flex-col">
+          //   <button className="basis-8">invite</button>
+          //   {admins.length > 0 ? <p>admins</p> : null}
+          //   {admins.length > 0
+          //     ? admins.map((m) => (
+          //         <MemberChip presence={presences[m.userId]} member={m} />
+          //       ))
+          //     : null}
+          //   <p>members</p>
+          //   {sortedMembers
+          //     .filter((m) => m.powerLevel < 100)
+          //     .map((m) => (
+          //       <MemberChip presence={presences[m.userId]} member={m} />
+          //     ))}
+          // </ul>
 };
 
 const MemberChip = ({

@@ -50,9 +50,6 @@ const MessageWindow = () => {
   const { currentRoom, roomEvents, roomStates } = useContext(RoomContext)!;
 
   const bottomDivRef = useRef<HTMLDivElement>(null);
-  const [presences, setPresences] = useState<
-    Record<string, IStatusResponse | null>
-  >({});
   const [showMembers, setShowMembers] = useState(false);
 
   useEffect(() => {
@@ -98,21 +95,24 @@ const MessageWindow = () => {
   }
 
   return (
-    <div className="min-w-0 flex flex-col basis-1/2 justify-between max-h-screen grow">
-      <TitleBar
-        showMembers={showMembers}
-        setShowMembers={setShowMembers}
-        roomState={roomStates[currentRoom.roomId] || null}
-        roomName={currentRoom.name}
-      />
-      <div
-        ref={bottomDivRef}
-        className="overflow-y-auto scrollbar flex flex-col justify-end grow"
-        id="bottom-div"
-      >
-        <Timeline events={eventsMemo} />
+    <div className="min-w-0 flex grow">
+      <div className="min-w-0 flex flex-col basis-1/2 justify-between max-h-screen grow">
+        <TitleBar
+          showMembers={showMembers}
+          setShowMembers={setShowMembers}
+          roomState={roomStates[currentRoom.roomId] || null}
+          roomName={currentRoom.name}
+        />
+        <div
+          ref={bottomDivRef}
+          className="overflow-y-auto scrollbar flex flex-col justify-end grow"
+          id="bottom-div"
+        >
+          <Timeline events={eventsMemo} />
+        </div>
+        <InputBar roomId={currentRoom.roomId} />
       </div>
-      <InputBar roomId={currentRoom.roomId} />
+      <MemberList setVisible={setShowMembers} />
     </div>
   );
 };
@@ -275,7 +275,6 @@ const TitleBar = ({
         title={roomName}
         visible={visible}
         setVisible={setVisible}
-        className="p-4"
       >
         <p>
           {
@@ -284,7 +283,7 @@ const TitleBar = ({
           }
         </p>
       </Modal>
-      <button className="truncate shrink" onClick={() => setVisible(true)}>
+      <button className="truncate shrink outline-none" onClick={() => setVisible(true)}>
         <span className="font-bold">{roomName}</span>
         {(
           <>
@@ -307,10 +306,10 @@ const TitleBar = ({
       </button>
       <div className="relative grow basis-4 flex justify-end">
         <button
-          className="invert bg-inherit"
+          className="bg-inherit"
           onClick={() => setShowMembers(!showMembers)}
         >
-          <MembersIcon />
+          <MembersIcon class="fill-current text-gray-600" />
         </button>
       </div>
     </div>

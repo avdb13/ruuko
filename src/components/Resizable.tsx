@@ -33,7 +33,7 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
         setSidebarWidth(
           props.side === "right"
             ? mouseMoveEvent.clientX
-            : window.outerWidth - sidebarWidth - mouseMoveEvent.clientX,
+            : window.outerWidth - mouseMoveEvent.clientX,
         );
         if (mouseMoveEvent.clientX < props.minWidth) {
           setSidebarWidth(props.minWidth / 2);

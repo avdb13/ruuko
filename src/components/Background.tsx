@@ -2,8 +2,8 @@ import { PropsWithChildren } from "react";
 
 const Background = (props: PropsWithChildren) => {
   return (
-    <div className="relative h-screen w-screen bg-[#FFF] fade overflow-hidden z-0">
-      <div>
+    <div className="relative h-screen w-screen bg-[#FFF] fade overflow-hidden">
+      <div className="z-0">
         <div
           className="chip"
           style={{
