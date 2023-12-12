@@ -84,15 +84,21 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
               {currentRoom.getDefaultRoomName()}
             </h2>
           ) : null}
-          <p className="text-sm text-gray-800">created by {currentRoom.getCreator()}</p>
+          <p className="text-sm text-gray-800">
+            created by {currentRoom.getCreator()}
+          </p>
         </div>
 
         <div className="flex gap-2">
-          <p className="bg-indigo-200 shadow-sm text-gray-600 border-2 py-1 px-4 rounded-full">public room</p>
-          <p className="bg-indigo-200 shadow-sm text-gray-600 border-2 py-1 px-4 rounded-full">encrypted</p>
+          <p className="bg-indigo-200 shadow-sm text-gray-800 border-2 py-1 px-4 rounded-full">
+            public room
+          </p>
+          <p className="bg-indigo-200 shadow-sm text-gray-800 border-2 py-1 px-4 rounded-full">
+            encrypted
+          </p>
         </div>
       </div>
-    <button className="scale-95 hover:scale-100 capitalize font-bold border-4 py-2 rounded-md border-indigo-200 text-gray-600 border-opacity-50 bg-transparent mx-4 shadow-sm duration-300 hover:border-indigo-300 hover:text-gray-800">
+      <button className="scale-95 hover:scale-100 capitalize font-bold border-4 py-2 rounded-md border-indigo-200 text-gray-600 border-opacity-50 bg-transparent mx-4 shadow-sm duration-300 hover:border-indigo-300 hover:text-gray-800">
         invite
       </button>
       <div className="overflow-y-scroll scrollbar">
@@ -158,7 +164,7 @@ const MemberChip = ({
   return (
     <button
       onClick={() => setOpen(true)}
-      className={`flex gap-4 items-center min-w-0 border-b-4 p-4 rounded-md shadow-md`}
+    className={`hover:bg-indigo-200 duration-300 flex gap-4 items-center min-w-0 border-b-4 p-4 rounded-md shadow-md`}
     >
       <MemberInfo
         presence={presence ?? undefined}
@@ -216,9 +222,19 @@ const MemberInfo = ({
         />
         <div className="text-center">
           <h1 className="text-2xl">{member.rawDisplayName}</h1>
-          <button onClick={() => {/* start DM */}} className="bg-gray-200 shadow-sm text-gray-800 py-1 m-2 px-4 rounded-full">{member.userId}</button>
+          <button
+            onClick={() => {
+              /* start DM */
+            }}
+            className="bg-gray-200 shadow-sm text-gray-800 py-1 m-2 px-4 rounded-full"
+          >
+            {member.userId}
+          </button>
           {presence?.last_active_ago ? (
-            <p>last seen {moment(+ new Date() - presence.last_active_ago).fromNow()}</p>
+            <p>
+              last seen{" "}
+              {moment(+new Date() - presence.last_active_ago).fromNow()}
+            </p>
           ) : null}
         </div>
       </div>

@@ -95,7 +95,9 @@ const MessageWindow = () => {
         </div>
         <InputBar roomId={currentRoom.roomId} />
       </div>
-      <MemberList setVisible={setShowMembers} />
+      {showMembers ? (
+        <MemberList setVisible={setShowMembers} />
+      ) : null}
     </div>
   );
 };

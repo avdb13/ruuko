@@ -72,9 +72,9 @@ const RoomList = ({
   sidebarWidth: number;
   rooms: Room[];
 }) => {
-  return <ul className="flex flex-col gap-2">{sidebarWidth < 120
+  return rooms.length > 0 ? <ul className="flex flex-col gap-2">{sidebarWidth < 120
     ? rooms.map((room) => <RoomIconWidget room={room} key={room.roomId} />)
-    : rooms.map((room) => <RoomWidget room={room} />)}</ul>;
+    : rooms.map((room) => <RoomWidget room={room} />)}</ul> : null;
 };
 
 const Sidebar = () => {
@@ -98,7 +98,7 @@ const Sidebar = () => {
       <div className="flex flex-col w-full overflow-y-auto scrollbar">
         <Togglable
           modal={<SearchUserForm />}
-          title="friends"
+          title="direct messages"
           sidebarWidth={sidebarWidth}
         >
           <RoomList
@@ -113,6 +113,15 @@ const Sidebar = () => {
         >
           <RoomList
             rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
+            sidebarWidth={sidebarWidth}
+          />
+        </Togglable>
+        <Togglable
+          title="historical rooms"
+          sidebarWidth={sidebarWidth}
+        >
+          <RoomList
+            rooms={sortedRooms.filter(r => !r)}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>

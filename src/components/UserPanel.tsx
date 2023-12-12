@@ -273,11 +273,11 @@ const UserPanel = () => {
         <p className="whitespace-nowrap truncate">{userId!}</p>
       </div>
       <div className="flex content-center gap-2">
-        <button onClick={() => client.logout(true)}>
-          <Exit />
+        <button onClick={() => client.logout(true)} title="logout">
+    <Exit className="hover:animate-shake duration-300 " />
         </button>
-        <button onClick={() => setVisible(!visible)}>
-          <Gear />
+        <button onClick={() => setVisible(!visible)} title="settings">
+    <Gear className="hover:rotate-180 duration-500 hover:blur-2" />
         </button>
       </div>
     </div>

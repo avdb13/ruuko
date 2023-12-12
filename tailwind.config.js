@@ -7,6 +7,7 @@ export default {
       animation: {
         modal: "modal 0.3s ease-out",
         hide: "modal 0.3s ease-in",
+        shake: "shake 0.6s ease-in-out",
       },
       keyframes: {
         modal: {
@@ -20,7 +21,14 @@ export default {
           "25%": { transform: "scale(0.98)", filter: "blur(0.5px)" },
           "50%": { transform: "scale(0.95)", filter: "blur(1px)" },
           "100%": { transform: "scale(0.9)", filter: "blur(2px)" },
-        }
+        },
+        shake: {
+          "0%": { transform: "translateX(0px)" },
+          "25%": { transform: "translateX(-1px)" },
+          "50%": { transform: "translateX(1px)" },
+          "75%": { transform: "translateX(-1px)" },
+          "100%": { transform: "translateX(0px)" },
+        },
       },
       transitionProperty: {
         'height': 'height'

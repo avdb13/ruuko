@@ -6,7 +6,7 @@ import {
   MsgType,
   RelationType,
 } from "matrix-js-sdk";
-import { extractAttributes, formatText } from "../lib/helpers";
+import { extractAttributes, formatText, onImgError } from "../lib/helpers";
 import {
   PropsWithChildren,
   forwardRef,
@@ -394,6 +394,8 @@ const RoomEvent = ({
   originalContent?: boolean;
 }) => {
   const client = useContext(ClientContext);
+  const { fallbackImage } = useContext(RoomContext)!;
+
   const content = originalContent
     ? event.getOriginalContent()
     : event.getContent();
@@ -418,6 +420,7 @@ const RoomEvent = ({
                   body: content.body.slice(0, start),
                 })}{" "}
                 <img
+                  onError={(e) => onImgError(e, fallbackImage)}
                   src={
                     client.mxcUrlToHttp(
                       attributes["src"]!,
@@ -428,7 +431,6 @@ const RoomEvent = ({
                     )!
                   }
                   className="inline-block"
-                  alt={attributes["alt"]!}
                   height={32}
                   width={32}
                 />
