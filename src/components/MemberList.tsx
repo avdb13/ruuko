@@ -77,7 +77,7 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
           className="self-center shadow-sm my-2"
         />
 
-        <div className="text-center">
+        <div className="text-center [&>*]:py-1">
           <h1 className="text-xl font-bold">{currentRoom.name}</h1>
           {currentRoom.getMembers().length > 2 ? (
             <h2 className="bg-gray-200 shadow-sm text-gray-800 px-4 rounded-full">
@@ -111,7 +111,7 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
           {admins.length > 0
             ? admins.map((m) => (
                 <MemberChip
-                  presencePromise={client.getPresence(m.userId)}
+                  // presencePromise={client.getPresence(m.userId)}
                   presenceEvent={presences[m.userId]}
                   key={m.name}
                   member={m}
@@ -125,7 +125,7 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
             .filter((m) => m.powerLevel < 100)
             .map((m) => (
               <MemberChip
-                presencePromise={client.getPresence(m.userId)}
+                // presencePromise={}
                 presenceEvent={presences[m.userId]}
                 key={m.name}
                 member={m}
@@ -140,11 +140,11 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
 const MemberChip = ({
   member,
   presenceEvent,
-  presencePromise,
+  // presencePromise,
 }: {
   member: RoomMember;
   presenceEvent?: IContent;
-  presencePromise: Promise<IStatusResponse>;
+  // presencePromise: Promise<IStatusResponse>;
 }) => {
   const [open, setOpen] = useState(false);
   const [presence, setPresence] = useState<IStatusResponse | null>(

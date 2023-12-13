@@ -37,7 +37,7 @@ const Togglable = (
           <button onClick={() => setVisible(true)}>
             <PlusIcon className="scale-75" />
           </button>
-        ) : <button disabled className="opacity-0"></button>}
+        ) : <div></div>}
       </div>
       {toggled ? <>{props.children}</> : null}
     </div>

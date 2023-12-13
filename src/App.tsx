@@ -5,7 +5,6 @@ import MessageWindow from "./components/MessageWindow";
 import { RoomContext } from "./providers/room";
 import { ClientContext } from "./providers/client";
 import { useCookies } from "react-cookie";
-import Login from "./components/Login";
 
 const App = () => {
   const [cookies] = useCookies(["session"]);
@@ -25,7 +24,7 @@ const App = () => {
   }
 
   return (
-    <div className="relative flex min-w-0 [&>*]:z-10">
+    <div className="flex min-w-0 [&>*]:z-10">
       <Sidebar />
       {roomState.currentRoom ? <MessageWindow /> : <p>welcome</p>}
     </div>

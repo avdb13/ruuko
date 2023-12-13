@@ -6,6 +6,8 @@ const Modal = (props: PropsWithChildren<ModalProps>) => {
   const { visible, setVisible } = props;
 
   useEffect(() => {
+    console.log(visible, modalRef)
+
     if (modalRef.current) {
       const modal = modalRef.current;
 
@@ -17,7 +19,7 @@ const Modal = (props: PropsWithChildren<ModalProps>) => {
         modal.close();
       }
     }
-  }, [visible]);
+  }, [visible, modalRef]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDialogElement>) => {
     if (event.key === "Escape") {

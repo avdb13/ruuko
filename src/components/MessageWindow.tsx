@@ -7,7 +7,12 @@ import {
   RelationType,
   RoomState,
 } from "matrix-js-sdk";
-import Message, { DateMessage, Membership, MessageFrame, StateFrame } from "./Message";
+import Message, {
+  DateMessage,
+  Membership,
+  MessageFrame,
+  StateFrame,
+} from "./Message";
 import InputBar from "./InputBar";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { RoomContext } from "../providers/room";
@@ -71,20 +76,26 @@ const MessageWindow = () => {
         bottomDivRef.current.scrollTo(0, scroll);
       }
     }
-  }, [eventsMemo]);
+  }, [currentRoom]);
 
   if (!eventsMemo || !currentRoom) {
     return <div></div>;
   }
 
-  console.log(roomEvents[currentRoom.roomId])
   if (currentRoom?.getMyMembership() === Membership.Ban) {
     return (
-      <div
-        className="absolute w-[40%] border-2 border-indigo-50 bg-white shadow-md rounded-sm top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 py-8"
-      >
-      <p className="py-2 text-lg text-gray-800 font-bold text-center">you were banned from this room</p><p className="py-2 text-center text-gray-800">reason: {eventsMemo[eventsMemo.length-1]?.getContent().reason ?? "unknown"}</p></div>
-    )
+      <div className="relative basis-1/2 max-h-screen grow">
+      <div className="absolute open:animate-modal modal w-[40%] border-2 border-indigo-50 bg-white shadow-md rounded-sm top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 py-8">
+        <p className="py-2 text-lg text-gray-800 font-bold text-center">
+          you were banned from this room
+        </p>
+        <p className="py-2 text-center text-gray-800">
+          reason:{" "}
+          {eventsMemo[eventsMemo.length - 1]?.getContent().reason ?? "unknown"}
+        </p>
+      </div>
+      </div>
+    );
   }
 
   return (
@@ -105,9 +116,7 @@ const MessageWindow = () => {
         </div>
         <InputBar roomId={currentRoom.roomId} />
       </div>
-      {showMembers ? (
-        <MemberList setVisible={setShowMembers} />
-      ) : null}
+      {showMembers ? <MemberList setVisible={setShowMembers} /> : null}
     </div>
   );
 };
@@ -262,7 +271,6 @@ const TitleBar = ({
 }) => {
   const [visible, setVisible] = useState(false);
 
-  console.log(roomState?.events);
   return (
     <div
       className="flex min-h-[42px] items-center justify-between text-gray-800 bg-opacity-50 bg-blue-300 px-4"

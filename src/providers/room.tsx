@@ -25,9 +25,10 @@ interface MyRoomState {
 
 const RoomProvider = (props: PropsWithChildren) => {
   const client = useContext(ClientContext);
-  client.once(ClientEvent.Sync, (state, previousState, res) => {
 
-  });
+  // client.once(ClientEvent.Sync, (state, previousState, res) => {
+
+  // });
 
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   // null because otherwise we can't distinguish between no rooms and not done preparing the store
