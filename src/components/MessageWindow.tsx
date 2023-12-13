@@ -56,6 +56,7 @@ const MessageWindow = () => {
   const { currentRoom, roomEvents, roomStates } = useContext(RoomContext)!;
   const [messagesShown, setMessagesShown] = useState(50);
 
+  const bottomDivRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<HTMLDivElement>(null);
   const [showMembers, setShowMembers] = useState(false);
 
@@ -67,6 +68,15 @@ const MessageWindow = () => {
     // Array.slice copies the array, might be a bad idea
     return arr.length < messagesShown ? arr : arr.slice(arr.length - messagesShown);
   }, [currentRoom, roomEvents]);
+
+  useEffect(() => {
+    console.log("scroll to bottom " + currentRoom?.name);
+    if (eventsMemo) {
+      if (bottomDivRef.current) {
+        bottomDivRef.current.scrollTo(0, 0);
+      }
+    }
+  }, [currentRoom]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {
@@ -115,6 +125,7 @@ const MessageWindow = () => {
           roomName={currentRoom.name}
         />
         <div
+          ref={bottomDivRef}
           className="overflow-y-scroll scrollbar flex flex-col mt-auto scale-y-[-1] [&>*]:scale-y-[-1]"
           id="bottom-div"
         >

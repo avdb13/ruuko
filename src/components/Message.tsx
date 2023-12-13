@@ -503,7 +503,7 @@ interface MessageFrameProps {
 }
 
 export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
-  <div className="p-2 border-x-2 border-b-2 border-black w-full">
+  <li className="p-2 border-x-2 border-b-2 border-black w-full">
     <div className="flex content-center gap-2">
       <Avatar id={props.userId} type="user" size={16} />
       <div className="flex flex-col gap-2 w-full">
@@ -518,7 +518,7 @@ export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
         <div className="">{props.children}</div>
       </div>
     </div>
-  </div>
+  </li>
 );
 
 export const ReplaceWindow = (
