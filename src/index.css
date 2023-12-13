@@ -184,14 +184,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    width: 100%;
   }
 
   .dot {
     height: 20px;
     width: 20px;
-    margin-right: 10px;
+    margin-right: 20px;
     border-radius: 10px;
     background-color: #c4b5fd;
     animation: pulse 1.5s infinite ease-in-out;

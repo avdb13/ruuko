@@ -5,7 +5,7 @@ import {
 } from "matrix-js-sdk";
 import { extractAttributes, formatText } from "../lib/helpers";
 import {
-  PropsWithChildren, useContext,
+  PropsWithChildren, Ref, useContext,
   useEffect, useLayoutEffect,
   useRef,
   useState
@@ -35,15 +35,19 @@ const Message = ({
 
   if (event.getType() !== EventType.RoomMessage) {
     return (
-      <div>
-        <span id={event.getId()!} tabIndex={-1} className="peer"></span>
-        <Reply relation={event.getContent()["m.relates_to"] ?? null} />
-        <Event
-          event={event}
-          replacements={replacements}
-          redaction={redaction}
-        />
-        <Annotations annotations={annotations} reply_id={event.getId()!} />
+      <div className="flex grow">
+        <div className="grow">
+          <span id={event.getId()!} tabIndex={-1} className="peer"></span>
+          <Reply relation={event.getContent()["m.relates_to"] ?? null} />
+          <Event
+            event={event}
+            replacements={replacements}
+            redaction={redaction}
+          />
+          <Annotations annotations={annotations} reply_id={event.getId()!} />
+        </div>
+        <div className="basis-32 bg-black">
+        </div>
       </div>
     );
   }
@@ -119,7 +123,7 @@ const MessageOptions = (
       <div className="group-hover:bg-indigo-200 group-hover:bg-opacity-50 duration-100 py-[2px] px-[8px]">
         {props.children}
       </div>
-      <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
+    <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
         <button type="button" title="edit">
           <EditIcon className="scale-75" onClick={handleEdit} />
         </button>
@@ -335,15 +339,6 @@ const ReplacedRoomEvent = (props: ReplacedRoomEventProps) => {
   const { original, replacements } = props;
 
   const current = replacements.slice(-1)[0]!;
-
-  const bottomDiv = document.getElementById("bottom-div");
-
-  useEffect(() => {
-    if (bottomDiv) {
-      const scroll = bottomDiv.scrollHeight - bottomDiv.clientHeight;
-      bottomDiv.scrollTo(0, scroll);
-    }
-  }, [bottomDiv]);
 
   // add diff to history later
   const detailsRef = useRef<HTMLDetailsElement>(null);
@@ -633,7 +628,7 @@ export const StateFrame = (props: PropsWithChildren<StateFrameProps>) => (
   <li className="p-2 border-x-2 border-b-2 border-black pl-6">
     <div className="flex content-center gap-2">
       <Avatar id={props.userId} size={8} type="user" />
-      <p className="flex flex-col justify-center whitespace-normal break-all">
+      <p className="flex flex-col justify-center whitespace-normal break-all grow">
         {props.children}
       </p>
     </div>

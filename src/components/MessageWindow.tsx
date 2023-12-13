@@ -6,13 +6,22 @@ import Message, {
   StateFrame,
 } from "./Message";
 import InputBar from "./InputBar";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Ref,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
 import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
 import Modal from "./Modal";
-import { ErrorBoundary } from "react-error-boundary";
+import { ClientContext } from "../providers/client";
+import Loader from "./Loader";
 
 // in case we have performance issues later
 // type SortingMetadata = {
@@ -20,7 +29,6 @@ import { ErrorBoundary } from "react-error-boundary";
 // }
 
 const sortByTimestamp = (events: MatrixEvent[]) =>
-  // .map(e => ({sender: e.getSender(), timestamp: e.getTs(), id: e.getId()! }))
   events
     .reduce((init, event, i) => {
       if (i === 0) {
@@ -45,55 +53,74 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
 
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
-  const { currentRoom, roomEvents, roomStates } = useContext(RoomContext)!;
-  const [messagesShown, setMessagesShown] = useState(
-    {} as Record<string, number>,
-  );
+  const { currentRoom, roomEvents, roomStates, setRoomEvents } =
+    useContext(RoomContext)!;
+  const client = useContext(ClientContext);
 
-  const bottomDivRef = useRef<HTMLDivElement>(null);
+  const bottomDivRef = useRef<HTMLUListElement>(null);
+  const observerRef = useRef<Element>();
   const [showMembers, setShowMembers] = useState(false);
-
-  const ul = document.getElementById("bottom-div");
-  const firstChild = ul?.children.item(ul?.children.length - 1) || null;
+  const [loading, setLoading] = useState(false);
 
   if (!currentRoom) {
     return <div></div>;
   }
 
-  const currentMessagesShown = messagesShown[currentRoom.roomId!] || 50;
+  // TODO: fix key navigation
 
-  // needed?
+  // // needed?
   const eventsMemo = useMemo(() => {
     // default value not good
-    const arr = Object.values(roomEvents[currentRoom!.roomId] || {});
+    return Object.values(roomEvents[currentRoom!.roomId] || {});
+  }, [currentRoom, roomEvents]);
 
-    return arr.length < currentMessagesShown
-      ? arr
-      : arr.slice(arr.length - currentMessagesShown);
-  }, [currentRoom, roomEvents, messagesShown]);
+  console.log(Object.values(roomEvents).map(v => Object.values(v).length))
 
-  useEffect(() => {
-    if (bottomDivRef.current) {
-      bottomDivRef.current.scrollIntoView()
-    }
-  }, [currentRoom, bottomDivRef, eventsMemo]);
+  useLayoutEffect(() => {
+    const list = document.getElementById("bottom-div");
+
+    observerRef.current =
+      list?.children?.item(list?.children.length - 1) ?? undefined;
+    list?.scroll(0, 0);
+  }, [currentRoom]);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) {
-        console.log(currentRoom.name, currentMessagesShown)
-        setMessagesShown(({...messagesShown, [currentRoom.roomId!]: currentMessagesShown + 50}));
+      if (entries[0]?.isIntersecting && !loading) {
+        console.log("intersecting");
+
+        setLoading(true);
+
+        client.scrollback(currentRoom, eventsMemo.length + 50).then((r) => {
+          // WARNING: we're inside a map, React batches updates so we have to pass a closure to use `previousEvents` here
+          setRoomEvents({
+            ...roomEvents,
+            [r.roomId]: r
+              .getLiveTimeline()
+              .getEvents()
+              .reduce(
+                (init, e) => ({
+                  ...init,
+                  [e.getId()!]: e,
+                }),
+                {} as Record<string, MatrixEvent>,
+              ),
+          });
+
+          console.log("finished loading more events", Object.values(roomEvents[currentRoom.roomId]!).length);
+          setLoading(false);
+        });
       }
     });
 
-    if (firstChild) {
-      observer.observe(firstChild);
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
     }
 
     return () => {
-      firstChild ? observer.unobserve(firstChild) : null;
+      observerRef.current ? observer.unobserve(observerRef.current) : null;
     };
-  }, [firstChild]);
+  }, [observerRef]);
 
   if (currentRoom?.getMyMembership() === Membership.Ban) {
     return (
@@ -121,15 +148,18 @@ const MessageWindow = () => {
           roomState={roomStates[currentRoom.roomId] || null}
           roomName={currentRoom.name}
         />
-        <ErrorBoundary onError={(e, info) => console.log(e, info)}>
-          <ul
-            className="overflow-y-scroll scrollbar flex flex-col mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>*]:list-none"
-            id="bottom-div"
-          >
-            <div className="bottom" ref={bottomDivRef}></div>
-            <Timeline events={eventsMemo} />
-          </ul>
-        </ErrorBoundary>
+        <ul
+          ref={bottomDivRef}
+          className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>*]:list-none"
+          id="bottom-div"
+        >
+          <Timeline events={eventsMemo} />
+          {loading ? (
+            <div className="h-24 shrink-0 flex items-center">
+              <Loader className="bg-transparent w-full" />
+            </div>
+          ) : null}
+        </ul>
         <InputBar roomId={currentRoom.roomId} />
       </div>
       {showMembers ? <MemberList setVisible={setShowMembers} /> : null}
@@ -193,17 +223,33 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
 
   // return reply + event + annotations
   const eventRecord = filteredEvents["rest"]!.reduce(
-    (init, event) => ({
-      ...init,
-      [event.getId()!]: (
-        <Message
-          event={event}
-          annotations={allAnnotations[event.getId()!]}
-          replacements={allReplacements[event.getId()!]}
-          redaction={allRedactions[event.getId()!]}
-        />
-      ),
-    }),
+    (init, event, i) => {
+      if (i === 0) {
+        return {
+          ...init,
+          [event.getId()!]: (
+            <Message
+              event={event}
+              annotations={allAnnotations[event.getId()!]}
+              replacements={allReplacements[event.getId()!]}
+              redaction={allRedactions[event.getId()!]}
+            />
+          ),
+        };
+      }
+
+      return {
+        ...init,
+        [event.getId()!]: (
+          <Message
+            event={event}
+            annotations={allAnnotations[event.getId()!]}
+            replacements={allReplacements[event.getId()!]}
+            redaction={allRedactions[event.getId()!]}
+          />
+        ),
+      };
+    },
     {} as Record<string, JSX.Element>,
   );
 
@@ -228,7 +274,6 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
       );
     }
 
-    // ref={latestMessage ? ref : null}
     return (
       <>
         <DayBreak previous={previous} current={firstEvent} />

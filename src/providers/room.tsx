@@ -38,6 +38,10 @@ const RoomProvider = (props: PropsWithChildren) => {
     Record<string, Record<string, MatrixEvent>>
   >({});
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
+  const [messagesShown, setMessagesShown] = useState(
+    {} as Record<string, number>,
+  );
+
   // const [fallbackImage, setFallbackImage] = useState<Blob>(new Blob());
 
   // useEffect(() => {
@@ -53,7 +57,6 @@ const RoomProvider = (props: PropsWithChildren) => {
     setRoomStates,
     setCurrentRoom,
     setRoomEvents,
-    // fallbackImage,
   };
 
   useEffect(() => {
@@ -68,7 +71,7 @@ const RoomProvider = (props: PropsWithChildren) => {
     for (const r of rooms) {
       // allow setting limit later
       // TODO: lazy loading old messages
-      client.scrollback(r, 200).then((scrollback) => {
+      client.scrollback(r, 50).then((scrollback) => {
         // WARNING: we're inside a map, React batches updates so we have to pass a closure to use `previousEvents` here
         setRoomEvents((previousEvents) => ({
           ...previousEvents,
@@ -83,6 +86,7 @@ const RoomProvider = (props: PropsWithChildren) => {
               {} as Record<string, MatrixEvent>,
             ),
         }));
+
       });
 
       setRoomStates(previous => {
@@ -91,7 +95,7 @@ const RoomProvider = (props: PropsWithChildren) => {
           ({...previous, [r.roomId]: state }) : previous;
       });
     }
-  }, [rooms ? rooms.length : null]);
+  }, [rooms?.length]);
 
   client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
 
