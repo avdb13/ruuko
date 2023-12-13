@@ -1,12 +1,4 @@
-import {
-  Direction,
-  EventType,
-  IContent,
-  IStatusResponse,
-  MatrixEvent,
-  RelationType,
-  RoomState,
-} from "matrix-js-sdk";
+import { EventType, MatrixEvent, RelationType, RoomState } from "matrix-js-sdk";
 import Message, {
   DateMessage,
   Membership,
@@ -19,8 +11,8 @@ import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import MemberList from "./MemberList";
 import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
-import RoomInfo from "./modals/RoomInfo";
 import Modal from "./Modal";
+import { ErrorBoundary } from "react-error-boundary";
 
 // in case we have performance issues later
 // type SortingMetadata = {
@@ -54,52 +46,54 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
   const { currentRoom, roomEvents, roomStates } = useContext(RoomContext)!;
-  const [messagesShown, setMessagesShown] = useState(50);
+  const [messagesShown, setMessagesShown] = useState(
+    {} as Record<string, number>,
+  );
 
-  const bottomDivRef = useRef<HTMLUListElement>(null);
+  const bottomDivRef = useRef<HTMLDivElement>(null);
   const [showMembers, setShowMembers] = useState(false);
 
-    const ul = document.getElementById("bottom-div");
-    const firstChild = ul?.children.item(ul?.children.length-1) || null;
+  const ul = document.getElementById("bottom-div");
+  const firstChild = ul?.children.item(ul?.children.length - 1) || null;
+
+  if (!currentRoom) {
+    return <div></div>;
+  }
+
+  const currentMessagesShown = messagesShown[currentRoom.roomId!] || 50;
 
   // needed?
   const eventsMemo = useMemo(() => {
     // default value not good
     const arr = Object.values(roomEvents[currentRoom!.roomId] || {});
-    // show first 50 events for now
-    // Array.slice copies the array, might be a bad idea
-    return arr.length < messagesShown ? arr : arr.slice(arr.length - messagesShown);
-  }, [currentRoom, roomEvents]);
+
+    return arr.length < currentMessagesShown
+      ? arr
+      : arr.slice(arr.length - currentMessagesShown);
+  }, [currentRoom, roomEvents, messagesShown]);
 
   useEffect(() => {
-    console.log("scroll to bottom " + currentRoom?.name);
-    if (eventsMemo) {
-      if (bottomDivRef.current) {
-        bottomDivRef.current.scrollTo(0, 0);
-      }
+    if (bottomDivRef.current) {
+      bottomDivRef.current.scrollIntoView()
     }
-  }, [currentRoom]);
+  }, [currentRoom, bottomDivRef, eventsMemo]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
+    const observer = new IntersectionObserver((entries) => {
       if (entries[0]?.isIntersecting) {
-        console.log("intersecting")
+        console.log(currentRoom.name, currentMessagesShown)
+        setMessagesShown(({...messagesShown, [currentRoom.roomId!]: currentMessagesShown + 50}));
       }
-    })
-
+    });
 
     if (firstChild) {
       observer.observe(firstChild);
     }
 
     return () => {
-      firstChild ? observer.unobserve(firstChild) : null
-    }
-  }, [firstChild])
-
-  if (!eventsMemo || !currentRoom) {
-    return <div></div>;
-  }
+      firstChild ? observer.unobserve(firstChild) : null;
+    };
+  }, [firstChild]);
 
   if (currentRoom?.getMyMembership() === Membership.Ban) {
     return (
@@ -127,13 +121,15 @@ const MessageWindow = () => {
           roomState={roomStates[currentRoom.roomId] || null}
           roomName={currentRoom.name}
         />
-        <ul
-          ref={bottomDivRef}
-          className="overflow-y-scroll scrollbar flex flex-col mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>*]:list-none"
-          id="bottom-div"
-        >
-          <Timeline events={eventsMemo} />
-        </ul>
+        <ErrorBoundary onError={(e, info) => console.log(e, info)}>
+          <ul
+            className="overflow-y-scroll scrollbar flex flex-col mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>*]:list-none"
+            id="bottom-div"
+          >
+            <div className="bottom" ref={bottomDivRef}></div>
+            <Timeline events={eventsMemo} />
+          </ul>
+        </ErrorBoundary>
         <InputBar roomId={currentRoom.roomId} />
       </div>
       {showMembers ? <MemberList setVisible={setShowMembers} /> : null}
@@ -148,7 +144,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   // reduce a step earlier?
   const filteredEvents = [...Array(events.length).keys()].reduce(
     (init, i) => {
-      const e = events[events.length-i-1]!;
+      const e = events[events.length - i - 1]!;
 
       switch (e.getType()) {
         case EventType.Reaction:

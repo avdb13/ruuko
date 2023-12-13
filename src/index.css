@@ -13,12 +13,8 @@
   }
 
   .scrollbar::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-radius: 100vh;
-  }
-
-  .scrollbar::-webkit-scrollbar-thumb:hover {
     background: #BBB;
+    border-radius: 100vh;
   }
 
   #logo {

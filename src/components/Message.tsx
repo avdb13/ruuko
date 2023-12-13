@@ -641,7 +641,7 @@ export const StateFrame = (props: PropsWithChildren<StateFrameProps>) => (
 );
 
 const MemberEvent = ({ event }: { event: MatrixEvent }) => (
-  <p>{formatMembership(event)}</p>
+  <div className="member">{formatMembership(event)}</div>
 );
 
 export const formatEvent = (event: MatrixEvent) => {
