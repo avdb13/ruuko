@@ -56,9 +56,11 @@ const MessageWindow = () => {
   const { currentRoom, roomEvents, roomStates } = useContext(RoomContext)!;
   const [messagesShown, setMessagesShown] = useState(50);
 
-  const bottomDivRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<HTMLDivElement>(null);
+  const bottomDivRef = useRef<HTMLUListElement>(null);
   const [showMembers, setShowMembers] = useState(false);
+
+    const ul = document.getElementById("bottom-div");
+    const firstChild = ul?.children.item(ul?.children.length-1) || null;
 
   // needed?
   const eventsMemo = useMemo(() => {
@@ -83,16 +85,17 @@ const MessageWindow = () => {
       if (entries[0]?.isIntersecting) {
         console.log("intersecting")
       }
-    }, { threshold: 1 })
+    })
 
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
+
+    if (firstChild) {
+      observer.observe(firstChild);
     }
 
     return () => {
-      observerRef.current ? observer.unobserve(observerRef.current) : null
+      firstChild ? observer.unobserve(firstChild) : null
     }
-  }, [observerRef])
+  }, [firstChild])
 
   if (!eventsMemo || !currentRoom) {
     return <div></div>;
@@ -124,14 +127,13 @@ const MessageWindow = () => {
           roomState={roomStates[currentRoom.roomId] || null}
           roomName={currentRoom.name}
         />
-        <div
+        <ul
           ref={bottomDivRef}
-          className="overflow-y-scroll scrollbar flex flex-col mt-auto scale-y-[-1] [&>*]:scale-y-[-1]"
+          className="overflow-y-scroll scrollbar flex flex-col mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>*]:list-none"
           id="bottom-div"
         >
           <Timeline events={eventsMemo} />
-          <div ref={observerRef} />
-        </div>
+        </ul>
         <InputBar roomId={currentRoom.roomId} />
       </div>
       {showMembers ? <MemberList setVisible={setShowMembers} /> : null}
