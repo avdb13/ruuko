@@ -59,9 +59,9 @@ export const getAvatarUrl = (
         : room.getAvatarUrl("https://matrix.org", 1200, 1200, "scale", true);
     }
     case "user": {
-      const user = client.getUser(id)!;
+      const user = client.getUser(id);
 
-      if (!user.avatarUrl) {
+      if (!user || !user.avatarUrl) {
         return null;
       }
 
@@ -128,6 +128,28 @@ export const getAnnotations = (events: MatrixEvent[]) =>
     },
     {} as Record<string, Record<string, Annotator[]>>,
   );
+
+// export const getReceipts = (events: MatrixEvent[]) =>
+//   events.reduce(
+//     (init, e) => {
+//       const annotation = toAnnotation(e);
+
+//       if (!annotation) {
+//         return init;
+//       }
+
+//       const { reply_id, key, annotator } = annotation;
+
+//       return {
+//         ...init,
+//         [reply_id]: {
+//           ...init[reply_id],
+//           [key]: [...(init[reply_id]?.[key] ?? []), annotator],
+//         },
+//       };
+//     },
+//     {} as Record<string, Record<string, Annotator[]>>,
+//   );
 
 export const getReplacements = (events: MatrixEvent[]) =>
   events.reduce(

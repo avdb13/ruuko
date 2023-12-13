@@ -182,6 +182,11 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
             ...init,
             [EventType.Reaction]: [...init[EventType.Reaction]!, e],
           };
+        case EventType.Receipt:
+          return {
+            ...init,
+            [EventType.Receipt]: [...init[EventType.Receipt]!, e],
+          };
         case EventType.RoomRedaction:
           return {
             ...init,
@@ -206,6 +211,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
     },
     {
       [EventType.Reaction]: [],
+      [EventType.Receipt]: [],
       [EventType.RoomRedaction]: [],
       [RelationType.Replace]: [],
       [RelationType.Thread]: [],
@@ -223,22 +229,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
 
   // return reply + event + annotations
   const eventRecord = filteredEvents["rest"]!.reduce(
-    (init, event, i) => {
-      if (i === 0) {
-        return {
-          ...init,
-          [event.getId()!]: (
-            <Message
-              event={event}
-              annotations={allAnnotations[event.getId()!]}
-              replacements={allReplacements[event.getId()!]}
-              redaction={allRedactions[event.getId()!]}
-            />
-          ),
-        };
-      }
-
-      return {
+    (init, event) => ({
         ...init,
         [event.getId()!]: (
           <Message
@@ -248,8 +239,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
             redaction={allRedactions[event.getId()!]}
           />
         ),
-      };
-    },
+      }),
     {} as Record<string, JSX.Element>,
   );
 

@@ -1,14 +1,13 @@
-import {
-  EventType, IEventRelation,
-  MatrixEvent,
-  MsgType
-} from "matrix-js-sdk";
+import { EventType, IEventRelation, MatrixEvent, MsgType } from "matrix-js-sdk";
 import { extractAttributes, formatText } from "../lib/helpers";
 import {
-  PropsWithChildren, Ref, useContext,
-  useEffect, useLayoutEffect,
+  PropsWithChildren,
+  Ref,
+  useContext,
+  useEffect,
+  useLayoutEffect,
   useRef,
-  useState
+  useState,
 } from "react";
 import { ClientContext } from "../providers/client";
 import { RoomContext } from "../providers/room";
@@ -36,18 +35,14 @@ const Message = ({
   if (event.getType() !== EventType.RoomMessage) {
     return (
       <div className="flex grow">
-        <div className="grow">
-          <span id={event.getId()!} tabIndex={-1} className="peer"></span>
-          <Reply relation={event.getContent()["m.relates_to"] ?? null} />
-          <Event
-            event={event}
-            replacements={replacements}
-            redaction={redaction}
-          />
-          <Annotations annotations={annotations} reply_id={event.getId()!} />
-        </div>
-        <div className="basis-32 bg-black">
-        </div>
+        <span id={event.getId()!} tabIndex={-1} className="peer"></span>
+        <Reply relation={event.getContent()["m.relates_to"] ?? null} />
+        <Event
+          event={event}
+          replacements={replacements}
+          redaction={redaction}
+        />
+        <Annotations annotations={annotations} reply_id={event.getId()!} />
       </div>
     );
   }
@@ -123,7 +118,7 @@ const MessageOptions = (
       <div className="group-hover:bg-indigo-200 group-hover:bg-opacity-50 duration-100 py-[2px] px-[8px]">
         {props.children}
       </div>
-    <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
+      <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
         <button type="button" title="edit">
           <EditIcon className="scale-75" onClick={handleEdit} />
         </button>
@@ -154,35 +149,43 @@ const Event = ({
   replacements?: MatrixEvent[];
   redaction?: MatrixEvent;
 }) => {
+  const { currentRoom } = useContext(RoomContext)!;
+  const receipts = currentRoom?.getReceiptsForEvent(event);
+
   switch (event.getType()) {
     case EventType.RoomMember:
-      return <MemberEvent event={event} />;
+      return (
+        <div>
+          <MemberEvent event={event} />
+          <div className="relative basis-[20%] flex space-x-[-8px] group">
+          <div className="text-xs w-[200%] bg-white rounded-sm absolute left-1/2 -translate-x-1/2 top-4 group-hover:opacity-100 opacity-0 duration-300">seen by {receipts?.slice(0, 4).map(r => r.userId).join(", ")}</div>
+            {receipts?.map((r, i) => <Avatar type="user" id={r.userId} size={4} className={`border-none shadow-sm z-[${i}px]`} />)}
+          </div>
+        </div>
+      );
     case EventType.RoomMessage:
       if (replacements) {
         return (
-          <>
+          <div>
             <ReplacedRoomEvent original={event} replacements={replacements} />{" "}
-            <button
-              onClick={() => console.log(event.getContent())}
-              className="bg-zinc-100 rounded-md border-2 border-zinc-400"
-            >
-              content
-            </button>
-          </>
+            <div className="basis-[20%] bg-black">
+              {currentRoom
+                ?.getReceiptsForEvent(event)
+                .map((r) => <Avatar type="user" id={r.userId} size={12} />)}
+            </div>
+          </div>
         );
       }
 
       return (
-        <>
+        <div>
           <RoomEvent event={event} redaction={redaction} />
-
-          <button
-            onClick={() => console.log(event.getContent())}
-            className="bg-transparent px-2 rounded-md border-2 border-zinc-400"
-          >
-            content
-          </button>
-        </>
+          <div className="basis-[20%] bg-black">
+            {currentRoom
+              ?.getReceiptsForEvent(event)
+              .map((r) => <Avatar type="user" id={r.userId} size={12} />)}
+          </div>
+        </div>
       );
     case EventType.RoomRedaction:
       return <RedactionEvent event={event} />;
@@ -389,9 +392,7 @@ const RoomEvent = ({
 
   switch (content.msgtype) {
     case MsgType.Text: {
-      if (
-        content.formatted_body
-      ) {
+      if (content.formatted_body) {
         if ((content.formatted_body as string).search("<img") > 0) {
           const attributes = extractAttributes(content.formatted_body, [
             "src",
@@ -447,7 +448,7 @@ const RoomEvent = ({
             <p className="inline-block whitespace-normal break-all">
               {formatText(content)}
             </p>
-          )
+          );
         }
       }
 
@@ -641,14 +642,14 @@ const MemberEvent = ({ event }: { event: MatrixEvent }) => (
 
 export const formatEvent = (event: MatrixEvent) => {
   switch (event.getType()) {
-      case EventType.RoomMember:
-        return formatMembership(event);
-      case EventType.RoomMessage:
-        return formatText(event.getContent());
-      default:
-        return "";
+    case EventType.RoomMember:
+      return formatMembership(event);
+    case EventType.RoomMessage:
+      return formatText(event.getContent());
+    default:
+      return "";
   }
-}
+};
 
 export enum Membership {
   Invite = "invite",
