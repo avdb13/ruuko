@@ -54,8 +54,9 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
   const { currentRoom, roomEvents, roomStates } = useContext(RoomContext)!;
+  const [messagesShown, setMessagesShown] = useState(50);
 
-  const bottomDivRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<HTMLDivElement>(null);
   const [showMembers, setShowMembers] = useState(false);
 
   // needed?
@@ -64,19 +65,24 @@ const MessageWindow = () => {
     const arr = Object.values(roomEvents[currentRoom!.roomId] || {});
     // show first 50 events for now
     // Array.slice copies the array, might be a bad idea
-    return arr.length < 50 ? arr : arr.slice(arr.length - 50);
+    return arr.length < messagesShown ? arr : arr.slice(arr.length - messagesShown);
   }, [currentRoom, roomEvents]);
 
   useEffect(() => {
-    console.log("scroll to bottom " + currentRoom?.name);
-    if (eventsMemo) {
-      if (bottomDivRef.current) {
-        const scroll =
-          bottomDivRef.current.scrollHeight - bottomDivRef.current.clientHeight;
-        bottomDivRef.current.scrollTo(0, scroll);
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0]?.isIntersecting) {
+        console.log("intersecting")
       }
+    }, { threshold: 1 })
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
     }
-  }, [currentRoom]);
+
+    return () => {
+      observerRef.current ? observer.unobserve(observerRef.current) : null
+    }
+  }, [observerRef])
 
   if (!eventsMemo || !currentRoom) {
     return <div></div>;
@@ -109,11 +115,11 @@ const MessageWindow = () => {
           roomName={currentRoom.name}
         />
         <div
-          ref={bottomDivRef}
-          className="overflow-y-scroll scrollbar flex flex-col mt-auto"
+          className="overflow-y-scroll scrollbar flex flex-col mt-auto scale-y-[-1] [&>*]:scale-y-[-1]"
           id="bottom-div"
         >
           <Timeline events={eventsMemo} />
+          <div ref={observerRef} />
         </div>
         <InputBar roomId={currentRoom.roomId} />
       </div>
@@ -127,8 +133,10 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
 
   // what if we have a replaced reaction???
   // reduce a step earlier?
-  const filteredEvents = events.reduce(
-    (init, e) => {
+  const filteredEvents = [...Array(events.length).keys()].reduce(
+    (init, i) => {
+      const e = events[events.length-i-1]!;
+
       switch (e.getType()) {
         case EventType.Reaction:
           return {
