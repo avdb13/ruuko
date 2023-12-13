@@ -85,22 +85,23 @@ const MessageWindow = () => {
   if (currentRoom?.getMyMembership() === Membership.Ban) {
     return (
       <div className="relative basis-1/2 max-h-screen grow">
-      <div className="absolute open:animate-modal modal w-[40%] border-2 border-indigo-50 bg-white shadow-md rounded-sm top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 py-8">
-        <p className="py-2 text-lg text-gray-800 font-bold text-center">
-          you were banned from this room
-        </p>
-        <p className="py-2 text-center text-gray-800">
-          reason:{" "}
-          {eventsMemo[eventsMemo.length - 1]?.getContent().reason ?? "unknown"}
-        </p>
-      </div>
+        <div className="absolute open:animate-modal modal w-[40%] border-2 border-indigo-50 bg-white shadow-md rounded-sm top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 py-8">
+          <p className="py-2 text-lg text-gray-800 font-bold text-center">
+            you were banned from this room
+          </p>
+          <p className="py-2 text-center text-gray-800">
+            reason:{" "}
+            {eventsMemo[eventsMemo.length - 1]?.getContent().reason ??
+              "unknown"}
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-w-0 flex grow">
-      <div className="min-w-0 flex flex-col basis-1/2 justify-between max-h-screen grow">
+      <div className="min-w-0 flex flex-col basis-1/2 justify-between h-screen grow">
         <TitleBar
           showMembers={showMembers}
           setShowMembers={setShowMembers}
@@ -109,7 +110,7 @@ const MessageWindow = () => {
         />
         <div
           ref={bottomDivRef}
-          className="overflow-y-auto scrollbar flex flex-col justify-end grow"
+          className="overflow-y-scroll scrollbar flex flex-col mt-auto"
           id="bottom-div"
         >
           <Timeline events={eventsMemo} />

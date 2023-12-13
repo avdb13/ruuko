@@ -61,9 +61,13 @@ export const getAvatarUrl = (
     case "user": {
       const user = client.getUser(id)!;
 
+      if (!user.avatarUrl) {
+        return null;
+      }
+
       // bug: avatar doesn't load sometimes since this method returns null for some reason.
       const httpUrl = client.mxcUrlToHttp(
-        user.avatarUrl!,
+        user.avatarUrl,
         1200,
         1200,
         "scale",
