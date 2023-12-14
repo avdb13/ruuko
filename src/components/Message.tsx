@@ -18,6 +18,8 @@ import ReplyIcon from "./icons/Reply";
 import CopyIcon from "./icons/Copy";
 import { InputContext } from "../providers/input";
 import { createReplaceEvent } from "../lib/content";
+import EyeIcon from "./icons/Eye";
+import Modal from "./Modal";
 
 const Message = ({
   event,
@@ -37,11 +39,14 @@ const Message = ({
       <div className="flex grow">
         <span id={event.getId()!} tabIndex={-1} className="peer"></span>
         <Reply relation={event.getContent()["m.relates_to"] ?? null} />
-        <Event
-          event={event}
-          replacements={replacements}
-          redaction={redaction}
-        />
+        <div className="flex justify-between grow">
+          <Event
+            event={event}
+            replacements={replacements}
+            redaction={redaction}
+          />
+          <Receipt event={event} />
+        </div>
         <Annotations annotations={annotations} reply_id={event.getId()!} />
       </div>
     );
@@ -149,57 +154,20 @@ const Event = ({
   replacements?: MatrixEvent[];
   redaction?: MatrixEvent;
 }) => {
-  const { currentRoom } = useContext(RoomContext)!;
-  const receipts = currentRoom?.getReceiptsForEvent(event);
-
   switch (event.getType()) {
     case EventType.RoomMember:
       return (
-        <div>
           <MemberEvent event={event} />
-          <div className="relative basis-[20%] flex space-x-[-8px] group">
-            <div className="text-xs bg-white break-normal rounded-sm p-1 absolute left-1/2 -translate-x-1/4 top-6 group-hover:opacity-100 opacity-0 duration-300">
-              seen by{" "}
-              {receipts
-                ?.slice(0, 4)
-                .map((r) => r.userId)
-                .join(", ")}
-            </div>
-            {receipts?.map((r, i) => (
-              <Avatar
-                key={r.userId}
-                type="user"
-                id={r.userId}
-                size={4}
-                className={`border-none shadow-sm z-[${i}]`}
-              />
-            ))}
-          </div>
-        </div>
       );
     case EventType.RoomMessage:
       if (replacements) {
         return (
-          <div>
-            <ReplacedRoomEvent original={event} replacements={replacements} />{" "}
-            <div className="basis-[20%] bg-black">
-              {currentRoom
-                ?.getReceiptsForEvent(event)
-                .map((r) => <Avatar key={r.userId} type="user" id={r.userId} size={12} />)}
-            </div>
-          </div>
+            <ReplacedRoomEvent original={event} replacements={replacements} />
         );
       }
 
       return (
-        <div>
           <RoomEvent event={event} redaction={redaction} />
-          <div className="basis-[20%] bg-black">
-            {currentRoom
-              ?.getReceiptsForEvent(event)
-              .map((r) => <Avatar key={r.userId} type="user" id={r.userId} size={12} />)}
-          </div>
-        </div>
       );
     case EventType.RoomRedaction:
       return <RedactionEvent event={event} />;
@@ -316,8 +284,6 @@ const Annotations = ({
 };
 
 const RedactionEvent = ({ event }: { event: MatrixEvent }) => {
-  const { currentRoom } = useContext(RoomContext)!;
-
   const content = event.getContent();
 
   return (
@@ -781,6 +747,29 @@ const formatMembership = (event: MatrixEvent) => {
     default:
       return null;
   }
+};
+
+const Receipt = ({ event }: { event: MatrixEvent }) => {
+  const [visible, setVisible] = useState(false);
+
+  const { currentRoom } = useContext(RoomContext)!;
+  const receipts = currentRoom?.getReceiptsForEvent(event);
+
+  if (!receipts || receipts.length === 0) {
+    return null;
+  }
+
+  return (
+    <button onClick={() => setVisible(true)} className="relative group shrink">
+      <Modal title="read by" visible={visible} setVisible={setVisible}>
+        <ul>{receipts.map(r => <li>{r.userId}</li>)}</ul>
+      </Modal>
+      <span className="font-bold rounded-full gap-[1px] flex justify-center items-center text-gray-600 scale-75">
+        {receipts.length}
+        <EyeIcon className="fill-current scale-[70%]" />
+      </span>
+    </button>
+  );
 };
 
 export default Message;
