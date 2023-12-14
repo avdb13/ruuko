@@ -98,13 +98,6 @@ const MessageWindow = () => {
             [r.roomId]: r
               .getLiveTimeline()
               .getEvents()
-              .reduce(
-                (init, e) => ({
-                  ...init,
-                  [e.getId()!]: e,
-                }),
-                {} as Record<string, MatrixEvent>,
-              ),
           });
 
           console.log("finished loading more events", Object.values(roomEvents[currentRoom.roomId]!).length);

@@ -15,11 +15,11 @@ interface MyRoomState {
   rooms: Room[] | null;
   roomStates: Record<string, RoomState>;
   currentRoom: Room | null;
-  roomEvents: Record<string, Record<string, MatrixEvent>>;
+  roomEvents: Record<string, MatrixEvent[]>;
   setRooms: (_: Room[]) => void;
   setRoomStates: (_: Record<string, RoomState>) => void;
   setCurrentRoom: (_: Room) => void;
-  setRoomEvents: (_: Record<string, Record<string, MatrixEvent>>) => void;
+  setRoomEvents: (_: Record<string, MatrixEvent[]>) => void;
   // fallbackImage: Blob;
 }
 
@@ -35,18 +35,9 @@ const RoomProvider = (props: PropsWithChildren) => {
   const [rooms, setRooms] = useState<Room[] | null>(null);
 
   const [roomEvents, setRoomEvents] = useState<
-    Record<string, Record<string, MatrixEvent>>
+    Record<string, MatrixEvent[]>
   >({});
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
-  const [messagesShown, setMessagesShown] = useState(
-    {} as Record<string, number>,
-  );
-
-  // const [fallbackImage, setFallbackImage] = useState<Blob>(new Blob());
-
-  // useEffect(() => {
-  //   fetch("/img-error.png").then(resp => resp.blob().then(blob => setFallbackImage(blob)));
-  // }, [])
 
   const roomState: MyRoomState = {
     rooms,
@@ -78,13 +69,6 @@ const RoomProvider = (props: PropsWithChildren) => {
           [scrollback.roomId]: scrollback
             .getLiveTimeline()
             .getEvents()
-            .reduce(
-              (init, event) => ({
-                ...init,
-                [event.getId()!]: event,
-              }),
-              {} as Record<string, MatrixEvent>,
-            ),
         }));
 
       });
@@ -131,10 +115,7 @@ const RoomProvider = (props: PropsWithChildren) => {
       // check behavior later
       setRoomEvents({
         ...roomEvents,
-        [room.roomId]: {
-          ...roomEvents[room.roomId],
-            [event.getId()!]: event,
-          },
+        [room.roomId]: [...roomEvents[room.roomId] ?? [], event],
       });
     }
   });

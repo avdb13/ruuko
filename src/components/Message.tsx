@@ -185,7 +185,7 @@ const Event = ({
             <div className="basis-[20%] bg-black">
               {currentRoom
                 ?.getReceiptsForEvent(event)
-                .map((r) => <Avatar type="user" id={r.userId} size={12} />)}
+                .map((r) => <Avatar key={r.userId} type="user" id={r.userId} size={12} />)}
             </div>
           </div>
         );
@@ -197,7 +197,7 @@ const Event = ({
           <div className="basis-[20%] bg-black">
             {currentRoom
               ?.getReceiptsForEvent(event)
-              .map((r) => <Avatar type="user" id={r.userId} size={12} />)}
+              .map((r) => <Avatar key={r.userId} type="user" id={r.userId} size={12} />)}
           </div>
         </div>
       );
@@ -249,13 +249,12 @@ const Reply = ({ relation }: { relation: IEventRelation | null }) => {
     return null;
   }
 
-  const { currentRoom, roomEvents } = useContext(RoomContext)!;
-  const events = roomEvents[currentRoom?.roomId!]!;
+  const { currentRoom } = useContext(RoomContext)!;
 
   // what happens if the replied-to event got redacted?
   // do we need to check for this?
   // const emote = original.getContent().msgtype === MsgType.Emote;
-  const original = events[inReplyTo!]!;
+  const original = currentRoom?.findEventById(inReplyTo);
 
   // users might send an ID for a non-existent ID
   if (!original) {
@@ -320,7 +319,6 @@ const RedactionEvent = ({ event }: { event: MatrixEvent }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
   const content = event.getContent();
-  const original = currentRoom?.findEventById(content.redacts);
 
   return (
     <p>{`redacted by ${content.displayname || event.getSender()} ${
@@ -398,7 +396,6 @@ const RoomEvent = ({
   originalContent?: boolean;
 }) => {
   const client = useContext(ClientContext);
-  const { fallbackImage } = useContext(RoomContext)!;
 
   const content = originalContent
     ? event.getOriginalContent()
@@ -422,7 +419,6 @@ const RoomEvent = ({
                   body: content.body.slice(0, start),
                 })}{" "}
                 <img
-                  onError={(e) => onImgError(e, fallbackImage)}
                   src={
                     client.mxcUrlToHttp(
                       attributes["src"]!,
