@@ -20,6 +20,7 @@ import { InputContext } from "../providers/input";
 import { createReplaceEvent } from "../lib/content";
 import EyeIcon from "./icons/Eye";
 import Modal from "./Modal";
+import moment from "moment";
 
 const Message = ({
   event,
@@ -156,19 +157,15 @@ const Event = ({
 }) => {
   switch (event.getType()) {
     case EventType.RoomMember:
-      return (
-          <MemberEvent event={event} />
-      );
+      return <MemberEvent event={event} />;
     case EventType.RoomMessage:
       if (replacements) {
         return (
-            <ReplacedRoomEvent original={event} replacements={replacements} />
+          <ReplacedRoomEvent original={event} replacements={replacements} />
         );
       }
 
-      return (
-          <RoomEvent event={event} redaction={redaction} />
-      );
+      return <RoomEvent event={event} redaction={redaction} />;
     case EventType.RoomRedaction:
       return <RedactionEvent event={event} />;
     case EventType.Reaction:
@@ -760,15 +757,40 @@ const Receipt = ({ event }: { event: MatrixEvent }) => {
   }
 
   return (
-    <button onClick={() => setVisible(true)} className="relative group shrink">
-      <Modal title="read by" visible={visible} setVisible={setVisible}>
-        <ul>{receipts.map(r => <li>{r.userId}</li>)}</ul>
+    <>
+      <Modal
+        title="read by"
+        visible={visible}
+        setVisible={setVisible}
+        className="scrollbar overflow-y-auto h-1/2"
+      >
+        <ul className="flex flex-col gap-2 p-4">
+          {receipts.map((r) => (
+            <li className="flex items-center justify-between p-2 rounded border-2 border-gray-400">
+              <div>
+              <p className="text-gray-800">{r.userId}</p>
+              <p className="text-xs text-gray-600">{moment(r.data.ts).fromNow()}</p>
+              </div>
+              <Avatar
+                id={r.userId}
+                type="user"
+                size={12}
+                className="border-none shadow-sm"
+              />
+            </li>
+          ))}
+        </ul>
       </Modal>
-      <span className="font-bold rounded-full gap-[1px] flex justify-center items-center text-gray-600 scale-75">
-        {receipts.length}
-        <EyeIcon className="fill-current scale-[70%]" />
-      </span>
-    </button>
+      <button
+        onClick={() => setVisible(true)}
+        className="relative group shrink"
+      >
+        <span className="font-bold rounded-full gap-[1px] flex justify-center items-center text-gray-600 scale-75">
+          {receipts.length}
+          <EyeIcon className="fill-current scale-[70%]" />
+        </span>
+      </button>
+    </>
   );
 };
 

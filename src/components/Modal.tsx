@@ -6,8 +6,6 @@ const Modal = (props: PropsWithChildren<ModalProps>) => {
   const { visible, setVisible } = props;
 
   useEffect(() => {
-    // console.log(visible, modalRef)
-
     if (modalRef.current) {
       const modal = modalRef.current;
 
