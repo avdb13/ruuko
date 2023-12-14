@@ -88,7 +88,7 @@ const RoomList = ({
     <ul className="flex flex-col gap-2">
       {sidebarWidth < 120
         ? rooms.map((room) => <RoomIconWidget room={room} key={room.roomId} />)
-        : rooms.map((room) => <RoomWidget room={room} />)}
+        : rooms.map((room) => <RoomWidget room={room} key={room.roomId} />)}
     </ul>
   ) : null;
 };
@@ -112,7 +112,7 @@ const Sidebar = () => {
       side="right"
       className="flex flex-col items-center gap-2 py-2 bg-opacity-25 bg-indigo-50 min-w-0 h-screen"
     >
-      <div className="flex flex-col w-full overflow-y-auto scrollbar">
+      <div className="flex flex-col w-full overflow-y-auto scrollbar z-10">
         <Togglable
           modal={<SearchUserForm />}
           title="direct messages"

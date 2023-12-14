@@ -158,8 +158,22 @@ const Event = ({
         <div>
           <MemberEvent event={event} />
           <div className="relative basis-[20%] flex space-x-[-8px] group">
-          <div className="text-xs w-[200%] bg-white rounded-sm absolute left-1/2 -translate-x-1/2 top-4 group-hover:opacity-100 opacity-0 duration-300">seen by {receipts?.slice(0, 4).map(r => r.userId).join(", ")}</div>
-            {receipts?.map((r, i) => <Avatar type="user" id={r.userId} size={4} className={`border-none shadow-sm z-[${i}px]`} />)}
+            <div className="text-xs bg-white break-normal rounded-sm p-1 absolute left-1/2 -translate-x-1/4 top-6 group-hover:opacity-100 opacity-0 duration-300">
+              seen by{" "}
+              {receipts
+                ?.slice(0, 4)
+                .map((r) => r.userId)
+                .join(", ")}
+            </div>
+            {receipts?.map((r, i) => (
+              <Avatar
+                key={r.userId}
+                type="user"
+                id={r.userId}
+                size={4}
+                className={`border-none shadow-sm z-[${i}]`}
+              />
+            ))}
           </div>
         </div>
       );
@@ -629,9 +643,9 @@ export const StateFrame = (props: PropsWithChildren<StateFrameProps>) => (
   <li className="p-2 border-x-2 border-b-2 border-black pl-6">
     <div className="flex content-center gap-2">
       <Avatar id={props.userId} size={8} type="user" />
-      <p className="flex flex-col justify-center whitespace-normal break-all grow">
+      <div className="flex flex-col justify-center whitespace-normal break-all grow">
         {props.children}
-      </p>
+      </div>
     </div>
   </li>
 );

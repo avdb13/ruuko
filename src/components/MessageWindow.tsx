@@ -257,7 +257,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
       return (
         <>
           <DayBreak previous={previous} current={firstEvent} />
-          <StateFrame userId={firstEvent.getSender()!}>
+          <StateFrame key={firstEvent.getId()!} userId={firstEvent.getSender()!}>
             {list.map((id) => eventRecord[id]!)}
           </StateFrame>
         </>
@@ -268,6 +268,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
       <>
         <DayBreak previous={previous} current={firstEvent} />
         <MessageFrame
+          key={firstEvent.getId()!}
           userId={firstEvent.getSender()!}
           displayName={displayName}
           timestamp={firstEvent.getTs()}
@@ -366,7 +367,7 @@ const TitleBar = ({
           className="bg-inherit"
           onClick={() => setShowMembers(!showMembers)}
         >
-          <MembersIcon class="fill-current text-gray-600" />
+          <MembersIcon className="fill-current text-gray-600" />
         </button>
       </div>
     </div>
