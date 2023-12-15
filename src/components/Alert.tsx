@@ -33,7 +33,7 @@ const Alert = ({
 
   return (
     <div
-      className={`transition-all duration-300 alert absolute border-b-2 border-gray-300 shadow-xl w-[50%] flex justify-center items-center bg-white rounded-sm z-10 ${
+      className={`transition-all duration-300 alert absolute border-b-2 border-gray-300 shadow-xl w-[50%] flex justify-center items-center bg-white rounded-sm ${
         fade ? "opacity-0 blur-2" : "opacity-100 blur-0"
       }`}
     >

@@ -14,19 +14,17 @@ import { StrictMode } from "react";
 global.Olm = Olm;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+  <Background>
     <CookiesProvider>
       <ClientProvider>
         <SettingsProvider>
           <RoomProvider>
             <InputProvider>
-              <Background>
-                <App />
-              </Background>
+              <App />
             </InputProvider>
           </RoomProvider>
         </SettingsProvider>
       </ClientProvider>
     </CookiesProvider>
-  </StrictMode>,
+  </Background>,
 );

@@ -1,13 +1,11 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Spinner from "./components/Spinner";
 import MessageWindow from "./components/MessageWindow";
 import { RoomContext } from "./providers/room";
 import { ClientContext } from "./providers/client";
-import { useCookies } from "react-cookie";
 
 const App = () => {
-  const [cookies] = useCookies(["session"]);
   const client = useContext(ClientContext);
 
   const roomState = useContext(RoomContext);
@@ -20,7 +18,7 @@ const App = () => {
     Object.entries(roomState.roomEvents).length !== rooms ||
     roomState.rooms && roomState.rooms.length !== rooms
   ) {
-    return <Spinner />;
+    return <Spinner className={`duration-300 ease-in transition-all ${roomState?.ready ? "[&>div]:scale-800 [&>div]:opacity-0" : "[&>div]:scale-1 [&>div]:opacity-100"}`} />;
   }
 
   return (

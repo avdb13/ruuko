@@ -1,11 +1,13 @@
-const Spinner = () => {
+import { ComponentProps } from "react";
+
+const Spinner = (props: ComponentProps<"div">) => {
   // const divStyle =
   //   "absolute ring-[4px] ring-zinc-600 rounded-full animate-ping";
 
       // <button className="text-center">logout</button>
   return (
     <>
-      <div className="ripple"><div></div><div></div></div>
+      <div className={"ripple " + props.className}><div></div><div></div></div>
     </>
   );
 };

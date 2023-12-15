@@ -33,6 +33,8 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
     return null;
   }
 
+  const [query, setQuery] = useState("");
+
   const [memberListWidth, setMemberListWidth] = useState(400);
   const [presences, setPresences] = useState<Record<string, IContent>>({});
 
@@ -102,6 +104,7 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
         invite
       </button>
       <div className="overflow-y-scroll scrollbar">
+        <input onClick={() => console.log("click")} onFocus={() => console.log("focus")} type="text" className="relative border-4" value={query} onChange={(e) => setQuery(e.target.value)} />
         <ul className="flex flex-col gap-2 mx-4">
           {admins.length > 0 ? (
             <p className="font-bold capitalize text-gray-600">
@@ -160,18 +163,19 @@ const MemberChip = ({
   //     .catch(() => setPresence(null));
   // }, []);
 
-  console.log(open);
   return (
+    <>
+    <MemberInfo
+      presence={presence ?? undefined}
+      visible={open}
+      setVisible={setOpen}
+      member={member}
+    />
     <button
+
       onClick={() => setOpen(true)}
     className={`hover:bg-indigo-200 duration-300 flex gap-4 items-center min-w-0 border-b-4 p-4 rounded-md shadow-md`}
     >
-      <MemberInfo
-        presence={presence ?? undefined}
-        visible={open}
-        setVisible={setOpen}
-        member={member}
-      />
       <Avatar
         id={member.userId}
         type="user"
@@ -191,6 +195,7 @@ const MemberChip = ({
         ) : null}
       </div>
     </button>
+    </>
   );
 };
 

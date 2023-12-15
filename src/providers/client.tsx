@@ -39,19 +39,20 @@ const ClientProvider = (props: PropsWithChildren) => {
   useEffect(() => {
     if (cookies["session"]) {
       const client = initClient(session);
-      setClient(client);
 
-      // client.initCrypto().finally(() => {
-        client.startClient({ lazyLoadMembers: true });
-      // });
+      client.startClient({ lazyLoadMembers: true })
+      setClient(client);
     }
   }, [cookies, session]);
 
   if (!cookies["session"] && !client) {
     return <Login />;
-  } else if (!client) {
+  }
+
+  if (!client) {
     return <Spinner />;
   }
+
 
   return <ClientContext.Provider value={client}>{props.children}</ClientContext.Provider>
 };

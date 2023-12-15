@@ -63,6 +63,7 @@
   .server-form {
     animation: grow 1s cubic-bezier(0, 0.5, 0.25, 1);
   }
+
   .final-form {
     animation: shrink 1s cubic-bezier(0, 0.5, 0.25, 1);
   }
@@ -127,6 +128,7 @@
 
 
   .ripple {
+    animation: grow 1s cubic-bezier(0, 0.5, 0.25, 1);
     display: inline-block;
     position: absolute;
     transform: translate(-50%, -50%);

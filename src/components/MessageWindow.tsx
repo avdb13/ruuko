@@ -84,6 +84,7 @@ const MessageWindow = () => {
     list?.scroll(0, 0);
   }, [currentRoom]);
 
+  // layout effect necessary?
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       if (entries[0]?.isIntersecting && !loading) {
@@ -132,6 +133,7 @@ const MessageWindow = () => {
     );
   }
 
+  // fix harsh transition
   return (
     <div className="min-w-0 flex grow">
       <div className="min-w-0 flex flex-col basis-1/2 justify-between h-screen grow">
@@ -143,7 +145,7 @@ const MessageWindow = () => {
         />
         <ul
           ref={bottomDivRef}
-          className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>*]:list-none"
+          className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>*]:list-none overflow-x-clip"
           id="bottom-div"
         >
           <Timeline events={eventsMemo} />

@@ -205,7 +205,7 @@ const EditableAvatar = () => {
         id={client.getUserId()!}
         size={24}
         type="user"
-        className="z-1 group-hover:scale-90 group-hover:blur-sm transition-all duration-300 ease-out"
+        className="group-hover:scale-90 group-hover:blur-sm transition-all duration-300 ease-out"
       />
       <div
         className="opacity-0 group-hover:opacity-50 absolute -top-0 rounded-full w-24 h-24 transition-all duration-300 ease-out"

@@ -15,10 +15,12 @@ interface MyRoomState {
   rooms: Room[] | null;
   roomStates: Record<string, RoomState>;
   currentRoom: Room | null;
+  ready: boolean;
   roomEvents: Record<string, MatrixEvent[]>;
   setRooms: (_: Room[]) => void;
   setRoomStates: (_: Record<string, RoomState>) => void;
   setCurrentRoom: (_: Room) => void;
+  setReady: (_: boolean) => void;
   setRoomEvents: (_: Record<string, MatrixEvent[]>) => void;
   // fallbackImage: Blob;
 }
@@ -31,6 +33,7 @@ const RoomProvider = (props: PropsWithChildren) => {
   // });
 
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
+  const [ready, setReady] = useState<boolean>(false);
   // null because otherwise we can't distinguish between no rooms and not done preparing the store
   const [rooms, setRooms] = useState<Room[] | null>(null);
 
@@ -40,6 +43,8 @@ const RoomProvider = (props: PropsWithChildren) => {
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
 
   const roomState: MyRoomState = {
+    ready,
+    setReady,
     rooms,
     roomStates,
     currentRoom,
@@ -70,7 +75,6 @@ const RoomProvider = (props: PropsWithChildren) => {
             .getLiveTimeline()
             .getEvents()
         }));
-
       });
 
       setRoomStates(previous => {
@@ -119,6 +123,8 @@ const RoomProvider = (props: PropsWithChildren) => {
       });
     }
   });
+
+  setTimeout(() => setReady(true), 1000)
 
   return (
     <RoomContext.Provider value={roomState}>
