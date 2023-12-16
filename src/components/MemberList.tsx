@@ -26,15 +26,16 @@ const sortMembers = (prev: RoomMember, next: RoomMember) => {
     : -1;
 };
 
-const MemberList = ({ visible, setVisible }: { visible: boolean, setVisible: (_: boolean) => void }) => {
-  const { currentRoom, roomEvents } = useContext(RoomContext)!;
-  const client = useContext(ClientContext);
+const MemberList = ({
+  visible,
+  setVisible,
+}: {
+  visible: boolean;
+  setVisible: (_: boolean) => void;
+}) => {
+  const { currentRoom } = useContext(RoomContext)!;
 
-  if (!currentRoom) {
-    return null;
-  }
-
-  if (!visible) {
+  if (!(currentRoom && visible)) {
     return null;
   }
 
@@ -64,8 +65,6 @@ const MemberList = ({ visible, setVisible }: { visible: boolean, setVisible: (_:
   const sortedMembers = currentRoom.getMembers().sort(sortMembers);
   const admins = sortedMembers.filter((m) => m.powerLevel === 100);
 
-  console.log(visible);
-
   return (
     <Resizable
       width={memberListWidth}
@@ -74,7 +73,6 @@ const MemberList = ({ visible, setVisible }: { visible: boolean, setVisible: (_:
       side="left"
       className="z-10 isolate min-w-0 flex flex-col gap-8 py-4 grow h-screen"
     >
-
       <div className="flex flex-col items-center gap-2 px-4">
         <button className="self-end" onClick={() => setVisible(false)}>
           <CrossNoCircleIcon />
@@ -107,15 +105,19 @@ const MemberList = ({ visible, setVisible }: { visible: boolean, setVisible: (_:
           </p>
         </div>
       </div>
-     <ReactFocusLock>
+
       <button className="scale-95 hover:scale-100 capitalize font-bold border-4 py-2 rounded-md border-indigo-200 text-gray-600 border-opacity-50 bg-transparent mx-4 shadow-sm duration-300 hover:border-indigo-300 hover:text-gray-800">
         invite
       </button>
-      <div className="flex bg-transparent grow rounded-md my-2 py-1"
-       >
-        <input onClick={() => console.log("click")} onFocus={() => console.log("focus")} type="text" className="relative z-50 border-4" value={query} onChange={(e) => setQuery(e.target.value)} />
-       </div>
-    </ReactFocusLock>
+
+      <div className="flex bg-transparent grow rounded-md my-2 py-1">
+        <input
+          type="text"
+          className="border-4"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
       <div className="overflow-y-scroll scrollbar">
         <ul className="flex flex-col gap-2 mx-4">
           {admins.length > 0 ? (
@@ -155,8 +157,8 @@ const MemberList = ({ visible, setVisible }: { visible: boolean, setVisible: (_:
 const MemberChip = ({
   member,
   presenceEvent,
-  // presencePromise,
-}: {
+} // presencePromise,
+: {
   member: RoomMember;
   presenceEvent?: IContent;
   // presencePromise: Promise<IStatusResponse>;
@@ -177,36 +179,35 @@ const MemberChip = ({
 
   return (
     <>
-    <MemberInfo
-      presence={presence ?? undefined}
-      visible={open}
-      setVisible={setOpen}
-      member={member}
-    />
-    <button
-
-      onClick={() => setOpen(true)}
-    className={`hover:bg-indigo-200 duration-300 flex gap-4 items-center min-w-0 border-b-4 p-4 rounded-md shadow-md`}
-    >
-      <Avatar
-        id={member.userId}
-        type="user"
-        size={16}
-        className={`shadow-sm ${
-          presence?.presence === "online"
-            ? "border-green-200"
-            : presence?.presence === "unavailable"
-            ? "border-red-300"
-            : "border-gray-300"
-        }`}
+      <MemberInfo
+        presence={presence ?? undefined}
+        visible={open}
+        setVisible={setOpen}
+        member={member}
       />
-      <div className="text-start min-w-0">
-        <p className="truncate max-w-full font-bold">{member.name}</p>
-        {presence?.status_msg ? (
-          <p className="text-sm truncate max-w-full">{presence.status_msg}</p>
-        ) : null}
-      </div>
-    </button>
+      <button
+        onClick={() => setOpen(true)}
+        className={`hover:bg-indigo-200 duration-300 flex gap-4 items-center min-w-0 border-b-4 p-4 rounded-md shadow-md`}
+      >
+        <Avatar
+          id={member.userId}
+          type="user"
+          size={16}
+          className={`shadow-sm ${
+            presence?.presence === "online"
+              ? "border-green-200"
+              : presence?.presence === "unavailable"
+              ? "border-red-300"
+              : "border-gray-300"
+          }`}
+        />
+        <div className="text-start min-w-0">
+          <p className="truncate max-w-full font-bold">{member.name}</p>
+          {presence?.status_msg ? (
+            <p className="text-sm truncate max-w-full">{presence.status_msg}</p>
+          ) : null}
+        </div>
+      </button>
     </>
   );
 };

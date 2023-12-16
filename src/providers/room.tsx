@@ -10,41 +10,28 @@ import { ClientContext } from "./client";
 
 export const RoomContext = createContext<MyRoomState | null>(null);
 
-// Map in javascript has O(n) access time but object is constant
 interface MyRoomState {
   rooms: Room[] | null;
   roomStates: Record<string, RoomState>;
   currentRoom: Room | null;
-  ready: boolean;
   roomEvents: Record<string, MatrixEvent[]>;
   setRooms: (_: Room[]) => void;
   setRoomStates: (_: Record<string, RoomState>) => void;
   setCurrentRoom: (_: Room) => void;
-  setReady: (_: boolean) => void;
   setRoomEvents: (_: Record<string, MatrixEvent[]>) => void;
-  // fallbackImage: Blob;
 }
 
 const RoomProvider = (props: PropsWithChildren) => {
   const client = useContext(ClientContext);
 
-  // client.once(ClientEvent.Sync, (state, previousState, res) => {
-
-  // });
-
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
-  const [ready, setReady] = useState<boolean>(false);
-  // null because otherwise we can't distinguish between no rooms and not done preparing the store
   const [rooms, setRooms] = useState<Room[] | null>(null);
-
   const [roomEvents, setRoomEvents] = useState<
     Record<string, MatrixEvent[]>
   >({});
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
 
   const roomState: MyRoomState = {
-    ready,
-    setReady,
     rooms,
     roomStates,
     currentRoom,
@@ -65,11 +52,8 @@ const RoomProvider = (props: PropsWithChildren) => {
     }
 
     for (const r of rooms) {
-      // allow setting limit later
-      // TODO: lazy loading old messages
-        // WARNING: we're inside a map, React batches updates so we have to pass a closure to use `previousEvents` here
-        setRoomEvents((previousEvents) => ({
-          ...previousEvents,
+        setRoomEvents((previous) => ({
+          ...previous,
           [r.roomId]: r
             .getLiveTimeline()
             .getEvents()
@@ -87,42 +71,19 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   // how do we update the roomStates ?
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
-    // weird bug that gets triggered the message twice
-    // console.log("received: ", event.getContent());
-
     if (room) {
       if (
         startOfTimeline
-        // || currentRoomEvents[Object.values(currentRoomEvents).length - 1] === event
       ) {
         return;
       }
 
-      // if (event.getType() === EventType.RoomMessage) {
-      //   const relation = event.getRelation();
-      //   if (relation?.rel_type === RelationType.Replace ?? null) {
-      //     const oldId = relation?.event_id!;
-
-      //     setRoomEvents({
-      //       ...roomEvents,
-      //       [room.roomId]: {
-      //         ...roomEvents[room.roomId],
-      //           [oldId]: event,
-      //         },
-      //     });
-      //     return;
-      //   }
-      // }
-
-      // check behavior later
       setRoomEvents({
         ...roomEvents,
         [room.roomId]: [...roomEvents[room.roomId] ?? [], event],
       });
     }
   });
-
-  setTimeout(() => setReady(true), 1000)
 
   return (
     <RoomContext.Provider value={roomState}>

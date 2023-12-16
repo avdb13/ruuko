@@ -27,7 +27,7 @@ const App = () => {
   return (
     <div id="app" className={`flex min-w-0`}>
       <Sidebar />
-      {roomState.currentRoom ? <MessageWindow /> : <p>welcome</p>}
+      {roomState.currentRoom ? <MessageWindow /> : null}
     </div>
   );
 };
