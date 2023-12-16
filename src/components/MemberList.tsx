@@ -44,36 +44,34 @@ const MemberList = ({
   const [memberListWidth, setMemberListWidth] = useState(400);
   const [presences, setPresences] = useState<Record<string, IContent>>({});
 
-  // useEffect(() => {
-  //   if (currentRoom) {
-  //     currentRoom.loadMembersIfNeeded().then((ok) => {
-  //       if (currentRoom.membersLoaded() && ok) {
-  //         const presences = Object.values(roomEvents[currentRoom.roomId]!)
-  //           .filter((e) => e.getType() === EventType.Presence)
-  //           .reduce(
-  //             (init, e) => ({ ...init, [e.getSender()!]: e.getContent() }),
-  //             {},
-  //           );
+  const [members, setMembers] = useState<RoomMember[]>([]);
+  useEffect(() => {
+    setMembers(currentRoom.getMembers());
+  }, [currentRoom.roomId]);
 
-  //         setPresences(presences);
-  //       }
-  //     });
-  //   }
-  // }, []);
-
-  // sort by online?
-  const sortedMembers = currentRoom.getMembers().sort(sortMembers);
-  const admins = sortedMembers.filter((m) => m.powerLevel === 100);
-
+  const admins = members
+    .filter((m) => m.powerLevel === 100)
+    // .filter(
+    //   (r) => query.length > 0 ?
+    //     0 < r.name.toLowerCase().search(query) ||
+    //   0 < r.rawDisplayName.toLowerCase().search(query) : r
+    // );
+  const regulars = members
+    .filter((m) => m.powerLevel !== 100)
+    // .filter(
+    //   (r) => query.length > 0 ?
+    //     0 < r.name.toLowerCase().search(query) ||
+    //   0 < r.rawDisplayName.toLowerCase().search(query) : r
+    // );
   return (
     <Resizable
       width={memberListWidth}
       minWidth={200}
       setWidth={setMemberListWidth}
       side="left"
-      className="isolate min-w-0 flex flex-col gap-8 py-4 grow h-screen"
+      className="isolate min-w-0 flex flex-col gap-8 py-4 grow h-screen items-center"
     >
-      <div className="flex flex-col items-center gap-2 px-4">
+      <div className="w-full flex flex-col items-center gap-2 px-4">
         <button className="self-end" onClick={() => setVisible(false)}>
           <CrossNoCircleIcon />
         </button>
@@ -110,17 +108,15 @@ const MemberList = ({
         invite
       </button>
 
-      <div className="flex bg-transparent grow rounded-md my-2 py-1">
-        <input
-          type="text"
-          className="border-4"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
+      <input
+        type="text"
+        className="border-4 mx-4 w-[80%]"
+        value={query}
+        onChange={(e) => setQuery(e.target.value.toLowerCase())}
+      />
 
-      <div className="overflow-y-scroll scrollbar">
-        <ul className="flex flex-col gap-2 mx-4">
+      <div className="w-full overflow-y-scroll scrollbar">
+        <ul className="min-w-0 flex flex-col gap-2 mx-4">
           {admins.length > 0 ? (
             <p className="font-bold capitalize text-gray-600">
               admins ({admins.length})
@@ -137,18 +133,16 @@ const MemberList = ({
               ))
             : null}
           <p className="font-bold capitalize text-gray-600">
-            members ({sortedMembers.filter((m) => m.powerLevel < 100).length})
+            members ({regulars.filter((m) => m.powerLevel < 100).length})
           </p>
-          {sortedMembers
-            .filter((m) => m.powerLevel < 100)
-            .map((m) => (
-              <MemberChip
-                // presencePromise={}
-                presenceEvent={presences[m.userId]}
-                key={m.name}
-                member={m}
-              />
-            ))}
+          {regulars.map((m) => (
+            <MemberChip
+              // presencePromise={}
+              presenceEvent={presences[m.userId]}
+              key={m.name}
+              member={m}
+            />
+          ))}
         </ul>
       </div>
     </Resizable>
@@ -157,9 +151,8 @@ const MemberList = ({
 
 const MemberChip = ({
   member,
-  presenceEvent,
-} // presencePromise,
-: {
+  presenceEvent, // presencePromise,
+}: {
   member: RoomMember;
   presenceEvent?: IContent;
   // presencePromise: Promise<IStatusResponse>;
@@ -188,7 +181,7 @@ const MemberChip = ({
       />
       <button
         onClick={() => setOpen(true)}
-        className={`hover:bg-indigo-200 duration-300 flex gap-4 items-center min-w-0 border-b-4 p-4 rounded-md shadow-md`}
+        className={`w-full hover:bg-indigo-200 duration-300 flex gap-4 items-center min-w-0 border-b-4 p-4 rounded-md shadow-md`}
       >
         <Avatar
           id={member.userId}

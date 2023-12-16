@@ -115,7 +115,7 @@ const MessageWindow = () => {
     return () => {
       observerRef.current ? observer.unobserve(observerRef.current) : null;
     };
-  }, [observerRef]);
+  }, [observerRef, currentRoom]);
 
   if (currentRoom?.getMyMembership() === Membership.Ban) {
     return (
