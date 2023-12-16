@@ -1,6 +1,5 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import Sidebar from "./components/Sidebar";
-import Spinner from "./components/Spinner";
 import MessageWindow from "./components/MessageWindow";
 import { RoomContext } from "./providers/room";
 import { ClientContext } from "./providers/client";
@@ -11,18 +10,18 @@ const App = () => {
   const roomState = useContext(RoomContext);
   const rooms = client.getRooms().length;
 
-  // find out how we can make this more concise, we need to check if the store is ready somehow
-  if (
+  const loading =
     !client.getSyncState() ||
     !roomState ||
     Object.entries(roomState.roomEvents).length !== rooms ||
-    roomState.rooms && roomState.rooms.length !== rooms
-  ) {
-    return <Spinner className={`duration-300 ease-in transition-all ${roomState?.ready ? "[&>div]:scale-800 [&>div]:opacity-0" : "[&>div]:scale-1 [&>div]:opacity-100"}`} />;
+    (roomState.rooms && roomState.rooms.length !== rooms);
+
+  if (loading) {
+    return null;
   }
 
   return (
-    <div className="flex min-w-0">
+    <div className={`transition-all duration-500 ease-out flex min-w-0 ${loading ? "opacity-0 scale-150 blur-[4px]" : "opacity-100 scale-100 blur-[0px]"}`}>
       <Sidebar />
       {roomState.currentRoom ? <MessageWindow /> : <p>welcome</p>}
     </div>

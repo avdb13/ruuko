@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import { useCookies } from "react-cookie";
-import Spinner from "../components/Spinner";
 import Login from "../components/Login";
 
 const temporaryClient = () => {
@@ -50,7 +49,7 @@ const ClientProvider = (props: PropsWithChildren) => {
   }
 
   if (!client) {
-    return <Spinner />;
+    return null;
   }
 
 
