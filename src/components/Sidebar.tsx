@@ -110,7 +110,7 @@ const Sidebar = () => {
       setWidth={setSidebarWidth}
       minWidth={200}
       side="right"
-      className="flex flex-col items-center gap-2 py-2 bg-opacity-25 bg-indigo-50 min-w-0 h-screen"
+      className="isolate flex flex-col items-center gap-2 py-2 bg-opacity-25 bg-indigo-50 min-w-0 h-screen"
     >
       <div className="flex flex-col w-full overflow-y-auto scrollbar">
         <Togglable

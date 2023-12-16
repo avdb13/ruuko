@@ -322,7 +322,7 @@ const TitleBar = ({
 
   return (
     <div
-      className="flex min-h-[42px] items-center justify-between text-gray-800 bg-opacity-50 bg-blue-300 px-4"
+      className="isolate flex min-h-[42px] items-center justify-between text-gray-800 bg-opacity-50 bg-blue-300 px-4"
       id="header"
     >
       <Modal title={roomName} visible={visible} setVisible={setVisible}>

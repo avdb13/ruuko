@@ -29,7 +29,7 @@ const Modal = (props: PropsWithChildren<ModalProps>) => {
     <dialog
       ref={modalRef}
       className={
-        "p-4 open:animate-modal close:animate-hide modal " + props.className || ""
+        "isolate p-4 open:animate-modal close:animate-hide modal " + props.className || ""
       }
       onKeyDown={handleKeyDown}
     >

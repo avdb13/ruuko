@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import MessageWindow from "./components/MessageWindow";
 import { RoomContext } from "./providers/room";
@@ -7,6 +7,7 @@ import { ClientContext } from "./providers/client";
 const App = () => {
   const client = useContext(ClientContext);
 
+  const [trans, setTrans] = useState(false);
   const roomState = useContext(RoomContext);
   const rooms = client.getRooms().length;
 
@@ -19,9 +20,10 @@ const App = () => {
   if (loading) {
     return null;
   }
+  setTimeout(() => setTrans(true), 600);
 
   return (
-    <div className={`transition-all duration-500 ease-out flex min-w-0 ${loading ? "opacity-0 scale-150 blur-[4px]" : "opacity-100 scale-100 blur-[0px]"}`}>
+    <div className={`flex min-w-0 ${trans ? "animate-app" : "opacity-0"}`}>
       <Sidebar />
       {roomState.currentRoom ? <MessageWindow /> : <p>welcome</p>}
     </div>
