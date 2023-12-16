@@ -3,6 +3,26 @@
 @tailwind utilities;
 
 @layer utilities {
+  #app {
+    animation-duration: 1s;
+    animation-name: ok;
+    animation-timing-function: cubic-bezier(0, 1, 1, 1);
+  }
+
+  @keyframes ok {
+    from {
+      transform: scale(1.2);
+      filter: blur(4px);
+      opacity: 0;
+    }
+
+    to {
+      transform: scale(1);
+      filter: blur(0px);
+      opacity: 100;
+    }
+  }
+
   .scrollbar::-webkit-scrollbar {
     width: 10px;
     background-color: transparent;
@@ -52,7 +72,6 @@
 
   .chip {
     animation: rotate 10s cubic-bezier(0.8, 0.2, 0.2, 0.8) infinite alternate;
-    z-index: -1;
     filter: blur(100px);
     opacity: 0.4;
     position: absolute;

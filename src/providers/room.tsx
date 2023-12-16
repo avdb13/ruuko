@@ -67,15 +67,13 @@ const RoomProvider = (props: PropsWithChildren) => {
     for (const r of rooms) {
       // allow setting limit later
       // TODO: lazy loading old messages
-      client.scrollback(r, 50).then((scrollback) => {
         // WARNING: we're inside a map, React batches updates so we have to pass a closure to use `previousEvents` here
         setRoomEvents((previousEvents) => ({
           ...previousEvents,
-          [scrollback.roomId]: scrollback
+          [r.roomId]: r
             .getLiveTimeline()
             .getEvents()
         }));
-      });
 
       setRoomStates(previous => {
         const state = r.getLiveTimeline().getState(Direction.Backward);
