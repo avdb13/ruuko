@@ -12,6 +12,7 @@ import CrossNoCircleIcon from "./icons/CrossNoCircle";
 import { ClientContext } from "../providers/client";
 import Modal from "./Modal";
 import moment from "moment";
+import ReactFocusLock from "react-focus-lock";
 
 const sortMembers = (prev: RoomMember, next: RoomMember) => {
   return prev
@@ -25,11 +26,15 @@ const sortMembers = (prev: RoomMember, next: RoomMember) => {
     : -1;
 };
 
-const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
+const MemberList = ({ visible, setVisible }: { visible: boolean, setVisible: (_: boolean) => void }) => {
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
   const client = useContext(ClientContext);
 
   if (!currentRoom) {
+    return null;
+  }
+
+  if (!visible) {
     return null;
   }
 
@@ -38,27 +43,28 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
   const [memberListWidth, setMemberListWidth] = useState(400);
   const [presences, setPresences] = useState<Record<string, IContent>>({});
 
-  console.log(Object.values(presences));
-  useEffect(() => {
-    if (currentRoom) {
-      currentRoom.loadMembersIfNeeded().then((ok) => {
-        if (currentRoom.membersLoaded() && ok) {
-          const presences = Object.values(roomEvents[currentRoom.roomId]!)
-            .filter((e) => e.getType() === EventType.Presence)
-            .reduce(
-              (init, e) => ({ ...init, [e.getSender()!]: e.getContent() }),
-              {},
-            );
+  // useEffect(() => {
+  //   if (currentRoom) {
+  //     currentRoom.loadMembersIfNeeded().then((ok) => {
+  //       if (currentRoom.membersLoaded() && ok) {
+  //         const presences = Object.values(roomEvents[currentRoom.roomId]!)
+  //           .filter((e) => e.getType() === EventType.Presence)
+  //           .reduce(
+  //             (init, e) => ({ ...init, [e.getSender()!]: e.getContent() }),
+  //             {},
+  //           );
 
-          setPresences(presences);
-        }
-      });
-    }
-  }, []);
+  //         setPresences(presences);
+  //       }
+  //     });
+  //   }
+  // }, []);
 
   // sort by online?
   const sortedMembers = currentRoom.getMembers().sort(sortMembers);
   const admins = sortedMembers.filter((m) => m.powerLevel === 100);
+
+  console.log(visible);
 
   return (
     <Resizable
@@ -66,8 +72,9 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
       minWidth={200}
       setWidth={setMemberListWidth}
       side="left"
-      className="min-w-0 flex flex-col gap-8 py-4 grow h-screen"
+      className="z-10 isolate min-w-0 flex flex-col gap-8 py-4 grow h-screen"
     >
+
       <div className="flex flex-col items-center gap-2 px-4">
         <button className="self-end" onClick={() => setVisible(false)}>
           <CrossNoCircleIcon />
@@ -100,11 +107,16 @@ const MemberList = ({ setVisible }: { setVisible: (_: boolean) => void }) => {
           </p>
         </div>
       </div>
+     <ReactFocusLock>
       <button className="scale-95 hover:scale-100 capitalize font-bold border-4 py-2 rounded-md border-indigo-200 text-gray-600 border-opacity-50 bg-transparent mx-4 shadow-sm duration-300 hover:border-indigo-300 hover:text-gray-800">
         invite
       </button>
+      <div className="flex bg-transparent grow rounded-md my-2 py-1"
+       >
+        <input onClick={() => console.log("click")} onFocus={() => console.log("focus")} type="text" className="relative z-50 border-4" value={query} onChange={(e) => setQuery(e.target.value)} />
+       </div>
+    </ReactFocusLock>
       <div className="overflow-y-scroll scrollbar">
-        <input onClick={() => console.log("click")} onFocus={() => console.log("focus")} type="text" className="relative border-4" value={query} onChange={(e) => setQuery(e.target.value)} />
         <ul className="flex flex-col gap-2 mx-4">
           {admins.length > 0 ? (
             <p className="font-bold capitalize text-gray-600">

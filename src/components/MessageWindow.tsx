@@ -22,6 +22,7 @@ import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
 import Modal from "./Modal";
 import { ClientContext } from "../providers/client";
 import Loader from "./Loader";
+import ReactFocusLock from "react-focus-lock";
 
 // in case we have performance issues later
 // type SortingMetadata = {
@@ -136,7 +137,7 @@ const MessageWindow = () => {
   // fix harsh transition
   return (
     <div className="min-w-0 flex grow">
-      <div className="min-w-0 flex flex-col basis-1/2 justify-between h-screen grow">
+      <div className="isolate min-w-0 flex flex-col basis-1/2 justify-between h-screen grow">
         <TitleBar
           showMembers={showMembers}
           setShowMembers={setShowMembers}
@@ -157,7 +158,7 @@ const MessageWindow = () => {
         </ul>
         <InputBar roomId={currentRoom.roomId} />
       </div>
-      {showMembers ? <MemberList setVisible={setShowMembers} /> : null}
+      <MemberList visible={showMembers} setVisible={setShowMembers} />
     </div>
   );
 };
@@ -322,7 +323,7 @@ const TitleBar = ({
 
   return (
     <div
-      className="isolate flex min-h-[42px] items-center justify-between text-gray-800 bg-opacity-50 bg-blue-300 px-4"
+      className="relative isolate z-0 flex min-h-[42px] items-center justify-between text-gray-800 bg-opacity-50 bg-blue-300 px-4"
       id="header"
     >
       <Modal title={roomName} visible={visible} setVisible={setVisible}>

@@ -195,7 +195,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         <FilePicker files={files} setFiles={setFiles} />
         <div className="flex bg-transparent grow rounded-md my-2 py-1">
           <input
-            id="input-panel"
             className="grow bg-transparent focus:outline-none mx-2"
             placeholder={`Message ${client.getRoom(roomId)?.name}`}
             onKeyDown={handleKeys}

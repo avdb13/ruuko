@@ -59,7 +59,7 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
         ref={sidebarRef}
         style={{ width: sidebarWidth }}
         onMouseDown={(e) => e.preventDefault()}
-        className="flex"
+        className="isolate flex"
       >
         {!props.side || props.side === "left" ? (
           <div onMouseDown={startResizing} className={resizerStyle} />

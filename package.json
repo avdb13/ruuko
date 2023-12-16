@@ -22,6 +22,7 @@
     "react-cookie": "^6.1.1",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^4.0.11",
+    "react-focus-lock": "^2.9.6",
     "tldjs": "^2.3.1",
     "transition-hook": "^1.5.2"
   },

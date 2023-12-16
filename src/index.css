@@ -52,6 +52,7 @@
 
   .chip {
     animation: rotate 10s cubic-bezier(0.8, 0.2, 0.2, 0.8) infinite alternate;
+    z-index: -1;
     filter: blur(100px);
     opacity: 0.4;
     position: absolute;
