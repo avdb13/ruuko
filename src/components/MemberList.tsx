@@ -71,7 +71,7 @@ const MemberList = ({
       minWidth={200}
       setWidth={setMemberListWidth}
       side="left"
-      className="z-10 isolate min-w-0 flex flex-col gap-8 py-4 grow h-screen"
+      className="isolate min-w-0 flex flex-col gap-8 py-4 grow h-screen"
     >
       <div className="flex flex-col items-center gap-2 px-4">
         <button className="self-end" onClick={() => setVisible(false)}>
@@ -118,6 +118,7 @@ const MemberList = ({
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
+
       <div className="overflow-y-scroll scrollbar">
         <ul className="flex flex-col gap-2 mx-4">
           {admins.length > 0 ? (

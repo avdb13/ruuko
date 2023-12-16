@@ -88,7 +88,7 @@ const MessageWindow = () => {
   // layout effect necessary?
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting && !loading) {
+      if (entries[0]?.isIntersecting || eventsMemo.length < 50 && !loading) {
         console.log("intersecting");
 
         setLoading(true);
