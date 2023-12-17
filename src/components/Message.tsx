@@ -472,7 +472,7 @@ interface MessageFrameProps {
 }
 
 export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
-  <li className="p-2 border-x-2 border-b-2 border-black w-full">
+  <li className="p-2 w-full">
     <div className="flex content-center gap-2">
       <Avatar id={props.userId} type="user" size={16} />
       <div className="flex flex-col gap-2 w-full">
@@ -582,13 +582,13 @@ export const ReplaceWindow = (
 
 export const DateMessage = ({ date }: { date: Date }) => {
   return (
-    <li className="py-4 border-b-2 border-black">
+    <li className="py-4">
       <div className="flex content-center justify-center gap-2">
-        <div className="w-full h-[2px] translate-y-[500%] bg-black" />
+        <div className="w-full h-[2px] translate-y-[500%] bg-slate-400" />
         <p className="whitespace-nowrap px-2">
           {date.toLocaleDateString("en-US")}
         </p>
-        <div className="w-full h-[2px] translate-y-[500%] bg-black" />
+        <div className="w-full h-[2px] translate-y-[500%] bg-slate-400" />
       </div>
     </li>
   );
@@ -599,10 +599,12 @@ interface StateFrameProps {
 }
 
 export const StateFrame = (props: PropsWithChildren<StateFrameProps>) => (
-  <li className="p-2 border-x-2 border-b-2 border-black pl-6">
+  <li className="p-2 border-black">
     <div className="flex content-center gap-2">
-      <Avatar id={props.userId} size={8} type="user" />
-      <div className="flex flex-col justify-center whitespace-normal break-all grow">
+      <div className="px-4">
+        <Avatar id={props.userId} size={8} type="user" />
+      </div>
+      <div className="flex flex-col justify-center whitespace-normal break-all grow px-2">
         {props.children}
       </div>
     </div>

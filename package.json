@@ -14,6 +14,7 @@
     "@types/react-transition-group": "^4.4.10",
     "axios": "^1.6.2",
     "diff": "^5.1.0",
+    "dotenv": "^16.3.1",
     "emoji-picker-react": "^4.5.16",
     "highlight.js": "^11.9.0",
     "matrix-js-sdk": "^29.1.0",

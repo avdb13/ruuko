@@ -7,9 +7,11 @@ import { ClientContext } from "./providers/client";
 const App = () => {
   const client = useContext(ClientContext);
 
-  const [trans, setTrans] = useState(false);
   const roomState = useContext(RoomContext);
   const rooms = client?.getRooms().length;
+
+  const env = import.meta.env.VITE_DEMO;
+  console.log(env);
 
   const loading =
     !client ||
@@ -21,8 +23,6 @@ const App = () => {
   if (loading) {
     return null;
   }
-
-  setTimeout(() => setTrans(true), 600);
 
   return (
     <div id="app" className={`flex min-w-0`}>

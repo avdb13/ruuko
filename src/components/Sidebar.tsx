@@ -119,7 +119,10 @@ const Sidebar = () => {
           sidebarWidth={sidebarWidth}
         >
           <RoomList
-            rooms={sortedRooms.filter((r) => r.getMembers().length <= 2)}
+            rooms={sortedRooms.filter(
+              (r) =>
+                r.getMyMembership() === Membership.Join)
+            .filter((r) => r.getMembers().length <= 2)}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
@@ -129,7 +132,10 @@ const Sidebar = () => {
           sidebarWidth={sidebarWidth}
         >
           <RoomList
-            rooms={sortedRooms.filter((r) => r.getMembers().length > 2)}
+            rooms={sortedRooms.filter(
+              (r) =>
+                r.getMyMembership() === Membership.Join)
+            .filter((r) => r.getMembers().length > 2)}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>

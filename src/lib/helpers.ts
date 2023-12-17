@@ -53,7 +53,7 @@ export const getAvatarUrl = (
               1200,
               1200,
               "scale",
-              true,
+              false,
               true,
             )
         : room.getAvatarUrl("https://matrix.org", 1200, 1200, "scale", true);

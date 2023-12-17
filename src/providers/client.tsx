@@ -34,6 +34,10 @@ const ClientProvider = (props: PropsWithChildren) => {
   const [cookies] = useCookies(["session"]);
   const session = cookies["session"] as Session;
 
+  if (import.meta.env.VITE_DEMO) {
+    
+  }
+
   useEffect(() => {
     if (cookies["session"]) {
       const client = initClient(session);
