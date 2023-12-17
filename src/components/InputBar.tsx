@@ -129,6 +129,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         msgtype: MsgType.Text,
         avatar_url: member?.getMxcAvatarUrl(),
         displayname: member?.rawDisplayName,
+        body: message,
         ["m.relates_to"]: {
           ["m.in_reply_to"]: { event_id: inReplyTo || undefined },
         },

@@ -48,7 +48,7 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
         event.getType() === EventType.RoomMessage &&
         previousEvent.getType() === EventType.RoomMessage &&
         diff < 60 * 1000
-        ? [...init.slice(0, init.length - 1), [...previousList, event]]
+        ? [...init.slice(0, init.length - 1), [event, ...previousList]]
         : [...init, [event]];
     }, [] as MatrixEvent[][])
     .map((list) => list.map((e) => e.getId()!));
@@ -115,7 +115,7 @@ const MessageWindow = () => {
     return () => {
       observerRef.current ? observer.unobserve(observerRef.current) : null;
     };
-  }, [observerRef, currentRoom]);
+  }, [observerRef, currentRoom.roomId]);
 
   if (currentRoom?.getMyMembership() === Membership.Ban) {
     return (
@@ -166,12 +166,8 @@ const MessageWindow = () => {
 const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
-  // what if we have a replaced reaction???
-  // reduce a step earlier?
-  const filteredEvents = [...Array(events.length).keys()].reduce(
-    (init, i) => {
-      const e = events[events.length - i - 1]!;
-
+  const filteredEvents = events.reduceRight(
+    (init, e) => {
       switch (e.getType()) {
         case EventType.Reaction:
           return {
