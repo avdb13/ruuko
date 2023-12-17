@@ -22,8 +22,8 @@ import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
 import { ClientContext } from "../providers/client";
 import Loader from "./Loader";
 
-const Modal = lazy(() => import("./Modal"))
-const MemberList = lazy(() => import("./MemberList"))
+const Modal = lazy(() => import("./Modal"));
+const MemberList = lazy(() => import("./MemberList"));
 
 // in case we have performance issues later
 // type SortingMetadata = {
@@ -68,14 +68,9 @@ const MessageWindow = () => {
     return <div></div>;
   }
 
-  // TODO: fix key navigation
-
-  // // needed?
   const eventsMemo = useMemo(() => {
-    // default value not good
     return Object.values(roomEvents[currentRoom!.roomId] || {});
   }, [currentRoom, roomEvents]);
-
 
   useLayoutEffect(() => {
     const list = document.getElementById("bottom-div");
@@ -85,24 +80,19 @@ const MessageWindow = () => {
     list?.scroll(0, 0);
   }, [currentRoom]);
 
-  // layout effect necessary?
-  useEffect(() => {
+  useLayoutEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting || eventsMemo.length < 50 && !loading) {
+      if ((entries[0]?.isIntersecting || eventsMemo.length < 50) && !loading) {
         console.log("intersecting");
 
         setLoading(true);
 
         client.scrollback(currentRoom, eventsMemo.length + 50).then((r) => {
-          // WARNING: we're inside a map, React batches updates so we have to pass a closure to use `previousEvents` here
           setRoomEvents({
             ...roomEvents,
-            [r.roomId]: r
-              .getLiveTimeline()
-              .getEvents()
+            [r.roomId]: r.getLiveTimeline().getEvents(),
           });
 
-          console.log("finished loading more events", Object.values(roomEvents[currentRoom.roomId]!).length);
           setLoading(false);
         });
       }
@@ -222,16 +212,16 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   // return reply + event + annotations
   const eventRecord = filteredEvents["rest"]!.reduce(
     (init, event) => ({
-        ...init,
-        [event.getId()!]: (
-          <Message
-            event={event}
-            annotations={allAnnotations[event.getId()!]}
-            replacements={allReplacements[event.getId()!]}
-            redaction={allRedactions[event.getId()!]}
-          />
-        ),
-      }),
+      ...init,
+      [event.getId()!]: (
+        <Message
+          event={event}
+          annotations={allAnnotations[event.getId()!]}
+          replacements={allReplacements[event.getId()!]}
+          redaction={allRedactions[event.getId()!]}
+        />
+      ),
+    }),
     {} as Record<string, JSX.Element>,
   );
 
@@ -248,8 +238,15 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
     if (list.length === 1 && firstEvent.getType() !== EventType.RoomMessage) {
       return (
         <>
-          <DayBreak key={firstEvent.getId()!+"-daybreak"} previous={previous} current={firstEvent} />
-          <StateFrame key={firstEvent.getId()!} userId={firstEvent.getSender()!}>
+          <DayBreak
+            key={firstEvent.getId()! + "-daybreak"}
+            previous={previous}
+            current={firstEvent}
+          />
+          <StateFrame
+            key={firstEvent.getId()!}
+            userId={firstEvent.getSender()!}
+          >
             {list.map((id) => eventRecord[id]!)}
           </StateFrame>
         </>
@@ -258,7 +255,11 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
 
     return (
       <>
-        <DayBreak key={firstEvent.getId()!+"-daybreak"} previous={previous} current={firstEvent} />
+        <DayBreak
+          key={firstEvent.getId()! + "-daybreak"}
+          previous={previous}
+          current={firstEvent}
+        />
         <MessageFrame
           key={firstEvent.getId()!}
           userId={firstEvent.getSender()!}

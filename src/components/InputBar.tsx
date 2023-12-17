@@ -1,10 +1,4 @@
-import {
-  SyntheticEvent,
-  useContext,
-  useEffect,
-  useRef,
-  useState
-} from "react";
+import { SyntheticEvent, useContext, useEffect, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import CrossIcon from "./icons/Cross";
@@ -25,15 +19,6 @@ const FilePicker = ({
   setFiles: (_: File[] | null) => void;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  // useEffect(() => {
-  //   if (inputRef.current) {
-  //     inputRef.current.fil
-  //   }
-  // }, [files])
-
-  useEffect(() => {
-    // set file previews
-  }, []);
 
   const handleChange = (e: SyntheticEvent) => {
     const files = (e.target as HTMLInputElement).files;
@@ -72,11 +57,10 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
   const { inReplyTo, setInReplyTo, setReplace } = useContext(InputContext)!;
 
-  const replyEvent = currentRoom?.findEventById(inReplyTo || "") ?? null;
-
   const [message, setMessage] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
   const [files, setFiles] = useState<File[] | null>(null);
+
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -84,13 +68,13 @@ const InputBar = ({ roomId }: { roomId: string }) => {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
         setShowEmojis(false);
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutsidePicker);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutsidePicker);
-    }
-  }, [pickerRef])
+    };
+  }, [pickerRef]);
 
   if (!currentRoom) {
     return null;
@@ -98,16 +82,20 @@ const InputBar = ({ roomId }: { roomId: string }) => {
 
   if (currentRoom?.getMyMembership() === Membership.Leave) {
     return (
-      <div
-        className="flex items-center gap-2 sticky h-16 mx-2 px-4"
-      >
-      <p title="join" className="font-semibold text-xl">you left this room, click here to join again</p><button className="py-1 px-4 rounded-md bg-violet-200 border-gray-600 fill-current stroke-2 text-gray-600 border-4 shadow-md scale-75"><KnobIcon /></button></div>
-    )
+      <div className="flex items-center gap-2 sticky h-16 mx-2 px-4">
+        <p title="join" className="font-semibold text-xl">
+          you left this room, click here to join again
+        </p>
+        <button className="py-1 px-4 rounded-md bg-violet-200 border-gray-600 fill-current stroke-2 text-gray-600 border-4 shadow-md scale-75">
+          <KnobIcon />
+        </button>
+      </div>
+    );
   }
 
+  const replyEvent = currentRoom?.findEventById(inReplyTo || "") ?? null;
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
-    e.stopPropagation();
 
     if (files) {
       Promise.all([...files.map((f) => client.uploadContent(f))]).then(
@@ -136,15 +124,14 @@ const InputBar = ({ roomId }: { roomId: string }) => {
       };
 
       client.sendMessage(roomId, content);
-      setInReplyTo(null);
     } else {
-
       client.sendTextMessage(roomId, message);
     }
 
-    currentRoom?.setTimelineNeedsRefresh(true);
     setMessage("");
+    setInReplyTo(null);
   };
+
 
   const removeFile = (name: string) => {
     setFiles(files ? files.filter((f) => f.name !== name) : null);
@@ -153,7 +140,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const handleKeys = (e: React.KeyboardEvent) => {
     switch (e.key) {
       case "ArrowUp":
-        const events = Object.values(roomEvents[currentRoom!.roomId]!);
+        const events = roomEvents[currentRoom!.roomId]!;
 
         const lastEvent = findLastTextEvent(events, client.getUserId()!);
         if (lastEvent) {
@@ -214,7 +201,10 @@ const InputBar = ({ roomId }: { roomId: string }) => {
             >
               😺
             </button>
-            <div ref={pickerRef} className="absolute right-[0%] bottom-[100%]  translate-x-0 duration-300 ease-out">
+            <div
+              ref={pickerRef}
+              className="absolute right-[0%] bottom-[100%]  translate-x-0 duration-300 ease-out"
+            >
               {showEmojis ? (
                 <EmojiPicker
                   emojiStyle={EmojiStyle.NATIVE}
@@ -232,7 +222,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
       </form>
     </>
   );
-  // peer-active:translate-y-[10%] peer-active:opacity-0 opacity-100
 };
 
 const FilePreview = ({

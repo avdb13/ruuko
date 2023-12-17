@@ -82,7 +82,6 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
 
-  // how do we update the roomStates ?
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
     if (room) {
       if (startOfTimeline) {

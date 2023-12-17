@@ -35,19 +35,23 @@ const MemberList = ({
 }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
-  if (!(currentRoom && visible)) {
-    return null;
-  }
 
   const [query, setQuery] = useState("");
 
   const [memberListWidth, setMemberListWidth] = useState(400);
   const [presences, setPresences] = useState<Record<string, IContent>>({});
 
-  const [members, setMembers] = useState<RoomMember[]>(currentRoom.getMembers());
-  // useEffect(() => {
-  //   setMembers(currentRoom.getMembers());
-  // }, [currentRoom.roomId]);
+  const [members, setMembers] = useState<RoomMember[]>([]);
+
+  useEffect(() => {
+    if (currentRoom) {
+      setMembers(currentRoom.getMembers());
+    }
+  }, [currentRoom?.roomId]);
+
+  if (!(currentRoom && visible)) {
+    return null;
+  }
 
   const admins = members
     .filter((m) => m.powerLevel === 100)
@@ -135,7 +139,7 @@ const MemberList = ({
           <p className="font-bold capitalize text-gray-600">
             members ({regulars.filter((m) => m.powerLevel < 100).length})
           </p>
-          {regulars.map((m) => (
+          {regulars.slice(0, 50).map((m) => (
             <MemberChip
               // presencePromise={}
               presenceEvent={presences[m.userId]}
