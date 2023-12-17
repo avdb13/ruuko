@@ -1,4 +1,4 @@
-import { EventType, MatrixEvent, Room } from "matrix-js-sdk";
+import { EventType, MatrixEvent, Room, RoomType } from "matrix-js-sdk";
 import { useState, useContext, useMemo } from "react";
 import { RoomContext } from "../providers/room";
 import { formatEvent } from "./Message";
@@ -27,47 +27,47 @@ const sortRooms = (prev: Room, next: Room) => {
     : -1;
 };
 
-const RoomIconWidget = ({ room }: { room: Room }) => {
-  const { setCurrentRoom } = useContext(RoomContext)!;
+const RoomIconWidget = ({ id }: { id: string }) => {
+  const { setCurrentRoom, rooms } = useContext(RoomContext)!;
 
   return (
     <button
       className="flex flex-col gap-8 items-center"
-      onClick={() => setCurrentRoom(room)}
+      onClick={() => setCurrentRoom(rooms?.find(r => r.roomId === id)!)}
     >
-      <Avatar id={room.roomId} type="room" size={16} className="shadow-sm" />
+      <Avatar id={id} type="room" size={16} className="shadow-sm" />
     </button>
   );
 };
 
-const RoomWidget = ({ room }: { room: Room }) => {
-  const { setCurrentRoom, roomEvents } = useContext(RoomContext)!;
+const RoomWidget = ({ id, name, personal }: { id: string, name: string, personal: boolean }) => {
+  const { setCurrentRoom, roomEvents, rooms } = useContext(RoomContext)!;
 
-  const events = Object.values(roomEvents[room.roomId] || {});
-  const f = (e: MatrixEvent) =>
+  const events = roomEvents[id]!.filter(e =>
     e.getType() === EventType.RoomMessage ||
-    e.getType() === EventType.RoomMember;
+    e.getType() === EventType.RoomMember
+  );
 
   const latestEvent = events
-    ? events.filter(f)[events.filter(f).length - 1]
+    ? events[events.length - 1]
     : null;
 
   return (
     <button
-      onClick={() => setCurrentRoom(room)}
+      onClick={() => setCurrentRoom(rooms?.find(r => r.roomId === id)!)}
       className="flex items-center gap-4 p-2 w-full border-b-4 shadow-md rounded-md hover:bg-indigo-200 duration-300"
-      key={room.name}
+      key={name}
     >
-      <Avatar id={room.roomId} type="room" size={16} className="shadow-sm" />
+      <Avatar id={id} type="room" size={16} className="shadow-sm" />
       <div className="flex flex-col items-start min-w-0">
-        <p className="max-w-full truncate font-bold">{room.name}</p>
+        <p className="max-w-full truncate font-bold">{name}</p>
         <p className="max-w-full truncate text-sm">
           {latestEvent
             ? `${
-                room.getMembers().length > 2
-                  ? (latestEvent.getContent().displayname ||
+                personal
+                  ? ""
+                  : (latestEvent.getContent().displayname ||
                       latestEvent.getSender()) + ": "
-                  : ""
               } ${formatEvent(latestEvent)}`
             : null}
         </p>
@@ -80,15 +80,17 @@ const RoomWidget = ({ room }: { room: Room }) => {
 const RoomList = ({
   sidebarWidth,
   rooms,
+  personal,
 }: {
   sidebarWidth: number;
-  rooms: Room[];
+  rooms: {name: string, id: string}[];
+  personal?: boolean;
 }) => {
   return rooms.length > 0 ? (
     <ul className="flex flex-col gap-2">
       {sidebarWidth < 120
-        ? rooms.map((room) => <RoomIconWidget room={room} key={room.roomId} />)
-        : rooms.map((room) => <RoomWidget room={room} key={room.roomId} />)}
+        ? rooms.map(({_, id}) => <RoomIconWidget id={id} key={id} />)
+        : rooms.map(({name, id}) => <RoomWidget personal name={name} id={id} key={id} />)}
     </ul>
   ) : null;
 };
@@ -100,8 +102,6 @@ const Sidebar = () => {
     return null;
   }
 
-  const memberships = rooms.map((r) => r.getMyMembership());
-  const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
   const [sidebarWidth, setSidebarWidth] = useState(400);
 
   const memoizedRooms = useMemo(
@@ -129,6 +129,8 @@ const Sidebar = () => {
     [memoizedRooms],
   );
 
+  const getInfo = (r: Room) => ({name: r.name, id: r.roomId});
+
   return (
     <Resizable
       width={sidebarWidth}
@@ -143,7 +145,7 @@ const Sidebar = () => {
           title="direct messages"
           sidebarWidth={sidebarWidth}
         >
-          <RoomList rooms={memoizedFriendRooms} sidebarWidth={sidebarWidth} />
+          <RoomList personal rooms={memoizedFriendRooms.map(getInfo)} sidebarWidth={sidebarWidth} />
         </Togglable>
         <Togglable
           modal={<SearchRoomForm />}
@@ -151,13 +153,13 @@ const Sidebar = () => {
           sidebarWidth={sidebarWidth}
         >
           <RoomList
-            rooms={memoizedPublicRooms}
+            rooms={memoizedPublicRooms.map(getInfo)}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
         <Togglable title="historical rooms" sidebarWidth={sidebarWidth}>
           <RoomList
-            rooms={memoizedHistoricalRooms}
+            rooms={memoizedHistoricalRooms.map(getInfo)}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
