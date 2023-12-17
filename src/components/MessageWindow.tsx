@@ -68,9 +68,10 @@ const MessageWindow = () => {
     return <div></div>;
   }
 
+  const events = roomEvents[currentRoom!.roomId]!;
   const eventsMemo = useMemo(() => {
-    return Object.values(roomEvents[currentRoom!.roomId] || {});
-  }, [currentRoom, roomEvents]);
+    return events;
+  }, [currentRoom, events?.length]);
 
   useLayoutEffect(() => {
     const list = document.getElementById("bottom-div");
@@ -136,7 +137,7 @@ const MessageWindow = () => {
         />
         <ul
           ref={bottomDivRef}
-          className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>*]:list-none overflow-x-clip"
+          className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>li]:scale-y-[-1] [&>li]:list-none overflow-x-clip"
           id="bottom-div"
         >
           <Timeline events={eventsMemo} />
@@ -156,8 +157,12 @@ const MessageWindow = () => {
 const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
-  const filteredEvents = events.reduceRight(
+  const filteredEvents = useMemo(() => events.reduceRight(
     (init, e) => {
+      if (!e) {
+        return init;
+      }
+
       switch (e.getType()) {
         case EventType.Reaction:
           return {
@@ -199,7 +204,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
       [RelationType.Thread]: [],
       ["rest"]: [],
     } as Record<string, MatrixEvent[]>,
-  );
+  ), [events.length]);
 
   const allAnnotations = getAnnotations(filteredEvents[EventType.Reaction]!);
   const allReplacements = getReplacements(
@@ -210,7 +215,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   const sortedEvents = sortByTimestamp(filteredEvents["rest"]!);
 
   // return reply + event + annotations
-  const eventRecord = filteredEvents["rest"]!.reduce(
+  const eventRecord = useMemo(() => filteredEvents["rest"]!.reduce(
     (init, event) => ({
       ...init,
       [event.getId()!]: (
@@ -223,7 +228,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
       ),
     }),
     {} as Record<string, JSX.Element>,
-  );
+  ), [events.length]);
 
   return sortedEvents.map((list, i) => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;

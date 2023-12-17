@@ -3,6 +3,7 @@ import { extractAttributes, formatText } from "../lib/helpers";
 import {
   PropsWithChildren,
   Ref,
+  memo,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -340,7 +341,7 @@ const ReplacedRoomEvent = (props: ReplacedRoomEventProps) => {
                 <RoomEvent event={e} originalContent />
               </li>
             ) : (
-              <li  key={e.getId()!}>
+              <li key={e.getId()!}>
                 <RoomEvent key={e.getId()!} event={e} />
               </li>
             ),
@@ -471,24 +472,28 @@ interface MessageFrameProps {
   timestamp: number;
 }
 
-export const MessageFrame = (props: PropsWithChildren<MessageFrameProps>) => (
-  <li className="p-2 w-full">
-    <div className="flex content-center gap-2">
-      <Avatar id={props.userId} type="user" size={16} />
-      <div className="flex flex-col gap-2 w-full">
-        <div className="flex gap-2">
-          <p className="whitespace-normal break-all font-bold">
-            {props.displayName || props.userId}
-          </p>
-          <p className="whitespace-normal break-all">
-            {new Date(props.timestamp).toLocaleString("en-US")}
-          </p>
+export const MessageFrame = memo(function MessageFrame(
+  props: PropsWithChildren<MessageFrameProps>,
+) {
+  return (
+    <li className="p-2 w-full">
+      <div className="flex content-center gap-2">
+        <Avatar id={props.userId} type="user" size={16} />
+        <div className="flex flex-col gap-2 w-full">
+          <div className="flex gap-2">
+            <p className="whitespace-normal break-all font-bold">
+              {props.displayName || props.userId}
+            </p>
+            <p className="whitespace-normal break-all">
+              {new Date(props.timestamp).toLocaleString("en-US")}
+            </p>
+          </div>
+          <div className="">{props.children}</div>
         </div>
-        <div className="">{props.children}</div>
       </div>
-    </div>
-  </li>
-);
+    </li>
+  );
+});
 
 export const ReplaceWindow = (
   props: MessageFrameProps & {
@@ -582,7 +587,7 @@ export const ReplaceWindow = (
 
 export const DateMessage = ({ date }: { date: Date }) => {
   return (
-    <li className="py-4">
+    <li className="py-4 date">
       <div className="flex content-center justify-center gap-2">
         <div className="w-full h-[2px] translate-y-[500%] bg-slate-400" />
         <p className="whitespace-nowrap px-2">
@@ -598,18 +603,22 @@ interface StateFrameProps {
   userId: string;
 }
 
-export const StateFrame = (props: PropsWithChildren<StateFrameProps>) => (
-  <li className="p-2 border-black">
-    <div className="flex content-center gap-2">
-      <div className="px-4">
-        <Avatar id={props.userId} size={8} type="user" />
+export const StateFrame = memo(function StateFrame(
+  props: PropsWithChildren<StateFrameProps>,
+) {
+  return (
+    <li className="p-2 border-black">
+      <div className="flex content-center gap-2">
+        <div className="px-4">
+          <Avatar id={props.userId} size={8} type="user" />
+        </div>
+        <div className="flex flex-col justify-center whitespace-normal break-all grow px-2">
+          {props.children}
+        </div>
       </div>
-      <div className="flex flex-col justify-center whitespace-normal break-all grow px-2">
-        {props.children}
-      </div>
-    </div>
-  </li>
-);
+    </li>
+  );
+});
 
 const MemberEvent = ({ event }: { event: MatrixEvent }) => (
   <div className="member">{formatMembership(event)}</div>
@@ -770,8 +779,10 @@ const Receipt = ({ event }: { event: MatrixEvent }) => {
           {receipts.map((r) => (
             <li className="flex items-center justify-between p-2 rounded border-2 border-gray-400">
               <div>
-              <p className="text-gray-800">{r.userId}</p>
-              <p className="text-xs text-gray-600">{moment(r.data.ts).fromNow()}</p>
+                <p className="text-gray-800">{r.userId}</p>
+                <p className="text-xs text-gray-600">
+                  {moment(r.data.ts).fromNow()}
+                </p>
               </div>
               <Avatar
                 id={r.userId}

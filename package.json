@@ -17,6 +17,7 @@
     "emoji-picker-react": "^4.5.16",
     "highlight.js": "^11.9.0",
     "matrix-js-sdk": "^29.1.0",
+    "million": "^2.6.4",
     "moment": "^2.29.4",
     "react": "^18.2.0",
     "react-cookie": "^6.1.1",
