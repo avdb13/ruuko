@@ -8,6 +8,7 @@ import Message, {
 import InputBar from "./InputBar";
 import {
   Ref,
+  lazy,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -17,12 +18,12 @@ import {
 } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
-import MemberList from "./MemberList";
 import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
-import Modal from "./Modal";
 import { ClientContext } from "../providers/client";
 import Loader from "./Loader";
-import ReactFocusLock from "react-focus-lock";
+
+const Modal = lazy(() => import("./Modal"))
+const MemberList = lazy(() => import("./MemberList"))
 
 // in case we have performance issues later
 // type SortingMetadata = {

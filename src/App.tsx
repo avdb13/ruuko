@@ -1,8 +1,9 @@
-import { useContext, useState } from "react";
+import { Suspense, lazy, useContext, useState } from "react";
 import Sidebar from "./components/Sidebar";
-import MessageWindow from "./components/MessageWindow";
 import { RoomContext } from "./providers/room";
 import { ClientContext } from "./providers/client";
+
+const MessageWindow = lazy(() => import("./components/MessageWindow"));
 
 const App = () => {
   const client = useContext(ClientContext);
@@ -25,7 +26,7 @@ const App = () => {
   return (
     <div id="app" className={`flex min-w-0`}>
       <Sidebar />
-      {roomState.currentRoom ? <MessageWindow /> : null}
+      {roomState.currentRoom ? <Suspense><MessageWindow /></Suspense> : null}
     </div>
   );
 };

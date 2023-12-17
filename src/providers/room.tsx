@@ -1,4 +1,11 @@
-import { ClientEvent, Direction, MatrixEvent, Room, RoomEvent, RoomState } from "matrix-js-sdk";
+import {
+  ClientEvent,
+  Direction,
+  MatrixEvent,
+  Room,
+  RoomEvent,
+  RoomState,
+} from "matrix-js-sdk";
 import {
   PropsWithChildren,
   createContext,
@@ -28,9 +35,9 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [rooms, setRooms] = useState<Room[] | null>(null);
-  const [roomEvents, setRoomEvents] = useState<
-    Record<string, MatrixEvent[]>
-  >({});
+  const [roomEvents, setRoomEvents] = useState<Record<string, MatrixEvent[]>>(
+    {},
+  );
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
   const [avatars, setAvatars] = useState<Record<string, string>>({});
 
@@ -56,20 +63,21 @@ const RoomProvider = (props: PropsWithChildren) => {
       return;
     }
 
-    for (const r of rooms) {
-        setRoomEvents((previous) => ({
-          ...previous,
-          [r.roomId]: r
-            .getLiveTimeline()
-            .getEvents()
-        }));
-
-      setRoomStates(previous => {
-        const state = r.getLiveTimeline().getState(Direction.Backward);
-        return state ?
-          ({...previous, [r.roomId]: state }) : previous;
-      });
-    }
+    setRoomEvents(
+      rooms.reduce(
+        (init, r) => ({ ...init, [r.roomId]: r.getLiveTimeline().getEvents() }),
+        {},
+      ),
+    );
+    setRoomStates(
+      rooms.reduce(
+        (init, r) => ({
+          ...init,
+          [r.roomId]: r.getLiveTimeline().getState(Direction.Backward),
+        }),
+        {},
+      ),
+    );
   }, [rooms?.length]);
 
   client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
@@ -77,15 +85,13 @@ const RoomProvider = (props: PropsWithChildren) => {
   // how do we update the roomStates ?
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
     if (room) {
-      if (
-        startOfTimeline
-      ) {
+      if (startOfTimeline) {
         return;
       }
 
       setRoomEvents({
         ...roomEvents,
-        [room.roomId]: [...roomEvents[room.roomId] ?? [], event],
+        [room.roomId]: [...(roomEvents[room.roomId] ?? []), event],
       });
     }
   });

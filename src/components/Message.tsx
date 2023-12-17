@@ -367,7 +367,7 @@ const RoomEvent = ({
   switch (content.msgtype) {
     case MsgType.Text: {
       if (content.formatted_body) {
-        if ((content.formatted_body as string).search("<img") > 0) {
+        if ((content.formatted_body as string).search("<img") >= 0) {
           const attributes = extractAttributes(content.formatted_body, [
             "src",
             "alt",
