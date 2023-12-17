@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import axios from "axios";
 import matrix from "../lib/matrix";
@@ -46,15 +46,26 @@ const FinalForm = ({
 
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const submitRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+      setTimeout(() => {
+        if (baseUrl === "demo.com" && passwordRef.current && usernameRef.current && submitRef.current) {
+          usernameRef.current.value = import.meta.env.VITE_USERNAME;
+          passwordRef.current.value = import.meta.env.VITE_PASSWORD;
+
+          submitRef.current.click();
+        }
+      }, 500)
+  }, [])
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
-    e.stopPropagation();
 
     if (passwordRef.current && usernameRef.current) {
       matrix
         .login({
-          baseUrl: baseUrl,
+          baseUrl: baseUrl === "demo.com" ? "https://matrix.envs.net" : baseUrl,
           password: passwordRef.current.value,
           username: usernameRef.current.value,
         })
@@ -93,6 +104,7 @@ const FinalForm = ({
         ref={passwordRef}
       />
       <button
+        ref={submitRef}
         type="submit"
         className="duration-300 transition-all group hover:border-gray-500 flex justify-center w-full shadow-md basis-8 p-2 mt-2 shadow-md border-4 border-gray-300 rounded-md bg-white"
       >
@@ -150,6 +162,18 @@ const ServerForm = ({
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
+
+    if (server === "demo.com") {
+      setOk(true);
+
+      setTimeout(() => {
+        setBaseUrl(
+          "demo.com"
+        );
+      }, 300);
+
+      return;
+    }
 
     testServer().then(status => {
       if (status && server) {
