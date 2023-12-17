@@ -1,5 +1,5 @@
 import { EventType, MatrixEvent, Room } from "matrix-js-sdk";
-import { useState, useContext } from "react";
+import { useState, useContext, useMemo } from "react";
 import { RoomContext } from "../providers/room";
 import { formatEvent } from "./Message";
 import Resizable from "./Resizable";
@@ -45,8 +45,8 @@ const RoomWidget = ({ room }: { room: Room }) => {
 
   const events = Object.values(roomEvents[room.roomId] || {});
   const f = (e: MatrixEvent) =>
-          e.getType() === EventType.RoomMessage ||
-          e.getType() === EventType.RoomMember;
+    e.getType() === EventType.RoomMessage ||
+    e.getType() === EventType.RoomMember;
 
   const latestEvent = events
     ? events.filter(f)[events.filter(f).length - 1]
@@ -104,6 +104,31 @@ const Sidebar = () => {
   const sortedRooms = rooms.sort((a, b) => sortRooms(a, b));
   const [sidebarWidth, setSidebarWidth] = useState(400);
 
+  const memoizedRooms = useMemo(
+    () => rooms.sort((a, b) => sortRooms(a, b)),
+    [rooms],
+  );
+  const memoizedFriendRooms = useMemo(
+    () =>
+      memoizedRooms
+        .filter((r) => r.getMyMembership() === Membership.Join)
+        .filter((r) => r.getMembers().length <= 2),
+    [memoizedRooms],
+  );
+  const memoizedPublicRooms = useMemo(
+    () =>
+      memoizedRooms
+        .filter((r) => r.getMyMembership() === Membership.Join)
+        .filter((r) => r.getMembers().length > 2),
+    [memoizedRooms],
+  );
+  const memoizedHistoricalRooms = useMemo(
+    () =>
+      memoizedRooms
+        .filter((r) => r.getMyMembership() === Membership.Ban),
+    [memoizedRooms],
+  );
+
   return (
     <Resizable
       width={sidebarWidth}
@@ -118,13 +143,7 @@ const Sidebar = () => {
           title="direct messages"
           sidebarWidth={sidebarWidth}
         >
-          <RoomList
-            rooms={sortedRooms.filter(
-              (r) =>
-                r.getMyMembership() === Membership.Join)
-            .filter((r) => r.getMembers().length <= 2)}
-            sidebarWidth={sidebarWidth}
-          />
+          <RoomList rooms={memoizedFriendRooms} sidebarWidth={sidebarWidth} />
         </Togglable>
         <Togglable
           modal={<SearchRoomForm />}
@@ -132,20 +151,13 @@ const Sidebar = () => {
           sidebarWidth={sidebarWidth}
         >
           <RoomList
-            rooms={sortedRooms.filter(
-              (r) =>
-                r.getMyMembership() === Membership.Join)
-            .filter((r) => r.getMembers().length > 2)}
+            rooms={memoizedPublicRooms}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>
         <Togglable title="historical rooms" sidebarWidth={sidebarWidth}>
           <RoomList
-            rooms={sortedRooms.filter(
-              (r) =>
-                r.getMyMembership() === Membership.Ban ||
-                r.getMyMembership() === Membership.Leave,
-            )}
+            rooms={memoizedHistoricalRooms}
             sidebarWidth={sidebarWidth}
           />
         </Togglable>

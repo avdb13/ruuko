@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import Resizable from "./Resizable";
 import {
   EventType,
@@ -35,7 +35,6 @@ const MemberList = ({
 }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
-
   const [query, setQuery] = useState("");
 
   const [memberListWidth, setMemberListWidth] = useState(400);
@@ -55,18 +54,24 @@ const MemberList = ({
 
   const admins = members
     .filter((m) => m.powerLevel === 100)
-    // .filter(
-    //   (r) => query.length > 0 ?
-    //     0 < r.name.toLowerCase().search(query) ||
-    //   0 < r.rawDisplayName.toLowerCase().search(query) : r
-    // );
+    .filter((r) =>
+      query.length > 0
+        ? 0 < r.name.toLowerCase().search(query) ||
+          0 < r.rawDisplayName.toLowerCase().search(query)
+        : r,
+    )
+    .slice(0, 50);
+
   const regulars = members
     .filter((m) => m.powerLevel !== 100)
-    // .filter(
-    //   (r) => query.length > 0 ?
-    //     0 < r.name.toLowerCase().search(query) ||
-    //   0 < r.rawDisplayName.toLowerCase().search(query) : r
-    // );
+    .filter((r) =>
+      query.length > 0
+        ? 0 < r.name.toLowerCase().search(query) ||
+          0 < r.rawDisplayName.toLowerCase().search(query)
+        : r,
+    )
+    .slice(0, 50);
+
   return (
     <Resizable
       width={memberListWidth}
@@ -139,7 +144,7 @@ const MemberList = ({
           <p className="font-bold capitalize text-gray-600">
             members ({regulars.filter((m) => m.powerLevel < 100).length})
           </p>
-          {regulars.slice(0, 50).map((m) => (
+          {regulars.map((m) => (
             <MemberChip
               // presencePromise={}
               presenceEvent={presences[m.userId]}
