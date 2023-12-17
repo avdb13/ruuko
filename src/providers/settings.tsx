@@ -1,6 +1,7 @@
 import { PropsWithChildren, createContext, useContext, useEffect, useState } from "react";
 import { ClientContext } from "./client";
 import { ThreepidMedium } from "matrix-js-sdk";
+import "dotenv";
 
 interface Settings {
   emails: string[];

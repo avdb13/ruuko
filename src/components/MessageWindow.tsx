@@ -75,7 +75,6 @@ const MessageWindow = () => {
     return Object.values(roomEvents[currentRoom!.roomId] || {});
   }, [currentRoom, roomEvents]);
 
-  console.log(Object.values(roomEvents).map(v => Object.values(v).length))
 
   useLayoutEffect(() => {
     const list = document.getElementById("bottom-div");
@@ -252,7 +251,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
     if (list.length === 1 && firstEvent.getType() !== EventType.RoomMessage) {
       return (
         <>
-          <DayBreak previous={previous} current={firstEvent} />
+          <DayBreak key={firstEvent.getId()!+"-daybreak"} previous={previous} current={firstEvent} />
           <StateFrame key={firstEvent.getId()!} userId={firstEvent.getSender()!}>
             {list.map((id) => eventRecord[id]!)}
           </StateFrame>
@@ -262,7 +261,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
 
     return (
       <>
-        <DayBreak previous={previous} current={firstEvent} />
+        <DayBreak key={firstEvent.getId()!+"-daybreak"} previous={previous} current={firstEvent} />
         <MessageFrame
           key={firstEvent.getId()!}
           userId={firstEvent.getSender()!}

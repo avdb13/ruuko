@@ -44,10 +44,10 @@ const MemberList = ({
   const [memberListWidth, setMemberListWidth] = useState(400);
   const [presences, setPresences] = useState<Record<string, IContent>>({});
 
-  const [members, setMembers] = useState<RoomMember[]>([]);
-  useEffect(() => {
-    setMembers(currentRoom.getMembers());
-  }, [currentRoom.roomId]);
+  const [members, setMembers] = useState<RoomMember[]>(currentRoom.getMembers());
+  // useEffect(() => {
+  //   setMembers(currentRoom.getMembers());
+  // }, [currentRoom.roomId]);
 
   const admins = members
     .filter((m) => m.powerLevel === 100)
@@ -104,7 +104,7 @@ const MemberList = ({
         </div>
       </div>
 
-      <button className="scale-95 hover:scale-100 capitalize font-bold border-4 py-2 rounded-md border-indigo-200 text-gray-600 border-opacity-50 bg-transparent mx-4 shadow-sm duration-300 hover:border-indigo-300 hover:text-gray-800">
+      <button className="w-full scale-95 hover:scale-100 capitalize font-bold border-4 py-2 rounded-md border-indigo-200 text-gray-600 border-opacity-50 bg-transparent mx-4 shadow-sm duration-300 hover:border-indigo-300 hover:text-gray-800">
         invite
       </button>
 

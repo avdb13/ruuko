@@ -10,8 +10,6 @@ const App = () => {
   const roomState = useContext(RoomContext);
   const rooms = client?.getRooms().length;
 
-  const env = import.meta.env.VITE_DEMO;
-  console.log(env);
 
   const loading =
     !client ||

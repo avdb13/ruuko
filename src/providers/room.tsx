@@ -19,6 +19,8 @@ interface MyRoomState {
   setRoomStates: (_: Record<string, RoomState>) => void;
   setCurrentRoom: (_: Room) => void;
   setRoomEvents: (_: Record<string, MatrixEvent[]>) => void;
+  avatars: Record<string, string>;
+  setAvatars: (_: Record<string, string>) => void;
 }
 
 const RoomProvider = (props: PropsWithChildren) => {
@@ -30,6 +32,7 @@ const RoomProvider = (props: PropsWithChildren) => {
     Record<string, MatrixEvent[]>
   >({});
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
+  const [avatars, setAvatars] = useState<Record<string, string>>({});
 
   const roomState: MyRoomState = {
     rooms,
@@ -40,6 +43,8 @@ const RoomProvider = (props: PropsWithChildren) => {
     setRoomStates,
     setCurrentRoom,
     setRoomEvents,
+    avatars,
+    setAvatars,
   };
 
   useEffect(() => {

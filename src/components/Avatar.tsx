@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { ClientContext } from "../providers/client";
 import { getAvatarUrl } from "../lib/helpers";
+import { RoomContext } from "../providers/room";
 
 export type AvatarType = "user" | "room";
 
@@ -16,10 +17,18 @@ const Avatar = ({
   className?: string;
 }) => {
   const client = useContext(ClientContext);
+  const { avatars, setAvatars } = useContext(RoomContext)!;
+
+  const url = getAvatarUrl(client, id, type);
+
+  if (!avatars[id] && url) {
+    setAvatars(({...avatars, [id]: url}))
+  }
+  const src = avatars[id] ? avatars[id] : url || "/public/anonymous.jpg"
 
   return (
     <img
-      src={getAvatarUrl(client, id, type) || "/public/anonymous.jpg"}
+      src={src}
       className={
         `bg-white object-cover self-start rounded-full border-4` + " " + className
       }

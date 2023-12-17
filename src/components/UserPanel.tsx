@@ -260,15 +260,16 @@ const UserPanel = () => {
   const client = useContext(ClientContext);
   const [visible, setVisible] = useState(false);
 
-  const userId = client.getUserId();
+  const userId = client.getSafeUserId();
+  const name = userId?.split(":")[0]?.substring(1)
 
   return (
     <div className="min-w-0 w-full flex justify-between basis-12 bg-opacity-50 bg-indigo-200 rounded-sm gap-2 p-2">
       <Settings visible={visible} setVisible={setVisible} />
       <Avatar id={userId!} type="user" size={16} />
-      <div className="flex flex-col justify-center min-w-0">
+      <div className="flex flex-col justify-center min-w-0 text-center">
         <p className="whitespace-nowrap truncate font-bold">
-          {client.getUser(userId!)?.displayName}
+          {name}
         </p>
         <p className="whitespace-nowrap truncate">{userId!}</p>
       </div>

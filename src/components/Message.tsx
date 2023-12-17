@@ -336,11 +336,11 @@ const ReplacedRoomEvent = (props: ReplacedRoomEventProps) => {
               : []),
           ].map((e, i) =>
             i === 0 ? (
-              <li>
-                <RoomEvent key={e.getId()!} event={e} originalContent />
+              <li key={e.getId()!}>
+                <RoomEvent event={e} originalContent />
               </li>
             ) : (
-              <li>
+              <li  key={e.getId()!}>
                 <RoomEvent key={e.getId()!} event={e} />
               </li>
             ),

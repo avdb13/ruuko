@@ -74,8 +74,6 @@ export const getAvatarUrl = (
         true,
       );
 
-      // console.log("fetching avatar: ", httpUrl);
-      // return !httpUrl || httpUrl.length === 0 ? getAvatarUrl(client, id, type) : httpUrl;
       return httpUrl;
     }
   }
