@@ -182,24 +182,40 @@ export const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
   );
 
 export const formatText = (content: IContent): string => {
+  const body = content.body as string;
+
   const inReplyTo = !!content["m.relates_to"]?.["m.in_reply_to"];
   const replacement =
     content["m.relates_to"]?.rel_type === RelationType.Replace;
+  const spoiler = body.match(/(?<before>.+)<span data-mx-spoiler=?(?<reason>".+")?>(?<inner>.+)<\/span>(?<after>.+)/);
 
   // support inline images
-  if (content.formatted_body) {
-    const start = (content.formatted_body as string).indexOf("<img");
+  // if (content.formatted_body) {
+  //   const start = (content.formatted_body as string).indexOf("<img");
 
-    (content.formatted_body as string).slice(0, start);
+  //   (content.formatted_body as string).slice(0, start);
+  // }
+
+  if (inReplyTo && spoiler) {
+    const newBody = content.body?.split("\n\n")[1];
+    // <span data-mx-spoiler=\"reason\">spoiler content</span> more normal text
+    console
+    return newBody;
   }
 
-  return inReplyTo && replacement
-    ? content["m.new_content"].body?.split("\n\n")[1]
-    : inReplyTo
-    ? content.body?.split("\n\n")[1]
-    : replacement
-    ? content["m.new_content"].body
-    : content.body;
+  if (inReplyTo && replacement) {
+    return content["m.new_content"].body?.split("\n\n")[1];
+  }
+
+  if (inReplyTo) {
+    return content.body?.split("\n\n")[1];
+  }
+
+  if (replacement) {
+    return content["m.new_content"].body
+  }
+
+  return content.body;
 };
 
 export const findLastTextEvent = (events: MatrixEvent[], myUserId: string) => {
