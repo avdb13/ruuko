@@ -1,4 +1,4 @@
-import { Suspense, lazy, useContext, useState } from "react";
+import { Suspense, lazy, useContext } from "react";
 import Sidebar from "./components/Sidebar";
 import { RoomContext } from "./providers/room";
 import { ClientContext } from "./providers/client";

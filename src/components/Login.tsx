@@ -52,7 +52,6 @@ const FinalForm = ({
       setTimeout(() => {
         if (baseUrl === "demo.com" && passwordRef.current && usernameRef.current && submitRef.current) {
           usernameRef.current.value = import.meta.env.VITE_USERNAME;
-          passwordRef.current.value = import.meta.env.VITE_PASSWORD;
 
           submitRef.current.click();
         }
@@ -66,7 +65,7 @@ const FinalForm = ({
       matrix
         .login({
           baseUrl: baseUrl === "demo.com" ? "https://matrix.envs.net" : baseUrl,
-          password: passwordRef.current.value,
+          password: baseUrl === "demo.com" ? import.meta.env.VITE_PASSWORD : passwordRef.current.value,
           username: usernameRef.current.value,
         })
         .then((session) => {
