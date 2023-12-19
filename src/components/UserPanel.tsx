@@ -1,9 +1,4 @@
-import {
-  ChangeEvent,
-  ReactNode, useContext,
-  useRef,
-  useState
-} from "react";
+import { ChangeEvent, ReactNode, useContext, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 import countries from "../../data/countries.json";
 import Avatar from "./Avatar";
@@ -15,6 +10,9 @@ import { SettingsContext } from "../providers/settings";
 import { getFlagEmoji } from "../lib/helpers";
 import PasswordIcon from "./icons/Password";
 import KeyIcon from "./icons/Key";
+import { useCookies } from "react-cookie";
+import { AuthType } from "matrix-js-sdk";
+import axios, { AxiosError } from "axios";
 
 const DevicesTab = () => {
   return <div></div>;
@@ -99,25 +97,60 @@ const PrivacyTab = () => {
 
 const AccountTab = () => {
   const client = useContext(ClientContext);
-  const { settings, setSettings } = useContext(SettingsContext)!;
+  const { settings, setSettings, setRefreshPids } =
+    useContext(SettingsContext)!;
 
+  // TODO: use refs instead
   const [newNumber, setNewNumber] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [requested, setRequested] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  // TODO: do we need cookies?
+  const [cookies] = useCookies(["session"]);
+  const session = cookies["session"] as Session;
 
   const user = client.getUser(client.getUserId()!)!;
 
-  const addEmail = async () => {
-    setNewEmail("");
-    setRequested(true);
+  const addEmail = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
 
-    const resp = await client.requestAdd3pidEmailToken(
-      newEmail,
-      client.generateClientSecret(),
-      1,
-    );
-    // TODO:
-    setRequested(false);
+    setNewEmail("");
+    setSubmitted(true);
+
+    const client_secret = client.generateClientSecret();
+
+    const { sid } = await client.requestAdd3pidEmailToken(newEmail, client_secret, 0);
+
+    try {
+      await client.addThreePidOnly({
+        sid,
+        client_secret,
+      });
+    } catch(e) {
+      if (e instanceof AxiosError) {
+        const auth = {
+          sid,
+          client_secret,
+          auth: {
+            password,
+            user: client.getUserId()!,
+            type: AuthType.Password,
+            session: e.response?.data.session,
+          },
+        }
+
+        axios.post(`${client.baseUrl}/_matrix/client/v3/account/3pid/add`, auth, {headers: {Authorization: `Bearer ${session.accessToken}`}}).catch(e => {
+          if (e instanceof AxiosError) {
+            setError(e.response?.data.error)
+          }
+        })
+      }
+    }
+
+    setRefreshPids(true);
+    setRefreshPids(false);
   };
 
   return (
@@ -137,18 +170,32 @@ const AccountTab = () => {
           {settings.emails.map((email) => (
             <p key={email}>{email}</p>
           ))}
-          <form method="dialog" className="flex">
-            <Input
+          <div className="flex">
+            <input
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              className="bg-gray-100 h-6 invalid:bg-red-100"
+              className="bg-gray-100 h-6 invalid:bg-red-100 px-2 w-full"
             />
-            <button className="bg-gray-300 w-6 h-6" onClick={addEmail}>
+            <button
+              type="submit"
+              className="bg-gray-300 px-2 h-6"
+              onClick={addEmail}
+            >
               +
             </button>
-          </form>
-          {requested ? <p>check your email</p> : null}
+          </div>
+          {submitted ? (
+            <div className="flex">
+              <p className="px-2 w-full text-center">check your email</p>
+              <button
+                className="bg-gray-300 px-2 h-6"
+                onClick={() => setSubmitted(!submitted)}
+              >
+                done
+              </button>
+            </div>
+          ) : null}
         </div>
         <div>
           <p className="uppercase font-bold text-xs">phone numbers</p>
@@ -158,7 +205,9 @@ const AccountTab = () => {
           <div className="flex">
             <select onClick={(e) => console.log(e)}>
               {countries.map((c) => (
-                <option key={c.code}>{getFlagEmoji(c.code) + " " + c.dial_code}</option>
+                <option key={c.code}>
+                  {getFlagEmoji(c.code) + " " + c.dial_code}
+                </option>
               ))}
             </select>
             <Input
@@ -205,7 +254,7 @@ const EditableAvatar = () => {
         id={client.getUserId()!}
         size={24}
         type="user"
-        className="group-hover:scale-90 group-hover:blur-sm transition-all duration-300 ease-out"
+        className="group-hover:scale-90 group-hover:blur-sm transition-all duration-300 ease-out w-24 h-24"
       />
       <div
         className="opacity-0 group-hover:opacity-50 absolute -top-0 rounded-full w-24 h-24 transition-all duration-300 ease-out"
@@ -261,24 +310,22 @@ const UserPanel = () => {
   const [visible, setVisible] = useState(false);
 
   const userId = client.getSafeUserId();
-  const name = userId?.split(":")[0]?.substring(1)
+  const name = userId?.split(":")[0]?.substring(1);
 
   return (
     <div className="min-w-0 w-full flex justify-between basis-12 bg-opacity-50 bg-indigo-200 rounded-sm gap-2 p-2">
       <Settings visible={visible} setVisible={setVisible} />
       <Avatar id={userId!} type="user" size={16} />
       <div className="flex flex-col justify-center min-w-0 text-center">
-        <p className="whitespace-nowrap truncate font-bold">
-          {name}
-        </p>
+        <p className="whitespace-nowrap truncate font-bold">{name}</p>
         <p className="whitespace-nowrap truncate">{userId!}</p>
       </div>
       <div className="flex content-center gap-2">
         <button onClick={() => client.logout(true)} title="logout">
-    <Exit className="hover:animate-shake duration-300 " />
+          <Exit className="hover:animate-shake duration-300 " />
         </button>
         <button onClick={() => setVisible(!visible)} title="settings">
-    <Gear className="hover:rotate-180 duration-500 hover:blur-2" />
+          <Gear className="hover:rotate-180 duration-500 hover:blur-2" />
         </button>
       </div>
     </div>
