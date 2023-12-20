@@ -85,7 +85,7 @@ const RoomList = ({
       {sidebarWidth < 120
         ? rooms.map(({ _, id }) => <RoomIconWidget id={id} key={id} />)
         : rooms.map(({ name, id }) => (
-            <RoomWidget personal name={name} id={id} key={id} />
+            <RoomWidget personal={personal ?? false} name={name} id={id} key={id} />
           ))}
     </ul>
   ) : null;
@@ -100,35 +100,36 @@ const Sidebar = () => {
     const events = roomEvents[r.roomId];
     return events?.[events.length - 1]?.getTs();
   };
+
   const directEvent = client.getAccountData(EventType.Direct);
-  const directRoomIds = Object.values(directEvent?.getContent() as Record<string, string[]>).flat();
+  // if (!directEvent) {
+  //   client.getAccountDataFromServer(EventType.Direct).then(resp => resp)
+  // }
 
-  const memoizedRooms = useMemo(
-    () => rooms.sort((a, b) => sortRooms(getLastEvent(a), getLastEvent(b))),
-    [rooms],
-  );
+  const directRoomIds = Object.values(
+    directEvent?.getContent() as Record<string, string[]>,
+  ).flat();
 
-  const memoizedFriendRooms = useMemo(
-    () =>
-      memoizedRooms
-        .filter((r) => r.getMyMembership() === Membership.Join)
-        .filter((r) => directRoomIds.indexOf(r.roomId) >= 0),
-    [memoizedRooms],
-  );
+  const arr = useMemo(() => {
+    const sorted = rooms.sort((a, b) =>
+      sortRooms(getLastEvent(a), getLastEvent(b)),
+    );
 
-  const memoizedPublicRooms = useMemo(
-    () =>
-      memoizedRooms
-        .filter((r) => r.getMyMembership() === Membership.Join)
-        .filter((r) => directRoomIds.indexOf(r.roomId) < 0),
-    [memoizedRooms],
-  );
-  const memoizedHistoricalRooms = useMemo(
-    () => memoizedRooms.filter((r) => r.getMyMembership() === Membership.Ban),
-    [memoizedRooms],
-  );
+    const joined = (r: Room) => r.getMyMembership() === Membership.Join;
+    const banned = (r: Room) => r.getMyMembership() === Membership.Ban;
+    const direct = (r: Room) => directRoomIds.indexOf(r.roomId) >= 0;
 
-  const getInfo = (r: Room) => ({ name: r.name, id: r.roomId });
+    const getInfo = (r: Room) => ({ name: r.name, id: r.roomId });
+
+    return [
+      sorted.filter((r) => joined(r) && direct(r)),
+      sorted.filter((r) => joined(r) && !direct(r)),
+      sorted.filter((r) => banned(r)),
+    ]
+    .map((arr) => arr.map(getInfo));
+  }, [rooms]);
+  // I hate JavaScript.
+  const [directRooms, publicRooms, historicalRooms] = [arr[0]!, arr[1]!, arr[2]!];
 
   return (
     <Resizable
@@ -144,27 +145,17 @@ const Sidebar = () => {
           title="direct messages"
           sidebarWidth={sidebarWidth}
         >
-          <RoomList
-            personal
-            rooms={memoizedFriendRooms.map(getInfo)}
-            sidebarWidth={sidebarWidth}
-          />
+          <RoomList personal rooms={directRooms} sidebarWidth={sidebarWidth} />
         </Togglable>
         <Togglable
           modal={<SearchRoomForm />}
           title="public rooms"
           sidebarWidth={sidebarWidth}
         >
-          <RoomList
-            rooms={memoizedPublicRooms.map(getInfo)}
-            sidebarWidth={sidebarWidth}
-          />
+          <RoomList rooms={publicRooms} sidebarWidth={sidebarWidth} />
         </Togglable>
         <Togglable title="historical rooms" sidebarWidth={sidebarWidth}>
-          <RoomList
-            rooms={memoizedHistoricalRooms.map(getInfo)}
-            sidebarWidth={sidebarWidth}
-          />
+          <RoomList rooms={historicalRooms} sidebarWidth={sidebarWidth} />
         </Togglable>
       </div>
       <UserPanel />
