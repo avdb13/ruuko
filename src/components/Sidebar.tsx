@@ -9,18 +9,12 @@ import Togglable from "./Togglable";
 import { SearchRoomForm, SearchUserForm } from "./Search";
 import { Membership } from "./Message";
 
-const sortRooms = (prev: Room, next: Room) => {
-  const prevEvents = prev.getLiveTimeline().getEvents();
-  const nextEvents = next.getLiveTimeline().getEvents();
-
-  const prevLastEvent = prevEvents[prevEvents.length - 1];
-  const nextLastEvent = nextEvents[nextEvents.length - 1];
-
-  return prevLastEvent
-    ? nextLastEvent
-      ? nextLastEvent.getTs() < prevLastEvent.getTs()
+const sortRooms = (prev: number, next: number) => {
+  return prev
+    ? next
+      ? next < prev
         ? 1
-        : nextLastEvent.getTs() > prevLastEvent.getTs()
+        : next > prev
         ? -1
         : 0
       : 1
@@ -105,16 +99,16 @@ const RoomList = ({
 };
 
 const Sidebar = () => {
-  const { rooms } = useContext(RoomContext)!;
-
-  if (!rooms) {
-    return null;
-  }
+  const { rooms, roomEvents } = useContext(RoomContext)!;
 
   const [sidebarWidth, setSidebarWidth] = useState(400);
+  const getLastEvent = (r: Room) => {
+    const events = roomEvents[r.roomId];
+    return events[events.length-1]?.getTs() || 0;
+  } 
 
   const memoizedRooms = useMemo(
-    () => rooms.sort((a, b) => sortRooms(a, b)),
+    () => rooms.sort((a, b) => sortRooms(getLastEvent(a), getLastEvent(b))),
     [rooms],
   );
   const memoizedFriendRooms = useMemo(

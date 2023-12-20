@@ -17,11 +17,11 @@ import {
 import { ClientContext } from "./client";
 
 export const RoomContext = createContext<
-  (MyRoomState & { rooms: Room[] }) | null
+  MyRoomState | null
 >(null);
 
 interface MyRoomState {
-  rooms: (Room | null)[];
+  rooms: Room[];
   roomStates: Record<string, RoomState>;
   currentRoom: Room | null;
   roomEvents: Record<string, MatrixEvent[]>;
@@ -45,7 +45,7 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   const roomState: MyRoomState = useMemo(() => {
     return {
-      rooms,
+      rooms: rooms.filter(r => !r) as Room[],
       roomStates,
       currentRoom,
       roomEvents,
@@ -116,7 +116,7 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   return (
     <RoomContext.Provider
-      value={{ ...roomState, rooms: roomState.rooms as Room[] }}
+    value={roomState}
     >
       {props.children}
     </RoomContext.Provider>
