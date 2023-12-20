@@ -163,8 +163,6 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
         return init;
       }
 
-      console.log(e.getContent())
-
       switch (e.getType()) {
         case EventType.Reaction:
           return {

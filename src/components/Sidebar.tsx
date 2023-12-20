@@ -33,28 +33,35 @@ const RoomIconWidget = ({ id }: { id: string }) => {
   return (
     <button
       className="flex flex-col gap-8 items-center"
-      onClick={() => setCurrentRoom(rooms?.find(r => r.roomId === id)!)}
+      onClick={() => setCurrentRoom(rooms?.find((r) => r.roomId === id)!)}
     >
       <Avatar id={id} type="room" size={16} className="shadow-sm" />
     </button>
   );
 };
 
-const RoomWidget = ({ id, name, personal }: { id: string, name: string, personal: boolean }) => {
+const RoomWidget = ({
+  id,
+  name,
+  personal,
+}: {
+  id: string;
+  name: string;
+  personal: boolean;
+}) => {
   const { setCurrentRoom, roomEvents, rooms } = useContext(RoomContext)!;
 
-  const events = roomEvents[id]!.filter(e =>
-    e.getType() === EventType.RoomMessage ||
-    e.getType() === EventType.RoomMember
+  const events = roomEvents[id]!.filter(
+    (e) =>
+      e.getType() === EventType.RoomMessage ||
+      e.getType() === EventType.RoomMember,
   );
 
-  const latestEvent = events
-    ? events[events.length - 1]
-    : null;
+  const latestEvent = events ? events[events.length - 1] : null;
 
   return (
     <button
-      onClick={() => setCurrentRoom(rooms?.find(r => r.roomId === id)!)}
+      onClick={() => setCurrentRoom(rooms?.find((r) => r.roomId === id)!)}
       className="flex items-center gap-4 p-2 w-full border-b-4 shadow-md rounded-md hover:bg-indigo-200 duration-300"
       key={name}
     >
@@ -83,14 +90,16 @@ const RoomList = ({
   personal,
 }: {
   sidebarWidth: number;
-  rooms: {name: string, id: string}[];
+  rooms: { name: string; id: string }[];
   personal?: boolean;
 }) => {
   return rooms.length > 0 ? (
     <ul className="flex flex-col gap-2">
       {sidebarWidth < 120
-        ? rooms.map(({_, id}) => <RoomIconWidget id={id} key={id} />)
-        : rooms.map(({name, id}) => <RoomWidget personal name={name} id={id} key={id} />)}
+        ? rooms.map(({ _, id }) => <RoomIconWidget id={id} key={id} />)
+        : rooms.map(({ name, id }) => (
+            <RoomWidget personal name={name} id={id} key={id} />
+          ))}
     </ul>
   ) : null;
 };
@@ -123,13 +132,11 @@ const Sidebar = () => {
     [memoizedRooms],
   );
   const memoizedHistoricalRooms = useMemo(
-    () =>
-      memoizedRooms
-        .filter((r) => r.getMyMembership() === Membership.Ban),
+    () => memoizedRooms.filter((r) => r.getMyMembership() === Membership.Ban),
     [memoizedRooms],
   );
 
-  const getInfo = (r: Room) => ({name: r.name, id: r.roomId});
+  const getInfo = (r: Room) => ({ name: r.name, id: r.roomId });
 
   return (
     <Resizable
@@ -145,7 +152,11 @@ const Sidebar = () => {
           title="direct messages"
           sidebarWidth={sidebarWidth}
         >
-          <RoomList personal rooms={memoizedFriendRooms.map(getInfo)} sidebarWidth={sidebarWidth} />
+          <RoomList
+            personal
+            rooms={memoizedFriendRooms.map(getInfo)}
+            sidebarWidth={sidebarWidth}
+          />
         </Togglable>
         <Togglable
           modal={<SearchRoomForm />}

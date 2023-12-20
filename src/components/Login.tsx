@@ -49,14 +49,19 @@ const FinalForm = ({
   const submitRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-      setTimeout(() => {
-        if (baseUrl === "demo.com" && passwordRef.current && usernameRef.current && submitRef.current) {
-          usernameRef.current.value = import.meta.env.VITE_USERNAME;
+    setTimeout(() => {
+      if (
+        baseUrl === "demo.com" &&
+        passwordRef.current &&
+        usernameRef.current &&
+        submitRef.current
+      ) {
+        usernameRef.current.value = import.meta.env.VITE_USERNAME;
 
-          submitRef.current.click();
-        }
-      }, 500)
-  }, [])
+        submitRef.current.click();
+      }
+    }, 500);
+  }, []);
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -65,15 +70,18 @@ const FinalForm = ({
       matrix
         .login({
           baseUrl: baseUrl === "demo.com" ? "https://matrix.envs.net" : baseUrl,
-          password: baseUrl === "demo.com" ? import.meta.env.VITE_PASSWORD : passwordRef.current.value,
+          password:
+            baseUrl === "demo.com"
+              ? import.meta.env.VITE_PASSWORD
+              : passwordRef.current.value,
           username: usernameRef.current.value,
         })
         .then((session) => {
           setOk(true);
 
           setTimeout(() => {
-            setCookie("session", session, { path: "/" })
-          }, 300)
+            setCookie("session", session, { path: "/" });
+          }, 300);
         })
         .catch((e) =>
           setError({
@@ -88,7 +96,9 @@ const FinalForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`final-form gap-2 p-2 bg-blue-50 border-b-4 border-gray-500 shadow-xl rounded-md basis-80 flex flex-col justify-center items-center gap-1 duration-300 transition-all ${ok ? "scale-150 blur-[4px] opacity-0" : "scale-1 blur-0 opacity-100"}`}
+      className={`final-form gap-2 p-2 bg-blue-50 border-b-4 border-gray-500 shadow-xl rounded-md basis-80 flex flex-col justify-center items-center gap-1 duration-300 transition-all ${
+        ok ? "scale-150 blur-[4px] opacity-0" : "scale-1 blur-0 opacity-100"
+      }`}
     >
       <input
         className="placeholder:font-semibold w-full border-4 basis-8 border-gray-300 focus:border-gray-500 outline-none invalid:border-red-400 rounded-md p-2 shadow-md duration-300 transition-all"
@@ -125,7 +135,7 @@ const ServerForm = ({
   const [ok, setOk] = useState<boolean>(false);
 
   const testServer = async () => {
-    console.log("ping default")
+    console.log("ping default");
     try {
       await axios.get(`https://matrix.org/_matrix/client/versions`, {
         timeout: 2000,
@@ -138,7 +148,7 @@ const ServerForm = ({
       return false;
     }
 
-    console.log("ping baseUrl")
+    console.log("ping baseUrl");
     try {
       const resp = await axios.get(
         server.startsWith("https://")
@@ -166,15 +176,13 @@ const ServerForm = ({
       setOk(true);
 
       setTimeout(() => {
-        setBaseUrl(
-          "demo.com"
-        );
+        setBaseUrl("demo.com");
       }, 300);
 
       return;
     }
 
-    testServer().then(status => {
+    testServer().then((status) => {
       if (status && server) {
         setOk(true);
 
@@ -185,7 +193,6 @@ const ServerForm = ({
         }, 300);
       }
     });
-
   };
 
   return (

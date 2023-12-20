@@ -171,6 +171,7 @@
   }
 
   .dot:nth-child(1) {
+
     animation-delay: -0.3s;
   }
 
