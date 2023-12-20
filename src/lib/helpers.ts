@@ -182,11 +182,6 @@ export const formatText = (content: IContent): string => {
   const inReplyTo = !!content["m.relates_to"]?.["m.in_reply_to"];
   const replacement =
     content["m.relates_to"]?.rel_type === RelationType.Replace;
-  / /
-      < span data - mx -
-            spoiler =\"reason\">spoiler content</span> more normal text
-  const spoiler = body.match(
-      /(?<before>.+)<span data-mx-spoiler=?(?<reason>".+")?>(?<inner>.+)<\/span>(?<after>.+)/);
 
       // support inline images
       // if (content.formatted_body) {
@@ -194,11 +189,6 @@ export const formatText = (content: IContent): string => {
 
       //   (content.formatted_body as string).slice(0, start);
       // }
-
-      if (inReplyTo && spoiler) {
-        const newBody = content.body?.split("\n\n")[1];
-        return newBody;
-      }
 
       if (inReplyTo && replacement) {
         return content["m.new_content"].body?.split("\n\n")[1];

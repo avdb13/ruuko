@@ -1,14 +1,4 @@
-// Tag 	  Permitted Attributes
-// font 	data-mx-bg-color, data-mx-color, color
-// span 	data-mx-bg-color, data-mx-color, data-mx-spoiler (see spoiler
-// messages) a 	    name, target, href (provided the value is not relative and
-// has a scheme matching one of: https, http, ftp, mailto, magnet) img width,
-// height, alt, title, src (provided it is a Matrix Content (mxc://) URI) ol
-// start code 	class (only classes which start with language- for syntax
-// highlighting)
-//
-
-const allowed = [
+const allowedElements = [
   "font",
   "del",
   "h1",
@@ -49,7 +39,7 @@ const allowed = [
   "summary",
 ] as const;
 
-const atrributeMap = {
+const attributeMap: Record<string, Array<string>> = {
   font: ["data-mx-bg-color", "data-mx-color", "color"],
   span: ["data-mx-bg-color", "data-mx-color", "data-mx-spoiler"],
   // must contain rel="noopener"
@@ -64,7 +54,7 @@ const AllowedSchemes = {
   img: ["mxc"],
 };
 
-type Kind = (typeof allowed)[number];
+type Kind = (typeof allowedElements)[number];
 
 type HtmlElement = {
   kind: Kind;
@@ -73,10 +63,6 @@ type HtmlElement = {
   before: string | null;
   after: string | null;
 };
-
-const isAllowed = (s: string): s is Kind => {
-  return allowed.indexOf(s as Kind) >= 0;
-}
 
 const FormattedBodyParser = (s: string) => {
   const maxDepth = 3;
@@ -105,19 +91,17 @@ const FormattedBodyParser = (s: string) => {
     if (nesting && nesting.groups) {
       const { body, attrs, open, close } = nesting.groups;
 
-
-      if (allowed.indexOf(open as Kind) < 0) {
-        throw new Error()
+      if (allowedElements.indexOf(open as Kind) < 0) {
+        throw new Error();
       }
 
       parent.kind = open as Kind;
 
       if (open !== close) {
-        throw new Error()
+        throw new Error();
       }
 
       if (attrs) {
-        
       }
 
       if (body) {
@@ -135,8 +119,8 @@ const FormattedBodyParser = (s: string) => {
     if (singleton && singleton?.groups) {
       const { attrs, open } = singleton.groups;
 
-      if (allowed.indexOf(open as Kind) < 0) {
-        throw new Error()
+      if (allowedElements.indexOf(open as Kind) < 0) {
+        throw new Error();
       }
 
       parent.kind = open as Kind;
@@ -146,11 +130,23 @@ const FormattedBodyParser = (s: string) => {
 
     throw new Error("invalid body!");
   };
-
 };
 
-const extractAttributes = (s: string) => s.split(" ").reduce((init, kv) => {
-    const [k,v] = kv.split("=");
+const extractAttributes = (kind: Kind, s: string) => {
+  const map = attributeMap[kind];
 
-    return ({...init, [k]: v})
+    if (!map) {
+      return null;
+    }
+
+  return s.split(" ").reduce((init, kv) => {
+    const [k, v] = kv.replace(`"`, "").split("=");
+
+    if (map.indexOf(k) < 0) {
+      return init;
+    }
+
+    return { ...init, [k]: v };
   }, {});
+}
+

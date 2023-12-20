@@ -11,14 +11,17 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { ClientContext } from "./client";
 
-export const RoomContext = createContext<MyRoomState | null>(null);
+export const RoomContext = createContext<
+  (MyRoomState & { rooms: Room[] }) | null
+>(null);
 
 interface MyRoomState {
-  rooms: Room[] | null;
+  rooms: (Room | null)[];
   roomStates: Record<string, RoomState>;
   currentRoom: Room | null;
   roomEvents: Record<string, MatrixEvent[]>;
@@ -29,43 +32,57 @@ interface MyRoomState {
   avatars: Record<string, string>;
   setAvatars: (_: Record<string, string>) => void;
 }
-
 const RoomProvider = (props: PropsWithChildren) => {
   const client = useContext(ClientContext);
 
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
-  const [rooms, setRooms] = useState<Room[] | null>(null);
+  const [rooms, setRooms] = useState<(Room | null)[]>([]);
   const [roomEvents, setRoomEvents] = useState<Record<string, MatrixEvent[]>>(
     {},
   );
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
   const [avatars, setAvatars] = useState<Record<string, string>>({});
 
-  const roomState: MyRoomState = {
-    rooms,
-    roomStates,
-    currentRoom,
-    roomEvents,
-    setRooms,
-    setRoomStates,
-    setCurrentRoom,
-    setRoomEvents,
-    avatars,
-    setAvatars,
-  };
+  const roomState: MyRoomState = useMemo(() => {
+    return {
+      rooms,
+      roomStates,
+      currentRoom,
+      roomEvents,
+      setRooms,
+      setRoomStates,
+      setCurrentRoom,
+      setRoomEvents,
+      avatars,
+      setAvatars,
+    };
+  }, [currentRoom, roomEvents, rooms, roomStates]);
 
   useEffect(() => {
     setRooms(client.getRooms());
+
+    // retrieve the actual room length and attempt to fill it with at least joined rooms
+    client
+      .getJoinedRooms()
+      .then((resp) =>
+        setRooms((prev) => [
+          ...prev,
+          ...Array(resp.joined_rooms.length - prev.length).fill(null),
+        ]),
+      );
   }, []);
 
   useEffect(() => {
-    if (!rooms || client.getRooms().length !== rooms.length) {
+    if (rooms.some((r) => !r)) {
       return;
     }
 
     setRoomEvents(
       rooms.reduce(
-        (init, r) => ({ ...init, [r.roomId]: r.getLiveTimeline().getEvents() }),
+        (init, r) => ({
+          ...init,
+          [r!.roomId]: r!.getLiveTimeline().getEvents(),
+        }),
         {},
       ),
     );
@@ -73,14 +90,16 @@ const RoomProvider = (props: PropsWithChildren) => {
       rooms.reduce(
         (init, r) => ({
           ...init,
-          [r.roomId]: r.getLiveTimeline().getState(Direction.Backward),
+          [r!.roomId]: r!.getLiveTimeline().getState(Direction.Backward),
         }),
         {},
       ),
     );
-  }, [rooms?.length]);
+  }, [rooms.length]);
 
-  client.on(ClientEvent.Room, () => setRooms(client.getRooms()));
+  client.on(ClientEvent.Room, (newRoom) =>
+    setRooms((prev) => [...prev, newRoom]),
+  );
 
   client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
     if (room) {
@@ -96,7 +115,9 @@ const RoomProvider = (props: PropsWithChildren) => {
   });
 
   return (
-    <RoomContext.Provider value={roomState}>
+    <RoomContext.Provider
+      value={{ ...roomState, rooms: roomState.rooms as Room[] }}
+    >
       {props.children}
     </RoomContext.Provider>
   );
