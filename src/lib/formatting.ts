@@ -64,63 +64,93 @@ const AllowedSchemes = {
   img: ["mxc"],
 };
 
-type Kind = keyof typeof atrributeMap | (typeof allowed)[number];
+type Kind = (typeof allowed)[number];
 
 type HtmlElement = {
   kind: Kind;
   atrributes: Record<string, string>;
-  inner: string | HtmlElement;
-  before: string;
-  after: string;
+  inner: string | HtmlElement | null;
+  before: string | null;
+  after: string | null;
 };
+
+const isAllowed = (s: string): s is Kind => {
+  return allowed.indexOf(s as Kind) >= 0;
+}
 
 const FormattedBodyParser = (s: string) => {
   const maxDepth = 3;
 
   const nestedPattern =
-    /<(?<open>[\S]+)\s?(?<attrs>.+)>(?<body>.+)<\/(?<close>[\S]+)>/;
-  const singlePattern = /<(?<open>[\S]+)\s?(?<attrs>.+)\/>/;
-
-  const txt =
-    'normal text <span data-mx-spoiler="reason">spoiler content</span> more normal text';
-  const reversed = s.split("").toReversed().join("");
-
-  let start = 0;
-  let end = s.length;
+    /<(?<open>[\S]+)\s?(?<attrs>.+)>(?<body>.+)?<\/(?<close>[\S]+)>/;
+  const singlePattern = /<(?<open>[\S]+)\s?(?<attrs>.+)\s?\/>/;
 
   const recurse = (parent: HtmlElement) => {
-    const before = s.search("<");
-    if (before !== -1) {
-      start += before;
+    const before = s.indexOf("<");
+    if (before >= 0) {
       parent.before = s.slice(0, before - 1);
+
+      s = s.slice(before - 1);
     }
 
-    const after = reversed.search(">");
-    if (after !== -1) {
-      end -= after;
-      parent.after = s.slice(end + 1);
+    const after = s.lastIndexOf(">");
+    if (after >= 0) {
+      parent.after = s.slice(after + 1);
+
+      s = s.slice(before - 1);
     }
 
-    const nesting = s.slice(start, end).match(nestedPattern);
+    const nesting = s.match(nestedPattern);
 
     if (nesting && nesting.groups) {
-      if (nesting.groups["open"] !== nesting.groups["close"]) {
+      const { body, attrs, open, close } = nesting.groups;
+
+
+      if (allowed.indexOf(open as Kind) < 0) {
         throw new Error()
       }
 
-      const inner = nesting.groups["body"]?.match(/.*[<>].*/) ? recurse(nesting.groups["body"]) : nesting.groups["body"];
-      parent.inner = inner;
+      parent.kind = open as Kind;
+
+      if (open !== close) {
+        throw new Error()
+      }
+
+      if (attrs) {
+        
+      }
+
+      if (body) {
+        const inner = body.match(/.*[<>].*/) ? recurse(body) : body;
+
+        // do we want null for empty bodies?
+        parent.inner = inner;
+      } else {
+        parent.inner = null;
+      }
     }
 
-    const singleton = s.slice(start, end).match(singlePattern);
+    const singleton = s.match(singlePattern);
 
-    if (singleton) {
+    if (singleton && singleton?.groups) {
+      const { attrs, open } = singleton.groups;
+
+      if (allowed.indexOf(open as Kind) < 0) {
+        throw new Error()
+      }
+
+      parent.kind = open as Kind;
+
+      parent.inner = null;
     }
 
     throw new Error("invalid body!");
   };
 
-  // if (end < start) {
-  //   return;
-  // }
 };
+
+const extractAttributes = (s: string) => s.split(" ").reduce((init, kv) => {
+    const [k,v] = kv.split("=");
+
+    return ({...init, [k]: v})
+  }, {});
