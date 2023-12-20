@@ -10,7 +10,7 @@ import { SearchRoomForm, SearchUserForm } from "./Search";
 import { Membership } from "./Message";
 import { ClientContext } from "../providers/client";
 
-const sortRooms = (prev: number, next: number) => {
+const sortRooms = (prev?: number, next?: number) => {
   return prev ? (next ? (next < prev ? 1 : next > prev ? -1 : 0) : 1) : -1;
 };
 
@@ -93,30 +93,34 @@ const RoomList = ({
 
 const Sidebar = () => {
   const { rooms, roomEvents } = useContext(RoomContext)!;
+  const client = useContext(ClientContext);
   const [sidebarWidth, setSidebarWidth] = useState(400);
 
   const getLastEvent = (r: Room) => {
     const events = roomEvents[r.roomId];
-    console.log(events?.filter(e => e.getType() === EventType.Direct).map(e => e.getContent()))
-    return events?.[events.length - 1]?.getTs() || 0;
+    return events?.[events.length - 1]?.getTs();
   };
+  const directEvent = client.getAccountData(EventType.Direct);
+  const directRoomIds = Object.values(directEvent?.getContent() as Record<string, string[]>).flat();
 
   const memoizedRooms = useMemo(
     () => rooms.sort((a, b) => sortRooms(getLastEvent(a), getLastEvent(b))),
     [rooms],
   );
+
   const memoizedFriendRooms = useMemo(
     () =>
       memoizedRooms
         .filter((r) => r.getMyMembership() === Membership.Join)
-        .filter((r) => r.getMembers().length <= 2),
+        .filter((r) => directRoomIds.indexOf(r.roomId) >= 0),
     [memoizedRooms],
   );
+
   const memoizedPublicRooms = useMemo(
     () =>
       memoizedRooms
         .filter((r) => r.getMyMembership() === Membership.Join)
-        .filter((r) => r.getMembers().length > 2),
+        .filter((r) => directRoomIds.indexOf(r.roomId) < 0),
     [memoizedRooms],
   );
   const memoizedHistoricalRooms = useMemo(

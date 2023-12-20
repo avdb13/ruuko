@@ -2,23 +2,15 @@ import { Suspense, lazy, useContext } from "react";
 import Sidebar from "./components/Sidebar";
 import { RoomContext } from "./providers/room";
 import { ClientContext } from "./providers/client";
-import { useCookies } from "react-cookie";
 import LogoutButton from "./components/Logout";
-import { SyncState } from "matrix-js-sdk";
 
 const MessageWindow = lazy(() => import("./components/MessageWindow"));
 
 const App = () => {
-  const client = useContext(ClientContext);
   const roomState = useContext(RoomContext);
+  console.log(roomState?.rooms.length, Object.values(roomState?.roomEvents || {}).length)
 
-  const [_cookies, _setCookie, removeCookie] = useCookies(["session"]);
-
-  const loading =
-    !client.getSyncState() ||
-    !roomState
-
-  if (loading) {
+  if (!roomState) {
     return <LogoutButton />;
   }
 

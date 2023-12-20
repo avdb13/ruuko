@@ -12,6 +12,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { ClientContext } from "./client";
@@ -34,9 +35,10 @@ interface MyRoomState {
 }
 const RoomProvider = (props: PropsWithChildren) => {
   const client = useContext(ClientContext);
+  const roomsLength = useRef<number>();
 
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
-  const [rooms, setRooms] = useState<(Room | null)[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [roomEvents, setRoomEvents] = useState<Record<string, MatrixEvent[]>>(
     {},
   );
@@ -45,7 +47,7 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   const roomState: MyRoomState = useMemo(() => {
     return {
-      rooms: rooms.filter(r => !r) as Room[],
+      rooms,
       roomStates,
       currentRoom,
       roomEvents,
@@ -59,21 +61,16 @@ const RoomProvider = (props: PropsWithChildren) => {
   }, [currentRoom, roomEvents, rooms, roomStates]);
 
   useEffect(() => {
-    setRooms(client.getRooms());
-
     // retrieve the actual room length and attempt to fill it with at least joined rooms
     client
       .getJoinedRooms()
-      .then((resp) =>
-        setRooms((prev) => [
-          ...prev,
-          ...Array(resp.joined_rooms.length - prev.length).fill(null),
-        ]),
-      );
+      .then((resp) => {
+        roomsLength.current = resp.joined_rooms.length;
+      });
   }, []);
 
   useEffect(() => {
-    if (rooms.some((r) => !r)) {
+    if (rooms.length === 0) {
       return;
     }
 
@@ -114,11 +111,14 @@ const RoomProvider = (props: PropsWithChildren) => {
     }
   });
 
-  const value = Object.values(roomEvents).length === rooms.length ? roomState : null
+  if (!(roomsLength.current && roomsLength.current > 0 && Object.values(roomEvents).length >= roomsLength.current)) {
+    console.log(roomsLength.current, Object.values(roomEvents).length)
+    return null;
+  }
 
   return (
     <RoomContext.Provider
-    value={value}
+    value={roomState}
     >
       {props.children}
     </RoomContext.Provider>

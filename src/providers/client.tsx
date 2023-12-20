@@ -40,7 +40,7 @@ const ClientProvider = (props: PropsWithChildren) => {
     if (cookies["session"]) {
       const client = initClient(session);
 
-      client.startClient({ initialSyncLimit: 4 })
+      client.startClient({ lazyLoadMembers: true, initialSyncLimit: 10 })
       setClient(client);
     } else {
       setClient(null);
