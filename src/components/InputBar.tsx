@@ -65,7 +65,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const [files, setFiles] = useState<File[] | null>(null);
 
   client.on(RoomMemberEvent.Typing, (event, _member) => {
-    setTyping((event.getContent().user_ids as string[]).map(id => currentRoom?.getMember(id)?.name || id));
+    setTyping((event.getContent().user_ids as string[]).filter(me => client.getUserId() !== me).map(id => currentRoom?.getMember(id)?.name || id));
   });
 
   useEffect(() => {

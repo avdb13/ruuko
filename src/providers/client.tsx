@@ -1,11 +1,11 @@
-import { IndexedDBStore, MatrixClient, createClient } from "matrix-js-sdk";
-import "@matrix-org/olm";
 import {
-  PropsWithChildren,
-  createContext,
-  useEffect,
-  useState,
-} from "react";
+  Filter,
+  IndexedDBStore,
+  MatrixClient,
+  createClient,
+} from "matrix-js-sdk";
+import "@matrix-org/olm";
+import { PropsWithChildren, createContext, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import Login from "../components/Login";
 import LogoutButton from "../components/Logout";
@@ -27,7 +27,13 @@ const initClient = (session: Session) => {
 
   const { accessToken, baseUrl, user } = session;
   // is deviceId correct here?
-  return createClient({ accessToken, baseUrl, userId: user, deviceId: "Ruuko", store });
+  return createClient({
+    accessToken,
+    baseUrl,
+    userId: user,
+    deviceId: "Ruuko",
+    store,
+  });
 };
 
 const ClientProvider = (props: PropsWithChildren) => {
@@ -40,7 +46,14 @@ const ClientProvider = (props: PropsWithChildren) => {
     if (cookies["session"]) {
       const client = initClient(session);
 
-      client.startClient({ lazyLoadMembers: true, initialSyncLimit: 10 })
+      client.createFilter({ presence: ({not_types: ["m.presence"]}) }).then((filter) => {
+        client.startClient({
+          lazyLoadMembers: true,
+          initialSyncLimit: 10,
+          filter,
+        });
+      });
+
       setClient(client);
     } else {
       setClient(null);
@@ -55,8 +68,11 @@ const ClientProvider = (props: PropsWithChildren) => {
     return <LogoutButton />;
   }
 
-
-  return <ClientContext.Provider value={client}>{props.children}</ClientContext.Provider>
+  return (
+    <ClientContext.Provider value={client}>
+      {props.children}
+    </ClientContext.Provider>
+  );
 };
 
 export default ClientProvider;
