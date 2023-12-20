@@ -161,7 +161,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
       }
 
       if (e.getContent().formatted_body) {
-        console.log(`[${e.getContent().body}]`, `(${e.getContent().formatted_body})`)
+        // console.log(`[${e.getContent().body}]`, `(${e.getContent().formatted_body})`)
       }
 
       switch (e.getType()) {

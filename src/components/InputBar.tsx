@@ -4,7 +4,7 @@ import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import CrossIcon from "./icons/Cross";
 import { RoomContext } from "../providers/room";
 import { InputContext } from "../providers/input";
-import { MsgType } from "matrix-js-sdk";
+import { EventType, MsgType, RoomMemberEvent } from "matrix-js-sdk";
 import { findLastTextEvent } from "../lib/helpers";
 import Message, { Membership } from "./Message";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
@@ -57,11 +57,28 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
   const { inReplyTo, setInReplyTo, setReplace } = useContext(InputContext)!;
 
+  const pickerRef = useRef<HTMLDivElement>(null);
+
   const [message, setMessage] = useState("");
+  const [typing, setTyping] = useState<string[]>([]);
   const [showEmojis, setShowEmojis] = useState(false);
   const [files, setFiles] = useState<File[] | null>(null);
 
-  const pickerRef = useRef<HTMLDivElement>(null);
+  client.on(RoomMemberEvent.Typing, (event, _member) => {
+    setTyping((event.getContent().user_ids as string[]).map(id => currentRoom?.getMember(id)?.name || id));
+  });
+
+  useEffect(() => {
+    if (message.length > 0) {
+      client.sendTyping(currentRoom?.roomId!, true, 1000);
+
+      const id = setTimeout(() => {
+        client.sendTyping(currentRoom?.roomId!, false, 1000);
+      }, 5000);
+
+      return clearTimeout(id);
+    }
+  }, [message]);
 
   useEffect(() => {
     const handleClickOutsidePicker = (e: MouseEvent) => {
@@ -132,7 +149,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
     setInReplyTo(null);
   };
 
-
   const removeFile = (name: string) => {
     setFiles(files ? files.filter((f) => f.name !== name) : null);
   };
@@ -153,6 +169,17 @@ const InputBar = ({ roomId }: { roomId: string }) => {
 
   return (
     <>
+      {typing.length > 0 ? (
+        <span className="px-4 text-sm text-slate-800">
+          {typing.length > 2
+            ? typing.length > 4
+              ? `${typing.length} people are typing ...`
+              : `${[typing].slice(0, -1).join(", ")}and ${[typing].slice(
+                  -1,
+                )} are typing ...`
+            : `${[typing][0]} is typing ...`}
+        </span>
+      ) : null}
       {replyEvent ? (
         <div className="p-2">
           <div className="flex pb-2 justify-between border-dashed border-b-2">
