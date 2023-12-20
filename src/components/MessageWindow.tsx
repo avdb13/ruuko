@@ -7,14 +7,11 @@ import Message, {
 } from "./Message";
 import InputBar from "./InputBar";
 import {
-  Ref,
   lazy,
-  useContext,
-  useEffect,
-  useLayoutEffect,
+  useContext, useLayoutEffect,
   useMemo,
   useRef,
-  useState,
+  useState
 } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";

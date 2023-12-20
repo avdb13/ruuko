@@ -9,6 +9,10 @@
     animation-timing-function: cubic-bezier(0, 1, 1, 1);
   }
 
+  /* .logout { */
+  /*   backgroundImage: url("/bg.jpg"); */
+  /* } */
+
   .date {
     transform: scaleY(-1);
   }

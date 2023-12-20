@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useCookies } from "react-cookie";
 import Login from "../components/Login";
+import LogoutButton from "../components/Logout";
 
 const temporaryClient = () => {
   return createClient({ baseUrl: "https://matrix.org" });
@@ -31,6 +32,7 @@ const initClient = (session: Session) => {
 
 const ClientProvider = (props: PropsWithChildren) => {
   const [client, setClient] = useState<MatrixClient | null>(null);
+
   const [cookies] = useCookies(["session"]);
   const session = cookies["session"] as Session;
 
@@ -40,6 +42,8 @@ const ClientProvider = (props: PropsWithChildren) => {
 
       client.startClient({ initialSyncLimit: 4 })
       setClient(client);
+    } else {
+      setClient(null);
     }
   }, [cookies, session]);
 
@@ -48,7 +52,7 @@ const ClientProvider = (props: PropsWithChildren) => {
   }
 
   if (!client) {
-    return null;
+    return <LogoutButton />;
   }
 
 

@@ -114,9 +114,11 @@ const RoomProvider = (props: PropsWithChildren) => {
     }
   });
 
+  const value = Object.values(roomEvents).length === rooms.length ? roomState : null
+
   return (
     <RoomContext.Provider
-    value={roomState}
+    value={value}
     >
       {props.children}
     </RoomContext.Provider>

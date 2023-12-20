@@ -8,17 +8,10 @@ import Avatar from "./Avatar";
 import Togglable from "./Togglable";
 import { SearchRoomForm, SearchUserForm } from "./Search";
 import { Membership } from "./Message";
+import { ClientContext } from "../providers/client";
 
 const sortRooms = (prev: number, next: number) => {
-  return prev
-    ? next
-      ? next < prev
-        ? 1
-        : next > prev
-        ? -1
-        : 0
-      : 1
-    : -1;
+  return prev ? (next ? (next < prev ? 1 : next > prev ? -1 : 0) : 1) : -1;
 };
 
 const RoomIconWidget = ({ id }: { id: string }) => {
@@ -100,12 +93,13 @@ const RoomList = ({
 
 const Sidebar = () => {
   const { rooms, roomEvents } = useContext(RoomContext)!;
-
   const [sidebarWidth, setSidebarWidth] = useState(400);
+
   const getLastEvent = (r: Room) => {
     const events = roomEvents[r.roomId];
-    return events[events.length-1]?.getTs() || 0;
-  } 
+    console.log(events?.filter(e => e.getType() === EventType.Direct).map(e => e.getContent()))
+    return events?.[events.length - 1]?.getTs() || 0;
+  };
 
   const memoizedRooms = useMemo(
     () => rooms.sort((a, b) => sortRooms(getLastEvent(a), getLastEvent(b))),
