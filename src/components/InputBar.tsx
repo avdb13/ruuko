@@ -5,8 +5,10 @@ import {
   RefObject,
   SyntheticEvent,
   forwardRef,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -86,6 +88,17 @@ const InputBar = ({ roomId }: { roomId: string }) => {
 
   const replyEvent = currentRoom?.findEventById(inReplyTo || "") ?? null;
 
+  const members = useMemo(() => {
+    return currentRoom?.getMembers();
+  }, [currentRoom?.roomId]);
+
+  const mentionQuery = message.split("@")[1];
+  // can't be null since it depends on InputBar, which is only available in a room
+  const mentionQueryResult = mentionQuery ? members!.filter(
+        (m) =>
+          m.userId.indexOf(mentionQuery) >= 0 ||
+    m.rawDisplayName.indexOf(mentionQuery) >= 0) : null;
+
   useEffect(() => {
     const handleTyping = (event: MatrixEvent, _member: RoomMember) => {
       setTyping(
@@ -114,11 +127,13 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   }, [message]);
 
   useEffect(() => {
-    setMessage("")
-  }, [currentRoom?.roomId])
+    setMessage("");
+  }, [currentRoom?.roomId]);
 
   useEffect(() => {
-    if (message.length > 0 && message.indexOf("@") >= 0) {
+    const atIdx = message.indexOf("@") + 1;
+
+    if (message.length > 0 && atIdx && message.length > atIdx) {
       setShowMentionModal(true);
     }
   }, [message]);
@@ -158,6 +173,18 @@ const InputBar = ({ roomId }: { roomId: string }) => {
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
+
+    if (showMentionModal) {
+      const prefix = message.split("@")[0]!;
+
+      // all variables have to be initialized because the modal is only open when
+      // 1. there query contains an element
+      // 2. the message contains @
+      setMessage(prefix.concat(mentionQueryResult![0]!.userId!.slice(1)));
+      setShowMentionModal(false);
+
+      return;
+    }
 
     if (files) {
       Promise.all([...files.map((f) => client.uploadContent(f))]).then(
@@ -210,13 +237,14 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         }
 
         return;
+      case "Enter":
     }
   };
 
   return (
     <>
       {typing.length > 0 ? (
-        <span className="px-4 text-sm text-slate-800">
+        <span className="px-4 text-sm text-slate-800 py-2 shadow-sm">
           {typing.length > 2
             ? typing.length > 4
               ? `${typing.length} people are typing ...`
@@ -254,39 +282,30 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         className="flex items-center gap-2 sticky h-12 mx-2"
       >
         <MentionModal ref={modalRef}>
-          {showMentionModal &&
-            currentRoom
-              .getMembers()
-              .filter(
-                (m) =>
-                  m.userId.indexOf(message.split("@")[1]!) >= 0 ||
-                  m.rawDisplayName.indexOf(message.split("@")[1]!) >= 0,
-              )
-              .map((r) => (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMessage(
-                      message
-                        .slice(0, message.lastIndexOf("@"))
-                        .concat(r.userId),
-                    );
-                    setShowMentionModal(false);
-                  }}
-                  key={r.userId}
-                  className="flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
-                >
-                  <Avatar
-                    id={r.userId}
-                    size={8}
-                    className="border-none"
-                    type="user"
-                  />
-                  <p>{r.rawDisplayName}</p>
-                  <div className="grow" />
-                  <p className="text-gray-600">{r.userId}</p>
-                </button>
-              ))}
+          {showMentionModal && mentionQueryResult &&
+            mentionQueryResult.slice(0, 6).map((r) => (
+              <button
+                type="button"
+                onClick={() => {
+                  setMessage(
+                    message.slice(0, message.lastIndexOf("@")).concat(r.userId),
+                  );
+                  setShowMentionModal(false);
+                }}
+                key={r.userId}
+                className="flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
+              >
+                <Avatar
+                  id={r.userId}
+                  size={8}
+                  className="border-none"
+                  type="user"
+                />
+                <p>{r.rawDisplayName}</p>
+                <div className="grow" />
+                <p className="text-gray-600">{r.userId}</p>
+              </button>
+            ))}
         </MentionModal>
         <FilePicker files={files} setFiles={setFiles} />
         <div className="flex bg-transparent grow rounded-md my-2 py-1">

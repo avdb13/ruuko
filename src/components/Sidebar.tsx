@@ -112,7 +112,9 @@ const Sidebar = () => {
 
   const arr = useMemo(() => {
     const sorted = rooms.sort((a, b) =>
-      sortRooms(getLastEvent(a), getLastEvent(b)),
+      // don't panic! I negated the return value here
+      // because I don't wanna rewrite the sorting function.
+      -sortRooms(getLastEvent(a), getLastEvent(b)),
     );
 
     const joined = (r: Room) => r.getMyMembership() === Membership.Join;
