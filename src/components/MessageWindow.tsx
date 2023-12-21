@@ -243,7 +243,8 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
     [events.length],
   );
 
-  return sortedEvents.map((list, i) => {
+  // TODO: get rid of this filter and pinpoint the problem.
+  return sortedEvents.filter(arr => arr.length > 0).map((list, i) => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;
 
     const displayName = firstEvent.getContent().displayname;

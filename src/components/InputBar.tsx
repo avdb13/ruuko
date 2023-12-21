@@ -2,11 +2,13 @@ import {
   Ref,
   RefObject,
   SyntheticEvent,
-  forwardRef, useContext,
+  forwardRef,
+  useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
-  useState
+  useState,
 } from "react";
 import { ClientContext } from "../providers/client";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
@@ -17,7 +19,7 @@ import {
   MatrixEvent,
   MsgType,
   RoomMember,
-  RoomMemberEvent
+  RoomMemberEvent,
 } from "matrix-js-sdk";
 import { findLastTextEvent } from "../lib/helpers";
 import Message, { Membership } from "./Message";
@@ -32,7 +34,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const { inReplyTo, setInReplyTo, setReplace } = useContext(InputContext)!;
 
   const pickerRef = useRef<HTMLDivElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
 
   const [message, setMessage] = useState("");
   const [typing, setTyping] = useState<string[]>([]);
@@ -53,7 +54,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         (m) =>
           m.userId.indexOf(mentionQuery) >= 0 ||
           m.rawDisplayName.indexOf(mentionQuery) >= 0,
-      )
+      ).slice(0,6)
     : null;
 
   useEffect(() => {
@@ -85,26 +86,9 @@ const InputBar = ({ roomId }: { roomId: string }) => {
 
   useEffect(() => {
     setMessage("");
+    setShowMentionModal(false);
+    setShowPicker(false);
   }, [currentRoom?.roomId]);
-
-  useEffect(() => {
-    const atIdx = message.indexOf("@") + 1;
-
-    if (mentionQueryResult?.length === 0) {
-      setShowMentionModal(false);
-    }
-
-    if (message.length > 0 && atIdx && message.length > atIdx) {
-      setShowMentionModal(true);
-    }
-  }, [message]);
-
-  useEffect(() => {
-    console.log(document.activeElement);
-    if (modalRef.current && modalRef.current.firstElementChild) {
-      (modalRef.current.firstElementChild as HTMLButtonElement).focus();
-    }
-  }, [modalRef, showMentionModal]);
 
   useEffect(() => {
     if (message.length > 0) {
@@ -120,16 +104,13 @@ const InputBar = ({ roomId }: { roomId: string }) => {
 
   useEffect(() => {
     const pickerHandler = handleClickOutside(pickerRef, setShowPicker);
-    const modalHandler = handleClickOutside(modalRef, setShowMentionModal);
 
     document.addEventListener("mousedown", pickerHandler);
-    document.addEventListener("mousedown", modalHandler);
 
     return () => {
       document.removeEventListener("mousedown", pickerHandler);
-      document.removeEventListener("mousedown", modalHandler);
     };
-  }, [pickerRef, modalRef]);
+  }, [pickerRef]);
 
   if (!currentRoom) {
     return null;
@@ -253,7 +234,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         className="flex items-center gap-2 sticky h-12 mx-2"
       >
         <MentionModal
-          ref={modalRef}
           visible={showMentionModal}
           setVisible={setShowMentionModal}
           queryResult={mentionQueryResult}
@@ -376,56 +356,109 @@ type MentionModalProps = {
   message: string;
   setMessage: (_: string) => void;
 };
-const MentionModal = forwardRef(
-  (
-    {
-      queryResult,
-      visible,
-      setVisible,
-      message,
-      setMessage,
-    }: MentionModalProps,
-    ref: Ref<HTMLDivElement>,
-  ) => {
-    if (!ref || typeof ref === "function") {
-      return null;
+const MentionModal = ({
+  queryResult,
+  visible,
+  setVisible,
+  message,
+  setMessage,
+}: MentionModalProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const children = useRef<HTMLButtonElement[]>([]);
+  const [selected, setSelected] =useState<number | null>(null);
+
+  useEffect(() => {
+    const handler = handleClickOutside(ref, setVisible);
+    document.addEventListener("mousedown", handler);
+
+    return () => {
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [ref]);
+
+  useLayoutEffect(() => {
+    console.log("fired", visible)
+
+    const atIdx = message.indexOf("@") + 1;
+
+    if (queryResult?.length === 0 ?? false) {
+      setVisible(false);
     }
 
-    return (
-      <div
-        ref={ref}
-        className="absolute w-[95%] right-[2.5%] bottom-[102.5%] bg-white border-2 border-slate-50 rounded-md shadow-md"
-      >
-        {visible &&
-          queryResult &&
-          queryResult.map((r, i) => (
-            <button
-              type="button"
-              onClick={() => {
-                setMessage(
-                  message.slice(0, message.lastIndexOf("@")).concat(r.userId),
-                );
-                setVisible(false);
-              }}
-              id={i.toString()}
-              key={r.userId}
-              className="focus:bg-red-100 flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
-            >
-              <Avatar
-                id={r.userId}
-                size={8}
-                className="border-none"
-                type="user"
-              />
-              <p>{r.rawDisplayName}</p>
-              <div className="grow" />
-              <p className="text-gray-600">{r.userId}</p>
-            </button>
-          ))}
-      </div>
-    );
-  },
-);
+    if (message.length > 0 && atIdx && message.length > atIdx) {
+      setVisible(true);
+    }
+
+    children.current = children.current.slice(0, queryResult?.length ?? 0);
+    // setSelected(0);
+
+  }, [queryResult, message])
+
+  useLayoutEffect(() => {
+    if (selected) {
+      children.current[selected]?.focus();
+      return;
+    }
+
+    const first = ref.current?.firstElementChild;
+
+    if (ref.current && first) {
+      setTimeout(() => (first as HTMLButtonElement).focus(), 50);
+    }
+  }, [selected])
+
+  if (!queryResult || !visible) {
+    return null;
+  }
+
+  const handleKeys = (e: React.SyntheticEvent) => {
+    if (!selected) {
+      return;
+    }
+
+    switch(e.type) {
+      case "ArrowDown":
+        setSelected((selected+1)%queryResult.length)
+        return;
+      case "ArrowUp":
+        setSelected(selected === 0 ? queryResult.length-1 : (selected-1)%queryResult.length)
+        return;
+    }
+  }
+
+  return (
+    <div
+      ref={ref}
+      onKeyDown={handleKeys}
+      className="absolute w-[95%] right-[2.5%] bottom-[102.5%] bg-white border-2 border-slate-50 rounded-md shadow-md"
+    >
+      {queryResult.map((r, i) => (
+          <button
+            ref={el => el ? children.current[i] = el : null}
+            type="button"
+            onClick={() => {
+              setMessage(
+                message.slice(0, message.lastIndexOf("@")).concat(r.userId),
+              );
+              setVisible(false);
+            }}
+            key={r.userId}
+            className="focus:bg-red-100 flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
+          >
+            <Avatar
+              id={r.userId}
+              size={8}
+              className="border-none"
+              type="user"
+            />
+            <p>{r.rawDisplayName}</p>
+            <div className="grow" />
+            <p className="text-gray-600">{r.userId}</p>
+          </button>
+        ))}
+    </div>
+  );
+};
 
 const TypingSpan = () => {};
 
