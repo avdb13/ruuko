@@ -1,16 +1,12 @@
 import {
-  ComponentPropsWithRef,
-  PropsWithChildren,
   Ref,
   RefObject,
   SyntheticEvent,
-  forwardRef,
-  useCallback,
-  useContext,
+  forwardRef, useContext,
   useEffect,
   useMemo,
   useRef,
-  useState,
+  useState
 } from "react";
 import { ClientContext } from "../providers/client";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
@@ -18,11 +14,10 @@ import CrossIcon from "./icons/Cross";
 import { RoomContext } from "../providers/room";
 import { InputContext } from "../providers/input";
 import {
-  EventType,
   MatrixEvent,
   MsgType,
   RoomMember,
-  RoomMemberEvent,
+  RoomMemberEvent
 } from "matrix-js-sdk";
 import { findLastTextEvent } from "../lib/helpers";
 import Message, { Membership } from "./Message";
@@ -30,47 +25,6 @@ import CrossNoCircleIcon from "./icons/CrossNoCircle";
 import CloudIcon from "./icons/Cloud";
 import KnobIcon from "./icons/Knob";
 import Avatar from "./Avatar";
-
-const FilePicker = ({
-  files,
-  setFiles,
-}: {
-  files: File[] | null;
-  setFiles: (_: File[] | null) => void;
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleChange = (e: SyntheticEvent) => {
-    const files = (e.target as HTMLInputElement).files;
-
-    if (files) {
-      setFiles(Array.from(files));
-    }
-  };
-
-  return (
-    <>
-      <input
-        className="basis-8 opacity-0"
-        type="file"
-        onChange={handleChange}
-        ref={inputRef}
-        multiple
-      />
-      <button
-        type="button"
-        className={`flex justify-center items-center w-8 h-8 my-2 absolute`}
-        onClick={() => {
-          inputRef.current?.click();
-        }}
-      >
-        <CloudIcon />
-      </button>
-    </>
-  );
-};
-
-// export interface
 
 const InputBar = ({ roomId }: { roomId: string }) => {
   const client = useContext(ClientContext);
@@ -94,10 +48,13 @@ const InputBar = ({ roomId }: { roomId: string }) => {
 
   const mentionQuery = message.split("@")[1];
   // can't be null since it depends on InputBar, which is only available in a room
-  const mentionQueryResult = mentionQuery ? members!.filter(
+  const mentionQueryResult = mentionQuery
+    ? members!.filter(
         (m) =>
           m.userId.indexOf(mentionQuery) >= 0 ||
-    m.rawDisplayName.indexOf(mentionQuery) >= 0) : null;
+          m.rawDisplayName.indexOf(mentionQuery) >= 0,
+      )
+    : null;
 
   useEffect(() => {
     const handleTyping = (event: MatrixEvent, _member: RoomMember) => {
@@ -133,10 +90,21 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   useEffect(() => {
     const atIdx = message.indexOf("@") + 1;
 
+    if (mentionQueryResult?.length === 0) {
+      setShowMentionModal(false);
+    }
+
     if (message.length > 0 && atIdx && message.length > atIdx) {
       setShowMentionModal(true);
     }
   }, [message]);
+
+  useEffect(() => {
+    console.log(document.activeElement);
+    if (modalRef.current && modalRef.current.firstElementChild) {
+      (modalRef.current.firstElementChild as HTMLButtonElement).focus();
+    }
+  }, [modalRef, showMentionModal]);
 
   useEffect(() => {
     if (message.length > 0) {
@@ -227,7 +195,9 @@ const InputBar = ({ roomId }: { roomId: string }) => {
 
   const handleKeys = (e: React.KeyboardEvent) => {
     console.log("hello!");
+
     switch (e.key) {
+      case "ArrowDown":
       case "ArrowUp":
         const events = roomEvents[currentRoom!.roomId]!;
 
@@ -238,6 +208,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
 
         return;
       case "Enter":
+        console.log("MURIDA");
     }
   };
 
@@ -281,32 +252,14 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         onSubmit={handleSubmit}
         className="flex items-center gap-2 sticky h-12 mx-2"
       >
-        <MentionModal ref={modalRef}>
-          {showMentionModal && mentionQueryResult &&
-            mentionQueryResult.slice(0, 6).map((r) => (
-              <button
-                type="button"
-                onClick={() => {
-                  setMessage(
-                    message.slice(0, message.lastIndexOf("@")).concat(r.userId),
-                  );
-                  setShowMentionModal(false);
-                }}
-                key={r.userId}
-                className="flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
-              >
-                <Avatar
-                  id={r.userId}
-                  size={8}
-                  className="border-none"
-                  type="user"
-                />
-                <p>{r.rawDisplayName}</p>
-                <div className="grow" />
-                <p className="text-gray-600">{r.userId}</p>
-              </button>
-            ))}
-        </MentionModal>
+        <MentionModal
+          ref={modalRef}
+          visible={showMentionModal}
+          setVisible={setShowMentionModal}
+          queryResult={mentionQueryResult}
+          message={message}
+          setMessage={setMessage}
+        />
         <FilePicker files={files} setFiles={setFiles} />
         <div className="flex bg-transparent grow rounded-md my-2 py-1">
           <input
@@ -351,6 +304,45 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   );
 };
 
+const FilePicker = ({
+  files,
+  setFiles,
+}: {
+  files: File[] | null;
+  setFiles: (_: File[] | null) => void;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleChange = (e: SyntheticEvent) => {
+    const files = (e.target as HTMLInputElement).files;
+
+    if (files) {
+      setFiles(Array.from(files));
+    }
+  };
+
+  return (
+    <>
+      <input
+        className="basis-8 opacity-0"
+        type="file"
+        onChange={handleChange}
+        ref={inputRef}
+        multiple
+      />
+      <button
+        type="button"
+        className={`flex justify-center items-center w-8 h-8 my-2 absolute`}
+        onClick={() => {
+          inputRef.current?.click();
+        }}
+      >
+        <CloudIcon />
+      </button>
+    </>
+  );
+};
+
 const FilePreview = ({
   file,
   removeFile,
@@ -377,14 +369,59 @@ const FilePreview = ({
   );
 };
 
+type MentionModalProps = {
+  visible: boolean;
+  setVisible: (_: boolean) => void;
+  queryResult: RoomMember[] | null;
+  message: string;
+  setMessage: (_: string) => void;
+};
 const MentionModal = forwardRef(
-  (props: PropsWithChildren, ref: Ref<HTMLDivElement>) => {
+  (
+    {
+      queryResult,
+      visible,
+      setVisible,
+      message,
+      setMessage,
+    }: MentionModalProps,
+    ref: Ref<HTMLDivElement>,
+  ) => {
+    if (!ref || typeof ref === "function") {
+      return null;
+    }
+
     return (
       <div
         ref={ref}
         className="absolute w-[95%] right-[2.5%] bottom-[102.5%] bg-white border-2 border-slate-50 rounded-md shadow-md"
       >
-        {props.children}
+        {visible &&
+          queryResult &&
+          queryResult.map((r, i) => (
+            <button
+              type="button"
+              onClick={() => {
+                setMessage(
+                  message.slice(0, message.lastIndexOf("@")).concat(r.userId),
+                );
+                setVisible(false);
+              }}
+              id={i.toString()}
+              key={r.userId}
+              className="focus:bg-red-100 flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
+            >
+              <Avatar
+                id={r.userId}
+                size={8}
+                className="border-none"
+                type="user"
+              />
+              <p>{r.rawDisplayName}</p>
+              <div className="grow" />
+              <p className="text-gray-600">{r.userId}</p>
+            </button>
+          ))}
       </div>
     );
   },
