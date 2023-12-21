@@ -1,15 +1,16 @@
-import { SyntheticEvent, useContext, useEffect, useRef, useState } from "react";
+import { PropsWithChildren, SyntheticEvent, useContext, useEffect, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import CrossIcon from "./icons/Cross";
 import { RoomContext } from "../providers/room";
 import { InputContext } from "../providers/input";
-import { EventType, MsgType, RoomMemberEvent } from "matrix-js-sdk";
+import { EventType, MsgType, RoomMember, RoomMemberEvent } from "matrix-js-sdk";
 import { findLastTextEvent } from "../lib/helpers";
 import Message, { Membership } from "./Message";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
 import CloudIcon from "./icons/Cloud";
 import KnobIcon from "./icons/Knob";
+import Avatar from "./Avatar";
 
 const FilePicker = ({
   files,
@@ -62,15 +63,38 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const [message, setMessage] = useState("");
   const [typing, setTyping] = useState<string[]>([]);
   const [showEmojis, setShowEmojis] = useState(false);
+  const [showMentionModal, setShowMentionModal] = useState(false);
   const [files, setFiles] = useState<File[] | null>(null);
 
-  client.on(RoomMemberEvent.Typing, (event, _member) => {
-    setTyping(
-      (event.getContent().user_ids as string[])
-        .filter((me) => client.getUserId() !== me)
-        .map((id) => currentRoom?.getMember(id)?.name || id),
-    );
-  });
+  useEffect(() => {
+    client.on(RoomMemberEvent.Typing, (event, _member) => {
+      setTyping(
+        (event.getContent().user_ids as string[])
+          .filter((me) => client.getUserId() !== me)
+          .map((id) => currentRoom?.getMember(id)?.name || id),
+      );
+    });
+  }, []);
+
+  useEffect(() => {
+    if (message.length > 0) {
+      client.sendTyping(currentRoom?.roomId!, true, 1000);
+
+      const id = setTimeout(() => {
+        client.sendTyping(currentRoom?.roomId!, false, 1000);
+      }, 5000);
+
+      return clearTimeout(id);
+    }
+  }, [message]);
+
+  useEffect(() => {
+    if (message.length > 0 && message.indexOf("@") >= 0) {
+      setShowMentionModal(true);
+    } else {
+      setShowMentionModal(false);
+    }
+  }, [message]);
 
   useEffect(() => {
     if (message.length > 0) {
@@ -211,6 +235,22 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         onSubmit={handleSubmit}
         className="flex items-center gap-2 sticky h-12 mx-2"
       >
+        <MentionModal
+        >
+          {showMentionModal && currentRoom.getMembers().filter(m => m.userId).map((r) => (
+            <button
+              type="button"
+              onClick={() => setMessage(message.slice(0, message.lastIndexOf("@")).concat(r.userId))}
+              key={r.userId}
+              className="flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
+            >
+              <Avatar id={r.userId} size={8} className="border-none" type="user" />
+              <p>{r.rawDisplayName}</p>
+              <div className="grow" />
+              <p className="text-gray-600">{r.userId}</p>
+            </button>
+          ))}
+        </MentionModal>
         <FilePicker files={files} setFiles={setFiles} />
         <div className="flex bg-transparent grow rounded-md my-2 py-1">
           <input
@@ -280,5 +320,15 @@ const FilePreview = ({
     </div>
   );
 };
+
+const MentionModal = (props: PropsWithChildren) => {
+  return (
+    <div className="absolute w-[95%] right-[2.5%] bottom-[102.5%] bg-white border-2 border-slate-50 rounded-md shadow-md">
+      {props.children}
+    </div>
+  );
+};
+
+const TypingSpan = () => {};
 
 export default InputBar;

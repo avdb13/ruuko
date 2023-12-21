@@ -8,10 +8,11 @@ import Message, {
 import InputBar from "./InputBar";
 import {
   lazy,
-  useContext, useLayoutEffect,
+  useContext,
+  useLayoutEffect,
   useMemo,
   useRef,
-  useState
+  useState,
 } from "react";
 import { RoomContext } from "../providers/room";
 import MembersIcon from "./icons/Members";
@@ -154,82 +155,93 @@ const MessageWindow = () => {
 const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
-  const filteredEvents = useMemo(() => events.reduceRight(
-    (init, e) => {
-      if (!e) {
-        return init;
-      }
+  const filteredEvents = useMemo(
+    () =>
+      events.reduceRight(
+        (init, e) => {
+          if (!e) {
+            console.log(e);
+            return init;
+          }
 
-      if (e.getContent().formatted_body) {
-        // console.log(`[${e.getContent().body}]`, `(${e.getContent().formatted_body})`)
-      }
+          if (e.getContent().formatted_body) {
+            // console.log(`[${e.getContent().body}]`, `(${e.getContent().formatted_body})`)
+          }
 
-      switch (e.getType()) {
-        case EventType.Reaction:
-          return {
-            ...init,
-            [EventType.Reaction]: [...init[EventType.Reaction]!, e],
-          };
-        case EventType.Receipt:
-          return {
-            ...init,
-            [EventType.Receipt]: [...init[EventType.Receipt]!, e],
-          };
-        case EventType.RoomRedaction:
-          return {
-            ...init,
-            [EventType.RoomRedaction]: [...init[EventType.RoomRedaction]!, e],
-          };
-        default:
-          switch (e.getRelation()?.rel_type) {
-            case RelationType.Replace:
+          switch (e.getType()) {
+            case EventType.Reaction:
               return {
                 ...init,
-                [RelationType.Replace]: [...init[RelationType.Replace]!, e],
+                [EventType.Reaction]: [...(init[EventType.Reaction] ?? []), e],
               };
-            case RelationType.Thread:
+            case EventType.Receipt:
               return {
                 ...init,
-                [RelationType.Thread]: [...init[RelationType.Thread]!, e],
+                [EventType.Receipt]: [...(init[EventType.Receipt] ?? []), e],
+              };
+            case EventType.RoomRedaction:
+              return {
+                ...init,
+                [EventType.RoomRedaction]: [
+                  ...(init[EventType.RoomRedaction] ?? []),
+                  e,
+                ],
               };
             default:
-              return { ...init, ["rest"]: [...init["rest"]!, e] };
+              switch (e.getRelation()?.rel_type) {
+                case RelationType.Replace:
+                  return {
+                    ...init,
+                    [RelationType.Replace]: [
+                      ...(init[RelationType.Replace] ?? []),
+                      e,
+                    ],
+                  };
+                case RelationType.Thread:
+                  return {
+                    ...init,
+                    [RelationType.Thread]: [
+                      ...(init[RelationType.Thread] ?? []),
+                      e,
+                    ],
+                  };
+                default:
+                  return { ...init, ["rest"]: [...(init["rest"] ?? []), e] };
+              }
           }
-      }
-    },
-    {
-      [EventType.Reaction]: [],
-      [EventType.Receipt]: [],
-      [EventType.RoomRedaction]: [],
-      [RelationType.Replace]: [],
-      [RelationType.Thread]: [],
-      ["rest"]: [],
-    } as Record<string, MatrixEvent[]>,
-  ), [events.length]);
-
-  const allAnnotations = getAnnotations(filteredEvents[EventType.Reaction]!);
-  const allReplacements = getReplacements(
-    filteredEvents[RelationType.Replace]!,
+        },
+        {} as Record<string, MatrixEvent[]>,
+      ),
+    [events.length],
   );
-  const allRedactions = getRedactions(filteredEvents[EventType.RoomRedaction]!);
 
-  const sortedEvents = sortByTimestamp(filteredEvents["rest"]!);
+  const allAnnotations = getAnnotations(filteredEvents[EventType.Reaction] ?? []);
+  const allReplacements = getReplacements(
+    filteredEvents[RelationType.Replace] ?? [],
+  );
+  const allRedactions = getRedactions(filteredEvents[EventType.RoomRedaction] ?? []);
+
+  const sortedEvents = sortByTimestamp(filteredEvents["rest"] ?? []);
 
   // return reply + event + annotations
-  const eventRecord = useMemo(() => filteredEvents["rest"]!.reduce(
-    (init, event) => ({
-      ...init,
-      [event.getId()!]: (
-        <Message
-          event={event}
-          annotations={allAnnotations[event.getId()!]}
-          replacements={allReplacements[event.getId()!]}
-          redaction={allRedactions[event.getId()!]}
-        />
+  const eventRecord = useMemo(
+    () =>
+      filteredEvents["rest"]!.reduce(
+        (init, event) => ({
+          ...init,
+          [event.getId()!]: (
+            <Message
+              event={event}
+              annotations={allAnnotations[event.getId()!]}
+              replacements={allReplacements[event.getId()!]}
+              redaction={allRedactions[event.getId()!]}
+            />
+          ),
+        }),
+        {} as Record<string, JSX.Element>,
       ),
-    }),
-    {} as Record<string, JSX.Element>,
-  ), [events.length]);
+    [events.length],
+  );
 
   return sortedEvents.map((list, i) => {
     const firstEvent = currentRoom?.findEventById(list[0]!)!;

@@ -778,7 +778,7 @@ const Receipt = ({ event }: { event: MatrixEvent }) => {
       >
         <ul className="flex flex-col gap-2 p-4">
           {receipts.map((r) => (
-            <li className="flex items-center justify-between p-2 rounded border-2 border-gray-400">
+            <li className="flex items-center justify-between p-2 rounded border-2 border-gray-400" key={r.userId}>
               <div>
                 <p className="text-gray-800">{r.userId}</p>
                 <p className="text-xs text-gray-600">
