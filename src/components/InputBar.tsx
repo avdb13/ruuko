@@ -15,7 +15,13 @@ import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import CrossIcon from "./icons/Cross";
 import { RoomContext } from "../providers/room";
 import { InputContext } from "../providers/input";
-import { EventType, MatrixEvent, MsgType, RoomMember, RoomMemberEvent } from "matrix-js-sdk";
+import {
+  EventType,
+  MatrixEvent,
+  MsgType,
+  RoomMember,
+  RoomMemberEvent,
+} from "matrix-js-sdk";
 import { findLastTextEvent } from "../lib/helpers";
 import Message, { Membership } from "./Message";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
@@ -91,8 +97,8 @@ const InputBar = ({ roomId }: { roomId: string }) => {
     client.on(RoomMemberEvent.Typing, handleTyping);
 
     return () => {
-      client.removeListener(RoomMemberEvent.Typing, handleTyping)
-    }
+      client.removeListener(RoomMemberEvent.Typing, handleTyping);
+    };
   }, []);
 
   useEffect(() => {
@@ -106,6 +112,10 @@ const InputBar = ({ roomId }: { roomId: string }) => {
       return clearTimeout(id);
     }
   }, [message]);
+
+  useEffect(() => {
+    setMessage("")
+  }, [currentRoom?.roomId])
 
   useEffect(() => {
     if (message.length > 0 && message.indexOf("@") >= 0) {
@@ -126,15 +136,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   }, [message]);
 
   useEffect(() => {
-  const handleClickOutside =
-    <T extends HTMLElement>(ref: RefObject<T>, setShow: (_: boolean) => void) =>
-    (e: MouseEvent) => {
-      console.log(ref.current)
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setShow(false);
-      }
-    };
-
     const pickerHandler = handleClickOutside(pickerRef, setShowPicker);
     const modalHandler = handleClickOutside(modalRef, setShowMentionModal);
 
@@ -198,7 +199,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   };
 
   const handleKeys = (e: React.KeyboardEvent) => {
-    console.log("hello!")
+    console.log("hello!");
     switch (e.key) {
       case "ArrowUp":
         const events = roomEvents[currentRoom!.roomId]!;
@@ -256,7 +257,11 @@ const InputBar = ({ roomId }: { roomId: string }) => {
           {showMentionModal &&
             currentRoom
               .getMembers()
-              .filter((m) => m.userId)
+              .filter(
+                (m) =>
+                  m.userId.indexOf(message.split("@")[1]!) >= 0 ||
+                  m.rawDisplayName.indexOf(message.split("@")[1]!) >= 0,
+              )
               .map((r) => (
                 <button
                   type="button"
@@ -353,17 +358,18 @@ const FilePreview = ({
   );
 };
 
-const MentionModal = forwardRef((
-  props: PropsWithChildren, ref: Ref<HTMLDivElement>
-) => {
-  return (
-    <div ref={ref}
-      className="absolute w-[95%] right-[2.5%] bottom-[102.5%] bg-white border-2 border-slate-50 rounded-md shadow-md"
-    >
-      {props.children}
-    </div>
-  );
-});
+const MentionModal = forwardRef(
+  (props: PropsWithChildren, ref: Ref<HTMLDivElement>) => {
+    return (
+      <div
+        ref={ref}
+        className="absolute w-[95%] right-[2.5%] bottom-[102.5%] bg-white border-2 border-slate-50 rounded-md shadow-md"
+      >
+        {props.children}
+      </div>
+    );
+  },
+);
 
 const TypingSpan = () => {};
 
@@ -372,11 +378,21 @@ const Rejoin = ({ handleJoinAgain }: { handleJoinAgain: () => void }) => (
     <p title="join" className="font-semibold text-xl">
       you left this room, click here to join again
     </p>
-    <button onClick={handleJoinAgain} className="py-1 px-4 rounded-md bg-violet-200 border-gray-600 fill-current stroke-2 text-gray-600 border-4 shadow-md scale-75">
+    <button
+      onClick={handleJoinAgain}
+      className="py-1 px-4 rounded-md bg-violet-200 border-gray-600 fill-current stroke-2 text-gray-600 border-4 shadow-md scale-75"
+    >
       <KnobIcon />
     </button>
   </div>
 );
 
+const handleClickOutside =
+  <T extends HTMLElement>(ref: RefObject<T>, setShow: (_: boolean) => void) =>
+  (e: MouseEvent) => {
+    if (ref.current && !ref.current.contains(e.target as Node)) {
+      setShow(false);
+    }
+  };
 
 export default InputBar;
