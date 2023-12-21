@@ -46,13 +46,15 @@ const ClientProvider = (props: PropsWithChildren) => {
     if (cookies["session"]) {
       const client = initClient(session);
 
-      client.createFilter({ presence: ({not_types: ["m.presence"]}) }).then((filter) => {
-        client.startClient({
-          lazyLoadMembers: true,
-          initialSyncLimit: 10,
-          filter,
+      client
+        .createFilter({ presence: { not_types: ["m.presence"] } })
+        .then((filter) => {
+          client.startClient({
+            lazyLoadMembers: true,
+            initialSyncLimit: 10,
+            filter,
+          });
         });
-      });
 
       setClient(client);
     } else {

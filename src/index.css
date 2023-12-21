@@ -3,21 +3,17 @@
 @tailwind utilities;
 
 @layer utilities {
-  #app {
+  .welcome {
     animation-duration: 1s;
-    animation-name: ok;
+    animation-name: welcome;
     animation-timing-function: cubic-bezier(0, 1, 1, 1);
   }
-
-  /* .logout { */
-  /*   backgroundImage: url("/bg.jpg"); */
-  /* } */
 
   .date {
     transform: scaleY(-1);
   }
 
-  @keyframes ok {
+  @keyframes welcome {
     from {
       transform: scale(1.2);
       filter: blur(4px);
@@ -28,6 +24,20 @@
       transform: scale(1);
       filter: blur(0px);
       opacity: 100;
+    }
+  }
+
+  @keyframes logout {
+    from {
+      transform: scale(1);
+      filter: blur(0px);
+      opacity: 100;
+    }
+
+    to {
+      transform: scale(0.5);
+      filter: blur(2px);
+      opacity: 0;
     }
   }
 

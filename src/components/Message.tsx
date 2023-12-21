@@ -199,6 +199,7 @@ const Event = ({
     // use of this is discouraged https://matrix.org/docs/spec/client_server/r0.6.1#m-room-message-feedback
     case EventType.RoomMessageFeedback:
     case EventType.PollStart:
+    case EventType.Direct:
     default:
       return (
         <p className="whitespace-normal break-all">

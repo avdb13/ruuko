@@ -37,9 +37,7 @@ const Background = (props: PropsWithChildren) => {
           }}
         ></div>
       </div>
-      <div>
-        {props.children}
-      </div>
+      {props.children}
     </div>
   )
 }
