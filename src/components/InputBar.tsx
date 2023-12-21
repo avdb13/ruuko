@@ -1,10 +1,21 @@
-import { PropsWithChildren, SyntheticEvent, useContext, useEffect, useRef, useState } from "react";
+import {
+  ComponentPropsWithRef,
+  PropsWithChildren,
+  Ref,
+  RefObject,
+  SyntheticEvent,
+  forwardRef,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ClientContext } from "../providers/client";
 import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import CrossIcon from "./icons/Cross";
 import { RoomContext } from "../providers/room";
 import { InputContext } from "../providers/input";
-import { EventType, MsgType, RoomMember, RoomMemberEvent } from "matrix-js-sdk";
+import { EventType, MatrixEvent, MsgType, RoomMember, RoomMemberEvent } from "matrix-js-sdk";
 import { findLastTextEvent } from "../lib/helpers";
 import Message, { Membership } from "./Message";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
@@ -59,21 +70,29 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const { inReplyTo, setInReplyTo, setReplace } = useContext(InputContext)!;
 
   const pickerRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const [message, setMessage] = useState("");
   const [typing, setTyping] = useState<string[]>([]);
-  const [showEmojis, setShowEmojis] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [showMentionModal, setShowMentionModal] = useState(false);
   const [files, setFiles] = useState<File[] | null>(null);
 
+  const replyEvent = currentRoom?.findEventById(inReplyTo || "") ?? null;
+
   useEffect(() => {
-    client.on(RoomMemberEvent.Typing, (event, _member) => {
+    const handleTyping = (event: MatrixEvent, _member: RoomMember) => {
       setTyping(
         (event.getContent().user_ids as string[])
           .filter((me) => client.getUserId() !== me)
           .map((id) => currentRoom?.getMember(id)?.name || id),
       );
-    });
+    };
+    client.on(RoomMemberEvent.Typing, handleTyping);
+
+    return () => {
+      client.removeListener(RoomMemberEvent.Typing, handleTyping)
+    }
   }, []);
 
   useEffect(() => {
@@ -91,8 +110,6 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   useEffect(() => {
     if (message.length > 0 && message.indexOf("@") >= 0) {
       setShowMentionModal(true);
-    } else {
-      setShowMentionModal(false);
     }
   }, [message]);
 
@@ -109,36 +126,35 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   }, [message]);
 
   useEffect(() => {
-    const handleClickOutsidePicker = (e: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setShowEmojis(false);
+  const handleClickOutside =
+    <T extends HTMLElement>(ref: RefObject<T>, setShow: (_: boolean) => void) =>
+    (e: MouseEvent) => {
+      console.log(ref.current)
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setShow(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutsidePicker);
+
+    const pickerHandler = handleClickOutside(pickerRef, setShowPicker);
+    const modalHandler = handleClickOutside(modalRef, setShowMentionModal);
+
+    document.addEventListener("mousedown", pickerHandler);
+    document.addEventListener("mousedown", modalHandler);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutsidePicker);
+      document.removeEventListener("mousedown", pickerHandler);
+      document.removeEventListener("mousedown", modalHandler);
     };
-  }, [pickerRef]);
+  }, [pickerRef, modalRef]);
 
   if (!currentRoom) {
     return null;
   }
 
   if (currentRoom?.getMyMembership() === Membership.Leave) {
-    return (
-      <div className="flex items-center gap-2 sticky h-16 mx-2 px-4">
-        <p title="join" className="font-semibold text-xl">
-          you left this room, click here to join again
-        </p>
-        <button className="py-1 px-4 rounded-md bg-violet-200 border-gray-600 fill-current stroke-2 text-gray-600 border-4 shadow-md scale-75">
-          <KnobIcon />
-        </button>
-      </div>
-    );
+    return <Rejoin handleJoinAgain={() => {}} />;
   }
 
-  const replyEvent = currentRoom?.findEventById(inReplyTo || "") ?? null;
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
 
@@ -182,6 +198,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   };
 
   const handleKeys = (e: React.KeyboardEvent) => {
+    console.log("hello!")
     switch (e.key) {
       case "ArrowUp":
         const events = roomEvents[currentRoom!.roomId]!;
@@ -235,21 +252,36 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         onSubmit={handleSubmit}
         className="flex items-center gap-2 sticky h-12 mx-2"
       >
-        <MentionModal
-        >
-          {showMentionModal && currentRoom.getMembers().filter(m => m.userId).map((r) => (
-            <button
-              type="button"
-              onClick={() => setMessage(message.slice(0, message.lastIndexOf("@")).concat(r.userId))}
-              key={r.userId}
-              className="flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
-            >
-              <Avatar id={r.userId} size={8} className="border-none" type="user" />
-              <p>{r.rawDisplayName}</p>
-              <div className="grow" />
-              <p className="text-gray-600">{r.userId}</p>
-            </button>
-          ))}
+        <MentionModal ref={modalRef}>
+          {showMentionModal &&
+            currentRoom
+              .getMembers()
+              .filter((m) => m.userId)
+              .map((r) => (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessage(
+                      message
+                        .slice(0, message.lastIndexOf("@"))
+                        .concat(r.userId),
+                    );
+                    setShowMentionModal(false);
+                  }}
+                  key={r.userId}
+                  className="flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
+                >
+                  <Avatar
+                    id={r.userId}
+                    size={8}
+                    className="border-none"
+                    type="user"
+                  />
+                  <p>{r.rawDisplayName}</p>
+                  <div className="grow" />
+                  <p className="text-gray-600">{r.userId}</p>
+                </button>
+              ))}
         </MentionModal>
         <FilePicker files={files} setFiles={setFiles} />
         <div className="flex bg-transparent grow rounded-md my-2 py-1">
@@ -267,7 +299,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setShowEmojis(!showEmojis);
+                setShowPicker(!showPicker);
               }}
             >
               😺
@@ -276,14 +308,14 @@ const InputBar = ({ roomId }: { roomId: string }) => {
               ref={pickerRef}
               className="absolute right-[0%] bottom-[100%]  translate-x-0 duration-300 ease-out"
             >
-              {showEmojis ? (
+              {showPicker ? (
                 <EmojiPicker
                   emojiStyle={EmojiStyle.NATIVE}
                   skinTonesDisabled={true}
                   previewConfig={{ showPreview: false }}
                   onEmojiClick={(e, _) => {
                     setMessage(message.concat(e.emoji));
-                    setShowEmojis(false);
+                    setShowPicker(false);
                   }}
                 />
               ) : null}
@@ -321,14 +353,30 @@ const FilePreview = ({
   );
 };
 
-const MentionModal = (props: PropsWithChildren) => {
+const MentionModal = forwardRef((
+  props: PropsWithChildren, ref: Ref<HTMLDivElement>
+) => {
   return (
-    <div className="absolute w-[95%] right-[2.5%] bottom-[102.5%] bg-white border-2 border-slate-50 rounded-md shadow-md">
+    <div ref={ref}
+      className="absolute w-[95%] right-[2.5%] bottom-[102.5%] bg-white border-2 border-slate-50 rounded-md shadow-md"
+    >
       {props.children}
     </div>
   );
-};
+});
 
 const TypingSpan = () => {};
+
+const Rejoin = ({ handleJoinAgain }: { handleJoinAgain: () => void }) => (
+  <div className="flex items-center gap-2 sticky h-16 mx-2 px-4">
+    <p title="join" className="font-semibold text-xl">
+      you left this room, click here to join again
+    </p>
+    <button onClick={handleJoinAgain} className="py-1 px-4 rounded-md bg-violet-200 border-gray-600 fill-current stroke-2 text-gray-600 border-4 shadow-md scale-75">
+      <KnobIcon />
+    </button>
+  </div>
+);
+
 
 export default InputBar;
