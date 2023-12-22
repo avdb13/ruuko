@@ -213,6 +213,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
     }
   };
 
+  // TODO: reset who's typing on currentRoom
   return (
     <>
       {typing.length > 0 ? (

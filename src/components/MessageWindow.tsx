@@ -60,7 +60,6 @@ const MessageWindow = () => {
 
   const bottomDivRef = useRef<HTMLUListElement>(null);
   const [showMembers, setShowMembers] = useState(false);
-  const [mouseDown, setMouseDown] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (!currentRoom) {
@@ -73,53 +72,57 @@ const MessageWindow = () => {
   }, [currentRoom, events?.length]);
 
   useEffect(() => {
-    document.body.onmouseup = () => setMouseDown(false);
-    document.body.onmousedown = () => setMouseDown(true);
-  }, [])
+    lazyLoadEvents();
+  }, [currentRoom.roomId])
+
+  const lazyLoadEvents = () => {
+    const parent = bottomDivRef.current;
+
+    if (!parent) {
+      return;
+    }
+    console.log("fired")
+
+    const children = [...parent.children ?? []];
+    const parentHeight = parent.getBoundingClientRect().height;
+
+    console.log("children.length " + children.length)
+    if (children.length > 0) {
+      const childrenHeight = children.map(c => c.getBoundingClientRect().height);
+
+      const range = [...Array(children.length).keys()];
+      const accum = (i: number) => childrenHeight.slice(0, i).reduce((init, j) => init+j, 0);
+
+      const visibleEls = range.find(i => accum(i)-parent.scrollTop > parentHeight);
+
+      console.log("parent.scrollTop " + parent.scrollTop)
+      console.log("visibleEls " + visibleEls)
+
+      if (!visibleEls) {
+        setLoading(true);
+
+        client.scrollback(currentRoom, 5).then((r) => {
+          setRoomEvents({
+            ...roomEvents,
+            [r.roomId]: r.getLiveTimeline().getEvents(),
+          });
+
+          setLoading(false);
+        });
+      }
+    }
+  }
 
   useLayoutEffect(() => {
-    console.log("fired")
     if (bottomDivRef.current) {
-      const parent = bottomDivRef.current;
-      const children = [...parent.children ?? []];
-
-      const lazyLoadEvents = () => {
-        const parentHeight = parent.getBoundingClientRect().height;
-
-        if (children.length > 0) {
-          const childrenHeight = children.map(c => c.getBoundingClientRect().height);
-
-          const range = [...Array(children.length).keys()];
-          const accum = (i: number) => childrenHeight.slice(0, i).reduce((init, j) => init+j, 0);
-
-          const visibleEls = range.find(i => accum(i)-parent.scrollTop > parentHeight);
-
-          console.log("parent.scrollTop " + parent.scrollTop)
-          console.log("visibleEls " + visibleEls)
-
-          if (!visibleEls && !mouseDown) {
-            console.log("LOADING MORE");
-            setLoading(true);
-
-            client.scrollback(currentRoom, 10).then((r) => {
-              setRoomEvents({
-                ...roomEvents,
-                [r.roomId]: r.getLiveTimeline().getEvents(),
-              });
-
-              setLoading(false);
-            });
-          }
-        }
-      }
-
       bottomDivRef.current.addEventListener("scroll", lazyLoadEvents)
+
 
       return () => {
         bottomDivRef.current?.removeEventListener("scroll", lazyLoadEvents);
       }
     }
-  }, [currentRoom, bottomDivRef]);
+  }, [currentRoom.roomId, bottomDivRef]);
 
   // useLayoutEffect(() => {
   //   const observer = new IntersectionObserver((entries) => {
