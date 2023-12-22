@@ -1,7 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import Resizable from "./Resizable";
 import {
-  EventType,
   IContent,
   IStatusResponse,
   RoomMember,
@@ -9,10 +8,8 @@ import {
 import Avatar from "./Avatar";
 import { RoomContext } from "../providers/room";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
-import { ClientContext } from "../providers/client";
 import Modal from "./Modal";
 import moment from "moment";
-import ReactFocusLock from "react-focus-lock";
 
 const sortMembers = (prev: RoomMember, next: RoomMember) => {
   return prev
@@ -60,17 +57,16 @@ const MemberList = ({
           0 < r.rawDisplayName.toLowerCase().search(query)
         : r,
     )
-    .slice(0, 50);
 
   const regulars = members
     .filter((m) => m.powerLevel !== 100)
+    .sort(sortMembers)
     .filter((r) =>
       query.length > 0
         ? 0 < r.name.toLowerCase().search(query) ||
           0 < r.rawDisplayName.toLowerCase().search(query)
         : r,
     )
-    .slice(0, 50);
 
   return (
     <Resizable
@@ -142,9 +138,9 @@ const MemberList = ({
               ))
             : null}
           <p className="font-bold capitalize text-gray-600">
-            members ({regulars.filter((m) => m.powerLevel < 100).length})
+            members ({regulars.length})
           </p>
-          {regulars.map((m) => (
+          {regulars.slice(0,50).map((m) => (
             <MemberChip
               // presencePromise={}
               presenceEvent={presences[m.userId]}

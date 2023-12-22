@@ -9,6 +9,7 @@ import InputBar from "./InputBar";
 import {
   lazy,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -58,8 +59,8 @@ const MessageWindow = () => {
   const client = useContext(ClientContext);
 
   const bottomDivRef = useRef<HTMLUListElement>(null);
-  const observerRef = useRef<Element>();
   const [showMembers, setShowMembers] = useState(false);
+  const [mouseDown, setMouseDown] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (!currentRoom) {
@@ -71,40 +72,71 @@ const MessageWindow = () => {
     return events;
   }, [currentRoom, events?.length]);
 
-  useLayoutEffect(() => {
-    const list = document.getElementById("bottom-div");
-
-    observerRef.current =
-      list?.children?.item(list?.children.length - 1) ?? undefined;
-    list?.scroll(0, 0);
-  }, [currentRoom]);
+  useEffect(() => {
+    document.body.onmouseup = () => setMouseDown(false);
+    document.body.onmousedown = () => setMouseDown(true);
+  }, [])
 
   useLayoutEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      if ((entries[0]?.isIntersecting || eventsMemo.length < 50) && !loading) {
-        console.log("intersecting");
+    console.log("fired")
+    if (bottomDivRef.current) {
+      const parent = bottomDivRef.current;
+      const children = [...parent.children ?? []];
 
-        setLoading(true);
+      const lazyLoadEvents = () => {
+        const parentHeight = parent.getBoundingClientRect().height;
 
-        client.scrollback(currentRoom, eventsMemo.length + 50).then((r) => {
-          setRoomEvents({
-            ...roomEvents,
-            [r.roomId]: r.getLiveTimeline().getEvents(),
-          });
+        if (children.length > 0) {
+          const childrenHeight = children.map(c => c.getBoundingClientRect().height);
 
-          setLoading(false);
-        });
+          const range = [...Array(children.length).keys()];
+          const accum = (i: number) => childrenHeight.slice(0, i).reduce((init, j) => init+j, 0);
+
+          const visibleEls = range.find(i => accum(i)-parent.scrollTop > parentHeight);
+
+          console.log("parent.scrollTop " + parent.scrollTop)
+          console.log("visibleEls " + visibleEls)
+
+          if (!visibleEls && !mouseDown) {
+            console.log("LOADING MORE");
+            setLoading(true);
+
+            client.scrollback(currentRoom, 10).then((r) => {
+              setRoomEvents({
+                ...roomEvents,
+                [r.roomId]: r.getLiveTimeline().getEvents(),
+              });
+
+              setLoading(false);
+            });
+          }
+        }
       }
-    });
 
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
+      bottomDivRef.current.addEventListener("scroll", lazyLoadEvents)
+
+      return () => {
+        bottomDivRef.current?.removeEventListener("scroll", lazyLoadEvents);
+      }
     }
+  }, [currentRoom, bottomDivRef]);
 
-    return () => {
-      observerRef.current ? observer.unobserve(observerRef.current) : null;
-    };
-  }, [observerRef, currentRoom.roomId]);
+  // useLayoutEffect(() => {
+  //   const observer = new IntersectionObserver((entries) => {
+  //     if ((entries[0]?.isIntersecting || eventsMemo.length < 50) && !loading) {
+  //       console.log("intersecting");
+
+  //     }
+  //   });
+
+  //   if (observerRef.current) {
+  //     observer.observe(observerRef.current);
+  //   }
+
+  //   return () => {
+  //     observerRef.current ? observer.unobserve(observerRef.current) : null;
+  //   };
+  // }, [observerRef, currentRoom.roomId]);
 
   if (currentRoom?.getMyMembership() === Membership.Ban) {
     return (
