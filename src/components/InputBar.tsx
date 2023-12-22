@@ -36,6 +36,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const pickerRef = useRef<HTMLDivElement>(null);
 
   const [message, setMessage] = useState("");
+  const [selected, setSelected] = useState<number>(0);
   const [typing, setTyping] = useState<string[]>([]);
   const [showPicker, setShowPicker] = useState(false);
   const [showMentionModal, setShowMentionModal] = useState(false);
@@ -50,11 +51,13 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   const mentionQuery = message.split("@")[1];
   // can't be null since it depends on InputBar, which is only available in a room
   const mentionQueryResult = mentionQuery
-    ? members!.filter(
-        (m) =>
-          m.userId.indexOf(mentionQuery) >= 0 ||
-          m.rawDisplayName.indexOf(mentionQuery) >= 0,
-      ).slice(0,6)
+    ? members!
+        .filter(
+          (m) =>
+            m.userId.slice(0, -1).toLowerCase().startsWith(mentionQuery.toLowerCase()) ||
+            m.rawDisplayName.toLowerCase().startsWith(mentionQuery.toLowerCase()),
+        )
+        .slice(0, 6)
     : null;
 
   useEffect(() => {
@@ -175,8 +178,28 @@ const InputBar = ({ roomId }: { roomId: string }) => {
   };
 
   const handleKeys = (e: React.KeyboardEvent) => {
-    console.log("hello!");
-
+    if (
+      showMentionModal &&
+      mentionQueryResult &&
+      mentionQueryResult.length > 0
+    ) {
+      switch (e.key) {
+        case "ArrowDown":
+          console.log(selected)
+          setSelected((selected + 1) % mentionQueryResult.length);
+          return;
+        case "ArrowUp":
+          setSelected(
+            selected === 0
+              ? mentionQueryResult.length - 1
+              : (selected - 1) % mentionQueryResult.length,
+          );
+          return;
+        case "Enter":
+          console.log("hi");
+          return;
+      }
+    }
     switch (e.key) {
       case "ArrowDown":
       case "ArrowUp":
@@ -186,10 +209,7 @@ const InputBar = ({ roomId }: { roomId: string }) => {
         if (lastEvent) {
           setReplace(lastEvent);
         }
-
         return;
-      case "Enter":
-        console.log("MURIDA");
     }
   };
 
@@ -239,6 +259,8 @@ const InputBar = ({ roomId }: { roomId: string }) => {
           queryResult={mentionQueryResult}
           message={message}
           setMessage={setMessage}
+          selected={selected}
+          setSelected={setSelected}
         />
         <FilePicker files={files} setFiles={setFiles} />
         <div className="flex bg-transparent grow rounded-md my-2 py-1">
@@ -355,6 +377,8 @@ type MentionModalProps = {
   queryResult: RoomMember[] | null;
   message: string;
   setMessage: (_: string) => void;
+  selected: number;
+  setSelected: (_: number) => void;
 };
 const MentionModal = ({
   queryResult,
@@ -362,10 +386,10 @@ const MentionModal = ({
   setVisible,
   message,
   setMessage,
+  selected,
+  setSelected,
 }: MentionModalProps) => {
   const ref = useRef<HTMLDivElement>(null);
-  const children = useRef<HTMLButtonElement[]>([]);
-  const [selected, setSelected] =useState<number | null>(null);
 
   useEffect(() => {
     const handler = handleClickOutside(ref, setVisible);
@@ -376,86 +400,41 @@ const MentionModal = ({
     };
   }, [ref]);
 
-  useLayoutEffect(() => {
-    console.log("fired", visible)
-
-    const atIdx = message.indexOf("@") + 1;
-
-    if (queryResult?.length === 0 ?? false) {
-      setVisible(false);
-    }
-
-    if (message.length > 0 && atIdx && message.length > atIdx) {
+  useEffect(() => {
+    if (queryResult && queryResult.length > 0) {
       setVisible(true);
     }
+  }, [queryResult]);
 
-    children.current = children.current.slice(0, queryResult?.length ?? 0);
-    // setSelected(0);
-
-  }, [queryResult, message])
-
-  useLayoutEffect(() => {
-    if (selected) {
-      children.current[selected]?.focus();
-      return;
-    }
-
-    const first = ref.current?.firstElementChild;
-
-    if (ref.current && first) {
-      setTimeout(() => (first as HTMLButtonElement).focus(), 50);
-    }
-  }, [selected])
-
-  if (!queryResult || !visible) {
+  if (!visible || !queryResult || queryResult.length === 0) {
     return null;
-  }
-
-  const handleKeys = (e: React.SyntheticEvent) => {
-    if (!selected) {
-      return;
-    }
-
-    switch(e.type) {
-      case "ArrowDown":
-        setSelected((selected+1)%queryResult.length)
-        return;
-      case "ArrowUp":
-        setSelected(selected === 0 ? queryResult.length-1 : (selected-1)%queryResult.length)
-        return;
-    }
   }
 
   return (
     <div
       ref={ref}
-      onKeyDown={handleKeys}
       className="absolute w-[95%] right-[2.5%] bottom-[102.5%] bg-white border-2 border-slate-50 rounded-md shadow-md"
     >
-      {queryResult.map((r, i) => (
-          <button
-            ref={el => el ? children.current[i] = el : null}
-            type="button"
-            onClick={() => {
-              setMessage(
-                message.slice(0, message.lastIndexOf("@")).concat(r.userId),
-              );
-              setVisible(false);
-            }}
-            key={r.userId}
-            className="focus:bg-red-100 flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full"
-          >
-            <Avatar
-              id={r.userId}
-              size={8}
-              className="border-none"
-              type="user"
-            />
-            <p>{r.rawDisplayName}</p>
-            <div className="grow" />
-            <p className="text-gray-600">{r.userId}</p>
-          </button>
-        ))}
+      {queryResult.map((m, i) => (
+        <button
+          type="button"
+          onClick={() => {
+            setMessage(
+              message.slice(0, message.lastIndexOf("@")).concat(m.userId),
+            );
+            setVisible(false);
+          }}
+          key={m.userId}
+          className={`flex p-2 gap-2 items-center hover:bg-slate-100 duration-100 w-full ${
+            selected === i ? "bg-red-100" : null
+          }`}
+        >
+          <Avatar id={m.userId} size={8} className="border-none" type="user" />
+          <p>{m.rawDisplayName}</p>
+          <div className="grow" />
+          <p className="text-gray-600">{m.userId}</p>
+        </button>
+      ))}
     </div>
   );
 };

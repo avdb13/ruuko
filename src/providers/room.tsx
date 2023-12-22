@@ -94,6 +94,10 @@ const RoomProvider = (props: PropsWithChildren) => {
     );
   }, [rooms.length]);
 
+  useEffect(() => {
+    currentRoom?.loadMembersIfNeeded()
+  }, [currentRoom?.roomId])
+
   client.on(ClientEvent.Room, (newRoom) =>
     setRooms((prev) => [...prev, newRoom]),
   );
