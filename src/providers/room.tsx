@@ -20,25 +20,24 @@ import {
 import { ClientContext } from "./client";
 import { Annotator } from "../components/chips/Annotation";
 import {
-  addAnnotation,
   addNewEvent,
-  addRedaction,
-  addReplacement,
   getAnnotations,
   getRedactions,
   getReplacements,
-  toAnnotation,
 } from "../lib/helpers";
 
 export const RoomContext = createContext<MyRoomState | null>(null);
 
-export type Message = {
-  event: MatrixEvent;
+type Metadata = {
   replacements?: MatrixEvent[];
   // no need to store the entire event for annotations
   annotations?: Record<string, Annotator[]>;
   redaction?: MatrixEvent;
 };
+
+export interface Message extends Metadata {
+  event: MatrixEvent;
+}
 
 interface MyRoomState {
   rooms: Room[];
@@ -88,9 +87,13 @@ const RoomProvider = (props: PropsWithChildren) => {
       return;
     }
 
+    // not sure if correct
     setRoomEvents(
       rooms.reduce((init, r) => {
-        const events = r.getLiveTimeline().getEvents();
+        const allEvents = r.getLiveTimeline().getEvents();
+        const firstMessageIdx = allEvents.findIndex(e => isRoomMessage(e));
+        const events = allEvents.slice(firstMessageIdx);
+
         const allReplacements = getReplacements(events);
         const allAnnotations = getAnnotations(events);
         const allRedactions = getRedactions(events);
@@ -150,7 +153,7 @@ const RoomProvider = (props: PropsWithChildren) => {
       Object.values(roomEvents).length >= roomsLength.current
     )
   ) {
-    console.log(roomsLength.current, Object.values(roomEvents).length);
+    // console.log(roomsLength.current, Object.values(roomEvents).length);
     return null;
   }
 

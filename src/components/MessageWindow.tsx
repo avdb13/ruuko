@@ -1,5 +1,5 @@
 import { EventType, MatrixEvent, RelationType, RoomState } from "matrix-js-sdk";
-import Message, {
+import MessageComponent, {
   DateMessage,
   Membership,
   MessageFrame,
@@ -15,9 +15,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { RoomContext } from "../providers/room";
+import { Message, RoomContext, sortByTimestamp } from "../providers/room";
 import MembersIcon from "./icons/Members";
-import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
 import { ClientContext } from "../providers/client";
 import Loader from "./Loader";
 
@@ -43,10 +42,10 @@ const MessageWindow = () => {
     return null;
   }
 
-  const events = roomEvents[currentRoom.roomId]!;
-  const eventsMemo = useMemo(() => {
-    return events;
-  }, [currentRoom, events?.length]);
+  const messages = roomEvents[currentRoom.roomId]!;
+  const messageMemo = useMemo(() => {
+    return messages;
+  }, [currentRoom, messages]);
 
   useEffect(() => {
     lazyLoadEvents();
@@ -92,23 +91,6 @@ const MessageWindow = () => {
     }
   }, [currentRoom.roomId, bottomDivRef]);
 
-  // useLayoutEffect(() => {
-  //   const observer = new IntersectionObserver((entries) => {
-  //     if ((entries[0]?.isIntersecting || eventsMemo.length < 50) && !loading) {
-  //       console.log("intersecting");
-
-  //     }
-  //   });
-
-  //   if (observerRef.current) {
-  //     observer.observe(observerRef.current);
-  //   }
-
-  //   return () => {
-  //     observerRef.current ? observer.unobserve(observerRef.current) : null;
-  //   };
-  // }, [observerRef, currentRoom.roomId]);
-
   if (currentRoom?.getMyMembership() === Membership.Ban) {
     return (
       <div className="relative basis-1/2 max-h-screen grow">
@@ -118,7 +100,7 @@ const MessageWindow = () => {
           </p>
           <p className="py-2 text-center text-gray-800">
             reason:{" "}
-            {eventsMemo[eventsMemo.length - 1]?.getContent().reason ??
+            {messageMemo[messageMemo.length - 1]?.event.getContent().reason ??
               "unknown"}
           </p>
         </div>
@@ -141,7 +123,7 @@ const MessageWindow = () => {
           className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>li]:scale-y-[-1] [&>li]:list-none overflow-x-clip"
           id="bottom-div"
         >
-          <Timeline events={eventsMemo} />
+          <Timeline messages={messageMemo} />
           {loading ? (
             <div className="h-24 shrink-0 flex items-center">
               <Loader className="bg-transparent w-full" />
@@ -155,96 +137,82 @@ const MessageWindow = () => {
   );
 };
 
-const Timeline = ({ events }: { events: MatrixEvent[] }) => {
-  const { currentRoom } = useContext(RoomContext)!;
+const Timeline = ({ messages }: { messages: Message[] }) => {
+  const { currentRoom, roomEvents } = useContext(RoomContext)!;
 
-  const allAnnotations = getAnnotations(events.filter(e => e.getType() === EventType.Reaction));
-  const allReplacements = getReplacements(events.filter(e => e.getRelation()?.rel_type && e.getRelation()?.rel_type! === RelationType.Replace));
-  const allRedactions = getRedactions(events.filter(e => e.getType() === EventType.RoomRedaction));
-
-  const rest = events.filter(e => e.getType() !== EventType.Reaction && e.getType() !== EventType.RoomRedaction && !e.getRelation());
-  rest.reverse();
-  const sortedEvents = sortByTimestamp(rest);
+  // const timestamps = sortByTimestamp(roomEvents[currentRoom!.roomId] ?? []);
 
   // return reply + event + annotations
-  const eventRecord = useMemo(
-    () =>
-      rest.reduce(
-        (init, event) => ({
-          ...init,
-          [event.getId()!]: (
-            <Message
-              event={event}
-              annotations={allAnnotations[event.getId()!]}
-              replacements={allReplacements[event.getId()!]}
-              redaction={allRedactions[event.getId()!]}
+  // const eventRecord = useMemo(
+  //   () =>
+  //     messages.reduce(
+  //       (init, message) => ({
+  //         ...init,
+  //         [message.event.getId()!]: (
+  //           <MessageComponent
+  //             message={message}
+  //           />
+  //         ),
+  //       }),
+  //       {} as Record<string, JSX.Element>,
+  //     ),
+  //   [events.length],
+  // );
+
+  return messages.map(message => (
+            <MessageComponent
+              message={message}
             />
-          ),
-        }),
-        {} as Record<string, JSX.Element>,
-      ),
-    [events.length],
-  );
+  ))
 
   // TODO: get rid of this filter and pinpoint the problem.
-  return sortedEvents.filter(arr => arr.length > 0).map((list, i) => {
-    const firstEvent = currentRoom?.findEventById(list[0]!)!;
+  // return sortedEvents.filter(arr => arr.length > 0).map((list, i) => {
+  //   const firstEvent = currentRoom?.findEventById(list[0]!)!;
 
-    const displayName = firstEvent.getContent().displayname;
+  //   const displayName = firstEvent.getContent().displayname;
 
-    const previous =
-      i !== 0
-        ? currentRoom!.findEventById(sortedEvents[i - 1]?.[0] || "") ?? null
-        : null;
+  //   const previous =
+  //     i !== 0
+  //       ? currentRoom!.findEventById(sortedEvents[i - 1]?.[0] || "") ?? null
+  //       : null;
 
-    if (list.length === 1 && (firstEvent.getType() !== EventType.RoomMessage || firstEvent.getType() !== EventType.RoomMessageEncrypted)) {
-      return (
-        <>
-          <DayBreak
-            key={firstEvent.getId()! + "-daybreak"}
-            previous={previous}
-            current={firstEvent}
-          />
-          <StateFrame
-            key={firstEvent.getId()!}
-            userId={firstEvent.getSender()!}
-          >
-            {list.map((id) => eventRecord[id]!)}
-          </StateFrame>
-        </>
-      );
-    }
+  //   if (list.length === 1 && (firstEvent.getType() !== EventType.RoomMessage || firstEvent.getType() !== EventType.RoomMessageEncrypted)) {
+  //     return (
+  //       <>
+  //         <DayBreak
+  //           key={firstEvent.getId()! + "-daybreak"}
+  //           previous={previous}
+  //           current={firstEvent}
+  //         />
+  //         <StateFrame
+  //           key={firstEvent.getId()!}
+  //           userId={firstEvent.getSender()!}
+  //         >
+  //           {list.map((id) => eventRecord[id]!)}
+  //         </StateFrame>
+  //       </>
+  //     );
+  //   }
 
-    return (
-      <>
-        <DayBreak
-          key={firstEvent.getId()! + "-daybreak"}
-          previous={previous}
-          current={firstEvent}
-        />
-        <MessageFrame
-          key={firstEvent.getId()!}
-          userId={firstEvent.getSender()!}
-          displayName={displayName}
-          timestamp={firstEvent.getTs()}
-        >
-          {list.map((id) => eventRecord[id]!)}
-        </MessageFrame>
-      </>
-    );
-  });
+  //   return (
+  //     <>
+  //       <DayBreak
+  //         key={firstEvent.getId()! + "-daybreak"}
+  //         previous={previous}
+  //         current={firstEvent}
+  //       />
+  //       <MessageFrame
+  //         key={firstEvent.getId()!}
+  //         userId={firstEvent.getSender()!}
+  //         displayName={displayName}
+  //         timestamp={firstEvent.getTs()}
+  //       >
+  //         {list.map((id) => eventRecord[id]!)}
+  //       </MessageFrame>
+  //     </>
+  //   );
+  // });
 };
-
-// <button
-//   className="p-1 bg-indigo-200 border-2 border-gray-400 rounded-md mb-2"
-//   onClick={() =>
-//     console.log(
-//       list.map((id) => currentRoom?.findEventById(id)?.getContent()),
-//     )
-//   }
-// >
-//   events
-// </button>
 
 const isDifferentDay = (previous: MatrixEvent, current: MatrixEvent) => {
   const previousDate = new Date(previous.getTs());

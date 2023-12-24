@@ -198,6 +198,11 @@ export const addNewEvent = (e: MatrixEvent, roomEvents?: Message[]) => {
       const annotation = relation?.rel_type === RelationType.Annotation;
       const redaction = e.getContent().redacts as string;
 
+      console.log(roomEvents)
+      if (!roomEvents?.find(m => m.event.getId() === relation?.event_id)) {
+        return roomEvents ?? []
+      }
+
       if (replacement) {
         // if we receive a non-message event roomEvents for this room must be initialized
         return roomEvents!.map((m) =>

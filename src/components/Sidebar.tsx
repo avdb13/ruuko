@@ -1,4 +1,4 @@
-import { EventType, MatrixEvent, Room, RoomType } from "matrix-js-sdk";
+import { EventType, Room } from "matrix-js-sdk";
 import { useState, useContext, useMemo } from "react";
 import { RoomContext } from "../providers/room";
 import { formatEvent } from "./Message";
@@ -30,21 +30,17 @@ const RoomIconWidget = ({ id }: { id: string }) => {
 const RoomWidget = ({
   id,
   name,
-  personal,
+  direct,
 }: {
   id: string;
   name: string;
-  personal: boolean;
+  direct: boolean;
 }) => {
   const { setCurrentRoom, roomEvents, rooms } = useContext(RoomContext)!;
 
-  const events = roomEvents[id]!.filter(
-    (e) =>
-      e.getType() === EventType.RoomMessage ||
-      e.getType() === EventType.RoomMember,
-  );
+  const messages = roomEvents[id];
 
-  const latestEvent = events ? events[events.length - 1] : null;
+  const latestMessage = messages ? messages[messages.length - 1] : null;
 
   return (
     <button
@@ -56,13 +52,13 @@ const RoomWidget = ({
       <div className="flex flex-col items-start min-w-0">
         <p className="max-w-full truncate font-bold">{name}</p>
         <p className="max-w-full truncate text-sm">
-          {latestEvent
+          {latestMessage
             ? `${
-                personal
+                direct
                   ? ""
-                  : (latestEvent.getContent().displayname ||
-                      latestEvent.getSender()) + ": "
-              } ${formatEvent(latestEvent)}`
+                  : (latestMessage.event.getContent().displayname ||
+                      latestMessage.event.getSender()) + ": "
+              } ${formatEvent(latestMessage.event)}`
             : null}
         </p>
       </div>
@@ -74,18 +70,18 @@ const RoomWidget = ({
 const RoomList = ({
   sidebarWidth,
   rooms,
-  personal,
+  direct,
 }: {
   sidebarWidth: number;
   rooms: { name: string; id: string }[];
-  personal?: boolean;
+  direct?: boolean;
 }) => {
   return rooms.length > 0 ? (
     <ul className="flex flex-col gap-2">
       {sidebarWidth < 120
         ? rooms.map(({ _, id }) => <RoomIconWidget id={id} key={id} />)
         : rooms.map(({ name, id }) => (
-            <RoomWidget personal={personal ?? false} name={name} id={id} key={id} />
+            <RoomWidget direct={direct ?? false} name={name} id={id} key={id} />
           ))}
     </ul>
   ) : null;
@@ -96,9 +92,9 @@ const Sidebar = () => {
   const client = useContext(ClientContext);
   const [sidebarWidth, setSidebarWidth] = useState(400);
 
-  const getLastEvent = (r: Room) => {
-    const events = roomEvents[r.roomId];
-    return events?.[events.length - 1]?.getTs();
+  const getLastMessage = (r: Room) => {
+    const messages = roomEvents[r.roomId];
+    return messages?.[messages.length - 1]?.event.getTs();
   };
 
   const directEvent = client.getAccountData(EventType.Direct);
@@ -114,7 +110,7 @@ const Sidebar = () => {
     const sorted = rooms.sort((a, b) =>
       // don't panic! I negated the return value here
       // because I don't wanna rewrite the sorting function.
-      -sortRooms(getLastEvent(a), getLastEvent(b)),
+      -sortRooms(getLastMessage(a), getLastMessage(b)),
     );
 
     const joined = (r: Room) => r.getMyMembership() === Membership.Join;
@@ -147,7 +143,7 @@ const Sidebar = () => {
           title="direct messages"
           sidebarWidth={sidebarWidth}
         >
-          <RoomList personal rooms={directRooms} sidebarWidth={sidebarWidth} />
+          <RoomList direct rooms={directRooms} sidebarWidth={sidebarWidth} />
         </Togglable>
         <Togglable
           modal={<SearchRoomForm />}
