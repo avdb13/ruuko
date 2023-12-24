@@ -16,7 +16,6 @@ const App = () => {
   useEffect(() => {
     const crypto = client.getCrypto();
     if  (crypto) {
-      crypto.bootstrapCrossSigning({}).then(() => console.log("bootstrapCrossSigning"))
       crypto.getCrossSigningStatus().then(status => console.log(status));
       crypto.getCrossSigningKeyId().then(status => console.log(status));
     }
@@ -24,6 +23,7 @@ const App = () => {
     // if ()
   }, [])
 
+  console.log("ready");
   return (
     <div className={`relative flex min-w-0 welcome`}>
       <Sidebar />

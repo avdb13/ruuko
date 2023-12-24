@@ -1,48 +1,95 @@
 import { memo, useContext } from "react";
 import { ClientContext } from "../providers/client";
-import { getAvatarUrl } from "../lib/helpers";
-import { RoomContext } from "../providers/room";
+import { AvatarContext } from "../providers/avatar";
+import { MatrixClient, getHttpUriForMxc } from "matrix-js-sdk";
 
-export type AvatarType = "user" | "room";
+export type AvatarKind = "user" | "room";
 
-const Avatar = memo(function Avatar ({
+type AvatarResponse = {
+  url?: string;
+  status: "success" | "fail" | "nonexistent";
+};
+
+export const getAvatarUrl = (
+  client: MatrixClient,
+  id: string,
+  kind: AvatarKind,
+): AvatarResponse => {
+  const mxcUrl = kind === "user" ? client.getUser(id)?.avatarUrl : client.getRoom(id)?.getMxcAvatarUrl();
+  console.log(mxcUrl)
+
+    if (!mxcUrl) {
+      return { status: "nonexistent" };
+    }
+
+    // if none of these resolve the avatarUrl, we simply give up.
+    const baseUrls = [
+      client.baseUrl,
+      "https://matrix.org",
+      "https://" + id.split(":")[1]!,
+    ];
+
+    for (const baseUrl of baseUrls) {
+      const url = getHttpUriForMxc(baseUrl, mxcUrl);
+
+      if (url.length > 0) {
+        return { status: "success", url };
+      } else {
+        continue;
+      }
+    }
+
+    return {status: "fail"}
+};
+
+const Avatar = memo(function Avatar({
   id,
-  type,
+  kind,
   size,
   className,
 }: {
   id: string;
-  type: AvatarType;
+  kind: AvatarKind;
   size: number;
   className?: string;
 }) {
   const client = useContext(ClientContext);
-  const { avatars, setAvatars } = useContext(RoomContext)!;
+  const { avatars, setAvatars } = useContext(AvatarContext)!;
 
-
-  const src = avatars[id] ? avatars[id] : getAvatarUrl(client, id, type);
-  if (!avatars[id] && src) {
-    setAvatars(({...avatars, [id]: src }))
+  if (!avatars[id]) {
+    const resp = getAvatarUrl(client, id, kind);
+    switch (resp.status) {
+      case "success":
+        setAvatars({ ...avatars, [id]: resp.url! });
+        break;
+      case "fail":
+        setAvatars({ ...avatars, [id]: "/unknown.jpg" });
+        break;
+      case "nonexistent":
+        setAvatars({ ...avatars, [id]: "/anonymous.jpg" });
+        break;
+    }
   }
 
   return (
     <img
-      src={src || "/public/anonymous.jpg"
-      }
+      src={avatars[id]!}
       className={
-        `bg-white object-cover self-start rounded-full border-4` + " " + className
+        `bg-white object-cover self-start rounded-full border-4` +
+        " " +
+        className
       }
       style={{ height: size * 4, width: size * 4, minWidth: size * 4 }}
     />
   );
 });
 
-export const DirectAvatar = memo(function DirectAvatar ({
+export const DirectAvatar = memo(function DirectAvatar({
   url,
   size,
   className,
 }: {
-  url?: string;
+  url: string;
   size: number;
   className?: string;
 }) {
@@ -51,11 +98,12 @@ export const DirectAvatar = memo(function DirectAvatar ({
   return (
     <img
       src={
-        url ? client.mxcUrlToHttp(url, 1200, 1200, "scale", true) ||
-        "/public/anonymous.jpg" : "/public/anonymous.jpg"
+          client.mxcUrlToHttp(url) ?? "/public/unknown.jpg"
       }
       className={
-        `bg-white object-cover self-start rounded-full border-4` + " " + className
+        `bg-white object-cover self-start rounded-full border-4` +
+        " " +
+        className
       }
       style={{ height: size * 4, width: size * 4, minWidth: size * 4 }}
     />

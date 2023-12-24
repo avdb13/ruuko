@@ -22,7 +22,7 @@ const RoomIconWidget = ({ id }: { id: string }) => {
       className="flex flex-col gap-8 items-center"
       onClick={() => setCurrentRoom(rooms?.find((r) => r.roomId === id)!)}
     >
-      <Avatar id={id} type="room" size={16} className="shadow-sm" />
+      <Avatar id={id} kind="room" size={16} className="shadow-sm" />
     </button>
   );
 };
@@ -48,7 +48,7 @@ const RoomWidget = ({
       className="flex items-center gap-4 p-2 w-full border-b-4 shadow-md rounded-md hover:bg-indigo-200 duration-300"
       key={name}
     >
-      <Avatar id={id} type="room" size={16} className="shadow-sm" />
+      <Avatar id={id} kind="room" size={16} className="shadow-sm" />
       <div className="flex flex-col items-start min-w-0">
         <p className="max-w-full truncate font-bold">{name}</p>
         <p className="max-w-full truncate text-sm">
@@ -129,6 +129,7 @@ const Sidebar = () => {
   // I hate JavaScript.
   const [directRooms, publicRooms, historicalRooms] = [arr[0]!, arr[1]!, arr[2]!];
 
+  console.log("sidebar")
   return (
     <Resizable
       width={sidebarWidth}

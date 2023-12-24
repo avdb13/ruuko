@@ -195,9 +195,12 @@ export const sortByTimestamp = (messages: Message[]) =>
     }, [] as Message[][])
     .map((list) => list.map((m) => m.event.getId()!));
 
+// temporary workaround
 export const isRoomMessage = (event: MatrixEvent) =>
-  event.getType() === EventType.RoomMessage ||
-  event.getType() === EventType.RoomMessageEncrypted;
+  event.getType() === EventType.RoomMessage;
+  // event.getType() === EventType.RoomMessageEncrypted;
+
+export const isDisplayable = (event: MatrixEvent) => isRoomMessage(event) || event.getType() === EventType.RoomMember
 
 const isDifferentDay = (previous: MatrixEvent, current: MatrixEvent) => {
   const previousDate = new Date(previous.getTs());
