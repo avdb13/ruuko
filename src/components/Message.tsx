@@ -1,4 +1,4 @@
-import { EventType, IEventRelation, MatrixEvent, MsgType } from "matrix-js-sdk";
+import { EventType, IContent, IEventRelation, MatrixEvent, MsgType } from "matrix-js-sdk";
 import { extractAttributes, formatText } from "../lib/helpers";
 import {
   PropsWithChildren,
@@ -22,6 +22,10 @@ import { createReplaceEvent } from "../lib/content";
 import EyeIcon from "./icons/Eye";
 import Modal from "./Modal";
 import moment from "moment";
+import Loader from "./Loader";
+import { ErrorBoundary } from "react-error-boundary";
+
+export const isRoomMessage = (e: MatrixEvent) => e.getType() !== EventType.RoomMessage || e.getType() !== EventType.RoomMessageEncrypted;
 
 const Message = ({
   event,
@@ -36,7 +40,9 @@ const Message = ({
 }) => {
   const { setReplace, replace } = useContext(InputContext)!;
 
-  if (event.getType() !== EventType.RoomMessage) {
+  if (
+    !isRoomMessage(event)
+  ) {
     return (
       <div className="flex grow">
         <span id={event.getId()!} tabIndex={-1} className="peer"></span>
@@ -160,19 +166,21 @@ const Event = ({
     case EventType.RoomMember:
       return <MemberEvent event={event} />;
     case EventType.RoomMessage:
+    case EventType.RoomMessageEncrypted:
       if (replacements) {
         return (
           <ReplacedRoomEvent original={event} replacements={replacements} />
         );
       }
 
-      return <RoomEvent event={event} redaction={redaction} />;
+      return <ErrorBoundary fallbackRender={() => <p>{JSON.stringify(event)}</p>}>
+        <RoomEvent event={event} redaction={redaction} />
+        </ErrorBoundary>;
     case EventType.RoomRedaction:
       return <RedactionEvent event={event} />;
     case EventType.Reaction:
       throw new Error("impossible");
 
-    case EventType.RoomMessageEncrypted:
     case EventType.Sticker:
       return <Sticker event={event} />;
     case EventType.CallInvite:
@@ -360,11 +368,28 @@ const RoomEvent = ({
   event: MatrixEvent;
   originalContent?: boolean;
 }) => {
+  const [content, setContent] = useState<IContent | null>(null);
   const client = useContext(ClientContext);
+  console.log(client.checkIfOwnDeviceCrossSigned("Ruuko"));
 
-  const content = originalContent
-    ? event.getOriginalContent()
-    : event.getContent();
+  useEffect(() => {
+    if (event.getType() === EventType.RoomMessageEncrypted) {
+      client
+        .decryptEventIfNeeded(event)
+        .then(() => {
+          setContent(event.getClearContent())
+          console.log(content);
+        })
+    } else {
+         setContent( originalContent
+          ? event.getOriginalContent()
+          : event.getContent());
+    }
+  }, []);
+
+  if (!content) {
+    return <Loader />;
+  }
 
   switch (content.msgtype) {
     case MsgType.Text: {
@@ -630,6 +655,7 @@ export const formatEvent = (event: MatrixEvent) => {
     case EventType.RoomMember:
       return formatMembership(event);
     case EventType.RoomMessage:
+    case EventType.RoomMessageEncrypted:
       return formatText(event.getContent());
     default:
       return "";
@@ -778,7 +804,10 @@ const Receipt = ({ event }: { event: MatrixEvent }) => {
       >
         <ul className="flex flex-col gap-2 p-4">
           {receipts.map((r) => (
-            <li className="flex items-center justify-between p-2 rounded border-2 border-gray-400" key={r.userId}>
+            <li
+              className="flex items-center justify-between p-2 rounded border-2 border-gray-400"
+              key={r.userId}
+            >
               <div>
                 <p className="text-gray-800">{r.userId}</p>
                 <p className="text-xs text-gray-600">

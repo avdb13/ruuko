@@ -1,6 +1,7 @@
 import {
   ClientEvent,
   Direction,
+  EventType,
   MatrixEvent,
   Room,
   RoomEvent,
@@ -78,11 +79,12 @@ const RoomProvider = (props: PropsWithChildren) => {
       rooms.reduce(
         (init, r) => ({
           ...init,
-          [r!.roomId]: r!.getLiveTimeline().getEvents(),
+          [r.roomId]: r.getLiveTimeline().getEvents(),
         }),
         {},
       ),
     );
+
     setRoomStates(
       rooms.reduce(
         (init, r) => ({
@@ -124,5 +126,44 @@ const RoomProvider = (props: PropsWithChildren) => {
     </RoomContext.Provider>
   );
 };
+
+const sortByTimestamp = (events: MatrixEvent[]) =>
+  events
+    .reduce((init, event, i) => {
+      if (i === 0) {
+        return [[event]];
+      }
+
+      // we retrieve the last
+      const previousList = init.slice(-1)[0];
+      const previousEvent = previousList?.slice(-1)[0];
+
+      if (!previousList || !previousEvent) {
+        throw new Error("this shouldn't be possible");
+      }
+
+      const diff = event.getTs() - previousEvent.getTs();
+      const isSameSender = previousEvent.getSender() === event.getSender();
+
+      return isSameSender &&
+        !isDifferentDay(previousEvent, event) &&
+        isRoomMessage(event) &&
+        isRoomMessage(previousEvent) &&
+        diff < 60 * 1000
+        ? [...init.slice(0, init.length - 1), [event, ...previousList]]
+        : [...init, [event]];
+    }, [] as MatrixEvent[][])
+    .map((list) => list.map((e) => e.getId()!));
+
+export const isRoomMessage = (event: MatrixEvent) =>
+  event.getType() === EventType.RoomMessage || event.getType() === EventType.RoomMessageEncrypted;
+
+const isDifferentDay = (previous: MatrixEvent, current: MatrixEvent) => {
+  const previousDate = new Date(previous.getTs());
+  const date = new Date(current.getTs());
+
+  return date.getDate() !== previousDate.getDate();
+};
+
 
 export default RoomProvider;

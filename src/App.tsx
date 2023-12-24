@@ -1,15 +1,28 @@
-import { Suspense, lazy, useContext, useEffect, useState } from "react";
+import { Suspense, lazy, useContext, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import { RoomContext } from "./providers/room";
+import { ClientContext } from "./providers/client";
 
 const MessageWindow = lazy(() => import("./components/MessageWindow"));
 
 const App = () => {
+  const client = useContext(ClientContext);
   const roomState = useContext(RoomContext);
 
   if (!roomState) {
     return null;
   }
+
+  useEffect(() => {
+    const crypto = client.getCrypto();
+    if  (crypto) {
+      crypto.bootstrapCrossSigning({}).then(() => console.log("bootstrapCrossSigning"))
+      crypto.getCrossSigningStatus().then(status => console.log(status));
+      crypto.getCrossSigningKeyId().then(status => console.log(status));
+    }
+    console.log(crypto?.bootstrapCrossSigning({}))
+    // if ()
+  }, [])
 
   return (
     <div className={`relative flex min-w-0 welcome`}>

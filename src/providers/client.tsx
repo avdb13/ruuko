@@ -26,12 +26,13 @@ const initClient = (session: Session) => {
   store.startup();
 
   const { accessToken, baseUrl, user } = session;
+
   // is deviceId correct here?
   return createClient({
     accessToken,
     baseUrl,
     userId: user,
-    deviceId: "Ruuko",
+    deviceId: "Ruuko (beta)",
     store,
   });
 };
@@ -42,21 +43,30 @@ const ClientProvider = (props: PropsWithChildren) => {
   const [cookies] = useCookies(["session"]);
   const session = cookies["session"] as Session;
 
+  // TODO: encryption
   useEffect(() => {
     if (cookies["session"]) {
       const client = initClient(session);
 
-      client
-        .createFilter({ presence: { not_types: ["m.presence"] } })
-        .then((filter) => {
+      const f = async () => {
+        try {
+          const filter = await client.createFilter({
+            presence: { not_types: ["m.presence"] },
+          });
+          await client.initCrypto();
+          await client.uploadDeviceSigningKeys();
+
           client.startClient({
             lazyLoadMembers: true,
             initialSyncLimit: 10,
             filter,
           });
-        });
+        } catch (e) {
+          console.error(e);
+        }
+      };
 
-      setClient(client);
+      f().then(() => setClient(client));
     } else {
       setClient(null);
     }

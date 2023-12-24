@@ -44,8 +44,8 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
 
       return previousEvent.getSender() === event.getSender() &&
         !isDifferentDay(previousEvent, event) &&
-        event.getType() === EventType.RoomMessage &&
-        previousEvent.getType() === EventType.RoomMessage &&
+        (event.getType() === EventType.RoomMessage || event.getType() === EventType.RoomMessageEncrypted) &&
+        (previousEvent.getType() === EventType.RoomMessage || previousEvent.getType() === EventType.RoomMessageEncrypted) &&
         diff < 60 * 1000
         ? [...init.slice(0, init.length - 1), [event, ...previousList]]
         : [...init, [event]];
@@ -81,12 +81,10 @@ const MessageWindow = () => {
     if (!parent) {
       return;
     }
-    console.log("fired")
 
     const children = [...parent.children ?? []];
     const parentHeight = parent.getBoundingClientRect().height;
 
-    console.log("children.length " + children.length)
     if (children.length > 0) {
       const childrenHeight = children.map(c => c.getBoundingClientRect().height);
 
@@ -94,9 +92,6 @@ const MessageWindow = () => {
       const accum = (i: number) => childrenHeight.slice(0, i).reduce((init, j) => init+j, 0);
 
       const visibleEls = range.find(i => accum(i)-parent.scrollTop > parentHeight);
-
-      console.log("parent.scrollTop " + parent.scrollTop)
-      console.log("visibleEls " + visibleEls)
 
       if (!visibleEls) {
         setLoading(true);
@@ -190,78 +185,78 @@ const MessageWindow = () => {
 const Timeline = ({ events }: { events: MatrixEvent[] }) => {
   const { currentRoom } = useContext(RoomContext)!;
 
-  const filteredEvents = useMemo(
-    () =>
-      events.reduceRight(
-        (init, e) => {
-          if (!e) {
-            console.log(e);
-            return init;
-          }
+  // const filteredEvents = useMemo(
+  //   () =>
+  //     events.reduceRight(
+  //       (init, e) => {
+  //         if (!e) {
+  //           console.log(e);
+  //           return init;
+  //         }
 
-          if (e.getContent().formatted_body) {
-            // console.log(`[${e.getContent().body}]`, `(${e.getContent().formatted_body})`)
-          }
+  //         if (e.getContent().formatted_body) {
+  //           // console.log(`[${e.getContent().body}]`, `(${e.getContent().formatted_body})`)
+  //         }
 
-          switch (e.getType()) {
-            case EventType.Reaction:
-              return {
-                ...init,
-                [EventType.Reaction]: [...(init[EventType.Reaction] ?? []), e],
-              };
-            case EventType.Receipt:
-              return {
-                ...init,
-                [EventType.Receipt]: [...(init[EventType.Receipt] ?? []), e],
-              };
-            case EventType.RoomRedaction:
-              return {
-                ...init,
-                [EventType.RoomRedaction]: [
-                  ...(init[EventType.RoomRedaction] ?? []),
-                  e,
-                ],
-              };
-            default:
-              switch (e.getRelation()?.rel_type) {
-                case RelationType.Replace:
-                  return {
-                    ...init,
-                    [RelationType.Replace]: [
-                      ...(init[RelationType.Replace] ?? []),
-                      e,
-                    ],
-                  };
-                case RelationType.Thread:
-                  return {
-                    ...init,
-                    [RelationType.Thread]: [
-                      ...(init[RelationType.Thread] ?? []),
-                      e,
-                    ],
-                  };
-                default:
-                  return { ...init, ["rest"]: [...(init["rest"] ?? []), e] };
-              }
-          }
-        },
-        {} as Record<string, MatrixEvent[]>,
-      ),
-    [events.length],
-  );
+  //         switch (e.getType()) {
+  //           case EventType.Reaction:
+  //             return {
+  //               ...init,
+  //               [EventType.Reaction]: [...(init[EventType.Reaction] ?? []), e],
+  //             };
+  //           case EventType.Receipt:
+  //             return {
+  //               ...init,
+  //               [EventType.Receipt]: [...(init[EventType.Receipt] ?? []), e],
+  //             };
+  //           case EventType.RoomRedaction:
+  //             return {
+  //               ...init,
+  //               [EventType.RoomRedaction]: [
+  //                 ...(init[EventType.RoomRedaction] ?? []),
+  //                 e,
+  //               ],
+  //             };
+  //           default:
+  //             switch (e.getRelation()?.rel_type) {
+  //               case RelationType.Replace:
+  //                 return {
+  //                   ...init,
+  //                   [RelationType.Replace]: [
+  //                     ...(init[RelationType.Replace] ?? []),
+  //                     e,
+  //                   ],
+  //                 };
+  //               case RelationType.Thread:
+  //                 return {
+  //                   ...init,
+  //                   [RelationType.Thread]: [
+  //                     ...(init[RelationType.Thread] ?? []),
+  //                     e,
+  //                   ],
+  //                 };
+  //               default:
+  //                 return { ...init, ["rest"]: [...(init["rest"] ?? []), e] };
+  //             }
+  //         }
+  //       },
+  //       {} as Record<string, MatrixEvent[]>,
+  //     ),
+  //   [events.length],
+  // );
 
-  const allAnnotations = getAnnotations(filteredEvents[EventType.Reaction] ?? []);
-  const allReplacements = getReplacements(
-    filteredEvents[RelationType.Replace] ?? [],
-  );
-  const allRedactions = getRedactions(filteredEvents[EventType.RoomRedaction] ?? []);
+  const allAnnotations = getAnnotations(events.filter(e => e.getType() === EventType.Reaction));
+  const allReplacements = getReplacements(events.filter(e => e.getRelation()?.rel_type && e.getRelation()?.rel_type! === RelationType.Replace));
+  const allRedactions = getRedactions(events.filter(e => e.getType() === EventType.RoomRedaction));
 
-  const sortedEvents = sortByTimestamp(filteredEvents["rest"] ?? []);
+  const rest = events.filter(e => e.getType() !== EventType.Reaction && e.getType() !== EventType.RoomRedaction && !e.getRelation());
+  rest.reverse();
+  const sortedEvents = sortByTimestamp(rest);
 
   // return reply + event + annotations
   const eventRecord = useMemo(
     () =>
-      filteredEvents["rest"]!.reduce(
+      rest.reduce(
         (init, event) => ({
           ...init,
           [event.getId()!]: (
@@ -289,7 +284,7 @@ const Timeline = ({ events }: { events: MatrixEvent[] }) => {
         ? currentRoom!.findEventById(sortedEvents[i - 1]?.[0] || "") ?? null
         : null;
 
-    if (list.length === 1 && firstEvent.getType() !== EventType.RoomMessage) {
+    if (list.length === 1 && (firstEvent.getType() !== EventType.RoomMessage || firstEvent.getType() !== EventType.RoomMessageEncrypted)) {
       return (
         <>
           <DayBreak

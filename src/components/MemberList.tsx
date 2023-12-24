@@ -42,6 +42,13 @@ const MemberList = ({
   useEffect(() => {
     if (currentRoom) {
       setMembers(currentRoom.getMembers());
+
+      // TODO: make re-rendering smoother
+      if (!currentRoom.membersLoaded()) {
+        currentRoom.loadMembersIfNeeded().then(ok => {
+          setMembers(currentRoom.getMembers())
+        })
+      }
     }
   }, [currentRoom?.roomId]);
 
