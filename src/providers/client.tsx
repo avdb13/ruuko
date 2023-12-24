@@ -1,6 +1,8 @@
 import {
+  AuthType,
   Filter,
   IndexedDBStore,
+  InteractiveAuth,
   MatrixClient,
   createClient,
 } from "matrix-js-sdk";
@@ -54,7 +56,10 @@ const ClientProvider = (props: PropsWithChildren) => {
             presence: { not_types: ["m.presence"] },
           });
           await client.initCrypto();
-          await client.uploadDeviceSigningKeys();
+
+          // console.log(import.meta.env.VITE_PASSWORD)
+          // await client.uploadDeviceSigningKeys().catch();
+          // await client.uploadDeviceSigningKeys({password: import.meta.env.VITE_PASSWORD,type:AuthType.Password,identifier:{user: import.meta.env.VITE_USERNAME},session: client.getSessionId()});
 
           client.startClient({
             lazyLoadMembers: true,

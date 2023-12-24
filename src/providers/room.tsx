@@ -17,22 +17,30 @@ import {
   useState,
 } from "react";
 import { ClientContext } from "./client";
+import { Annotator } from "../components/chips/Annotation";
+import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
 
-export const RoomContext = createContext<
-  MyRoomState | null
->(null);
+export const RoomContext = createContext<MyRoomState | null>(null);
+
+type Message = {
+  event: MatrixEvent;
+  replacements?: MatrixEvent[];
+  // no need to store the entire event for annotations
+  annotations?: Record<string, Annotator[]>;
+  redation?: MatrixEvent;
+};
 
 interface MyRoomState {
   rooms: Room[];
   roomStates: Record<string, RoomState>;
   currentRoom: Room | null;
-  roomEvents: Record<string, MatrixEvent[]>;
+  roomEvents: Record<string, Message[]>;
   setRooms: (_: Room[]) => void;
   setRoomStates: (_: Record<string, RoomState>) => void;
   setCurrentRoom: (_: Room) => void;
-  setRoomEvents: (_: Record<string, MatrixEvent[]>) => void;
-  avatars: Record<string, string>;
-  setAvatars: (_: Record<string, string>) => void;
+  setRoomEvents: (_: Record<string, Message[]>) => void;
+  // avatars: Record<string, string>;
+  // setAvatars: (_: Record<string, string>) => void;
 }
 const RoomProvider = (props: PropsWithChildren) => {
   const client = useContext(ClientContext);
@@ -40,11 +48,8 @@ const RoomProvider = (props: PropsWithChildren) => {
 
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [roomEvents, setRoomEvents] = useState<Record<string, MatrixEvent[]>>(
-    {},
-  );
+  const [roomEvents, setRoomEvents] = useState<Record<string, Message[]>>({});
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
-  const [avatars, setAvatars] = useState<Record<string, string>>({});
 
   const roomState: MyRoomState = useMemo(() => {
     return {
@@ -56,18 +61,16 @@ const RoomProvider = (props: PropsWithChildren) => {
       setRoomStates,
       setCurrentRoom,
       setRoomEvents,
-      avatars,
-      setAvatars,
+      // avatars,
+      // setAvatars,
     };
   }, [currentRoom, roomEvents, rooms, roomStates]);
 
   useEffect(() => {
     // retrieve the actual room length and attempt to fill it with at least joined rooms
-    client
-      .getJoinedRooms()
-      .then((resp) => {
-        roomsLength.current = resp.joined_rooms.length;
-      });
+    client.getJoinedRooms().then((resp) => {
+      roomsLength.current = resp.joined_rooms.length;
+    });
   }, []);
 
   useEffect(() => {
@@ -76,13 +79,30 @@ const RoomProvider = (props: PropsWithChildren) => {
     }
 
     setRoomEvents(
-      rooms.reduce(
-        (init, r) => ({
+      rooms.reduce((init, r) => {
+        const events = r.getLiveTimeline().getEvents();
+        const allReplacements = getReplacements(events);
+        const allAnnotations = getAnnotations(events);
+        const allRedactions = getRedactions(events);
+
+        const messages = events.filter(isRoomMessage);
+
+        return {
           ...init,
-          [r.roomId]: r.getLiveTimeline().getEvents(),
-        }),
-        {},
-      ),
+          [r.roomId]: messages.reduce((init, event) => {
+            const id = event.getId()!;
+            return [
+              ...init,
+              {
+                event,
+                replacements: allReplacements[id],
+                annotations: allAnnotations[id],
+                redation: allRedactions[id],
+              },
+            ];
+          }, [] as Message[]),
+        };
+      }, {}),
     );
 
     setRoomStates(
@@ -113,15 +133,19 @@ const RoomProvider = (props: PropsWithChildren) => {
     }
   });
 
-  if (!(roomsLength.current && roomsLength.current > 0 && Object.values(roomEvents).length >= roomsLength.current)) {
-    console.log(roomsLength.current, Object.values(roomEvents).length)
+  if (
+    !(
+      roomsLength.current &&
+      roomsLength.current > 0 &&
+      Object.values(roomEvents).length >= roomsLength.current
+    )
+  ) {
+    console.log(roomsLength.current, Object.values(roomEvents).length);
     return null;
   }
 
   return (
-    <RoomContext.Provider
-    value={roomState}
-    >
+    <RoomContext.Provider value={roomState}>
       {props.children}
     </RoomContext.Provider>
   );
@@ -156,7 +180,8 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
     .map((list) => list.map((e) => e.getId()!));
 
 export const isRoomMessage = (event: MatrixEvent) =>
-  event.getType() === EventType.RoomMessage || event.getType() === EventType.RoomMessageEncrypted;
+  event.getType() === EventType.RoomMessage ||
+  event.getType() === EventType.RoomMessageEncrypted;
 
 const isDifferentDay = (previous: MatrixEvent, current: MatrixEvent) => {
   const previousDate = new Date(previous.getTs());
@@ -164,6 +189,5 @@ const isDifferentDay = (previous: MatrixEvent, current: MatrixEvent) => {
 
   return date.getDate() !== previousDate.getDate();
 };
-
 
 export default RoomProvider;
