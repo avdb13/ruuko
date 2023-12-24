@@ -7,12 +7,7 @@ import {
 
 import {AvatarType} from "../components/Avatar";
 import {Annotator} from "../components/chips/Annotation";
-
-// export const onImgError = (e: React.SyntheticEvent<HTMLImageElement, Event>,
-// blob: Blob) => {
-//   e.currentTarget.onerror = null; // prevents looping
-//   e.currentTarget.src = URL.createObjectURL(blob);
-// }
+import { Message, isRoomMessage } from "../providers/room";
 
 export const extractAttributes = (s: string, attributes: Array<string>) =>
     attributes.reduce(
@@ -87,19 +82,23 @@ export const getFlagEmoji = (countryCode: string) => {
   return String.fromCodePoint(...codePoints);
 };
 
-const toAnnotation = (e: MatrixEvent) => {
+export const toAnnotation = (e: MatrixEvent) => {
   const relation = e.getContent()["m.relates_to"];
+  if (relation?.rel_type !== RelationType.Annotation) {
+    return null;
+  }
+
   const reply_id = relation?.event_id;
   const key = relation?.key;
+
   const annotator: Annotator = {
     user_id : e.getSender()!,
     event_id : e.getId()!,
   };
 
-  return relation && relation.rel_type === RelationType.Annotation &&
-                 annotator && reply_id && key
-             ? {reply_id, key, annotator}
-             : null;
+  return annotator && reply_id && key
+     ? {reply_id, key, annotator}
+     : null;
 };
 
 export const getAnnotations = (events: MatrixEvent[]) => events.reduce(
@@ -123,32 +122,9 @@ export const getAnnotations = (events: MatrixEvent[]) => events.reduce(
     {} as Record<string, Record<string, Annotator[]>>,
 );
 
-// export const getReceipts = (events: MatrixEvent[]) =>
-//   events.reduce(
-//     (init, e) => {
-//       const annotation = toAnnotation(e);
-
-//       if (!annotation) {
-//         return init;
-//       }
-
-//       const { reply_id, key, annotator } = annotation;
-
-//       return {
-//         ...init,
-//         [reply_id]: {
-//           ...init[reply_id],
-//           [key]: [...(init[reply_id]?.[key] ?? []), annotator],
-//         },
-//       };
-//     },
-//     {} as Record<string, Record<string, Annotator[]>>,
-//   );
-
 export const getReplacements = (events: MatrixEvent[]) => events.reduce(
     (init, e) => {
       const target_id = e.getRelation()?.event_id;
-
       if (!target_id) {
         return init;
       }
@@ -168,6 +144,21 @@ export const getRedactions = (events: MatrixEvent[]) => events.reduce(
     }),
     {} as Record<string, MatrixEvent>,
 );
+
+
+export const addReplacement = (m: Message, e: MatrixEvent): Message => ({...m, replacements: m.replacements?.concat(e) ?? [e] });
+export const addAnnotation = (m: Message, e: MatrixEvent): Message => {
+  const key = e.getRelation()!.key;
+  const annotation = toAnnotation(e);
+
+  if (!key || !annotation) {
+    throw new Error();
+  }
+
+  return ({...m, annotations: ({...m.annotations, [key]: [...m.annotations?.[key] ?? [], annotation.annotator] })  })
+}
+;
+export const addRedaction = (m: Message, e: MatrixEvent): Message => ({...m, redaction: e });
 
 export const filterRecord = <T>(ids: string[], record: Record<string, T>) =>
     ids.reduce(
@@ -201,6 +192,29 @@ export const formatText = (content: IContent): string => {
       return content.body;
 };
 
+export const addNewEvent = (e: MatrixEvent, roomEvents?: Message[]) => {
+      const relation = e.getRelation();
+      const replacement = relation?.rel_type === RelationType.Replace;
+      const annotation = relation?.rel_type === RelationType.Annotation;
+      const redaction = e.getContent().redacts as string;
+
+      if (replacement) {
+        // if we receive a non-message event roomEvents for this room must be initialized
+        return roomEvents!.map((m) =>
+          m.event.getId() === relation.event_id ? addReplacement(m, e) : m,
+        );
+      } else if (annotation) {
+        return roomEvents!.map((m) =>
+          m.event.getId() === relation.event_id ? addAnnotation(m, e) : m,
+        );
+      } else if (redaction) {
+        return roomEvents!.map((m) =>
+          m.event.getId() === redaction ? addRedaction(m, e) : m,
+        );
+      } else {
+        return [...roomEvents ?? [], { event: e }];
+      }
+}
 export const findLastTextEvent = (events: MatrixEvent[], myUserId: string) => {
   for (let i = events.length; i > 0; i -= 1) {
     const currentEvent = events[i];

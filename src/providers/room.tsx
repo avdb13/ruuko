@@ -21,6 +21,7 @@ import { ClientContext } from "./client";
 import { Annotator } from "../components/chips/Annotation";
 import {
   addAnnotation,
+  addNewEvent,
   addRedaction,
   addReplacement,
   getAnnotations,
@@ -36,7 +37,7 @@ export type Message = {
   replacements?: MatrixEvent[];
   // no need to store the entire event for annotations
   annotations?: Record<string, Annotator[]>;
-  redation?: MatrixEvent;
+  redaction?: MatrixEvent;
 };
 
 interface MyRoomState {
@@ -106,7 +107,7 @@ const RoomProvider = (props: PropsWithChildren) => {
                 event,
                 replacements: allReplacements[id],
                 annotations: allAnnotations[id],
-                redation: allRedactions[id],
+                redaction: allRedactions[id],
               },
             ];
           }, [] as Message[]),
@@ -135,47 +136,10 @@ const RoomProvider = (props: PropsWithChildren) => {
         return;
       }
 
-      const relation = e.getRelation();
-      const replacement = relation?.rel_type === RelationType.Replace;
-      const annotation = relation?.rel_type === RelationType.Annotation;
-      const redaction = e.getContent().redacts as string;
-
-      if (replacement) {
-        // if we receive a non-message event roomEvents for this room must be initialized
-        const newMessages = roomEvents[room.roomId]!.map((m) =>
-          m.event.getId() === relation.event_id ? addReplacement(m, e) : m,
-        );
-
-        setRoomEvents({
-          ...roomEvents,
-          [room.roomId]: newMessages,
-        });
-      } else if (annotation) {
-        const newMessages = roomEvents[room.roomId]!.map((m) =>
-          m.event.getId() === relation.event_id ? addAnnotation(m, e) : m,
-        );
-
-        setRoomEvents({
-          ...roomEvents,
-          [room.roomId]: newMessages,
-        });
-      } else if (redaction) {
-        const newMessages = roomEvents[room.roomId]!.map((m) =>
-          m.event.getId() === redaction ? addRedaction(m, e) : m,
-        );
-
-        setRoomEvents({
-          ...roomEvents,
-          [room.roomId]: newMessages,
-        });
-      } else if (isRoomMessage(e)) {
-        setRoomEvents({
-          ...roomEvents,
-          [room.roomId]: roomEvents[room.roomId]?.concat({ event: e }) ?? [
-            { event: e },
-          ],
-        });
-      }
+      setRoomEvents({
+        ...roomEvents,
+        [room.roomId]: addNewEvent(e, roomEvents[room.roomId]),
+      });
     }
   });
 
@@ -197,20 +161,23 @@ const RoomProvider = (props: PropsWithChildren) => {
   );
 };
 
-const sortByTimestamp = (events: MatrixEvent[]) =>
-  events
-    .reduce((init, event, i) => {
+export const sortByTimestamp = (messages: Message[]) =>
+  messages
+    .reduce((init, message, i) => {
       if (i === 0) {
-        return [[event]];
+        return [[message]];
       }
 
       // we retrieve the last
       const previousList = init.slice(-1)[0];
-      const previousEvent = previousList?.slice(-1)[0];
+      const previousMessage = previousList?.slice(-1)[0];
 
-      if (!previousList || !previousEvent) {
+      if (!previousList || !previousMessage) {
         throw new Error("this shouldn't be possible");
       }
+
+      const event = message.event;
+      const previousEvent = previousMessage.event;
 
       const diff = event.getTs() - previousEvent.getTs();
       const isSameSender = previousEvent.getSender() === event.getSender();
@@ -220,10 +187,10 @@ const sortByTimestamp = (events: MatrixEvent[]) =>
         isRoomMessage(event) &&
         isRoomMessage(previousEvent) &&
         diff < 60 * 1000
-        ? [...init.slice(0, init.length - 1), [event, ...previousList]]
-        : [...init, [event]];
-    }, [] as MatrixEvent[][])
-    .map((list) => list.map((e) => e.getId()!));
+        ? [...init.slice(0, init.length - 1), [message, ...previousList]]
+        : [...init, [message]];
+    }, [] as Message[][])
+    .map((list) => list.map((m) => m.event.getId()!));
 
 export const isRoomMessage = (event: MatrixEvent) =>
   event.getType() === EventType.RoomMessage ||

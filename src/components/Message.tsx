@@ -1,4 +1,10 @@
-import { EventType, IContent, IEventRelation, MatrixEvent, MsgType } from "matrix-js-sdk";
+import {
+  EventType,
+  IContent,
+  IEventRelation,
+  MatrixEvent,
+  MsgType,
+} from "matrix-js-sdk";
 import { extractAttributes, formatText } from "../lib/helpers";
 import {
   PropsWithChildren,
@@ -11,7 +17,7 @@ import {
   useState,
 } from "react";
 import { ClientContext } from "../providers/client";
-import { RoomContext } from "../providers/room";
+import { Message, RoomContext } from "../providers/room";
 import Annotation, { Annotator } from "./chips/Annotation";
 import Avatar from "./Avatar";
 import EditIcon from "./icons/Edit";
@@ -25,62 +31,45 @@ import moment from "moment";
 import Loader from "./Loader";
 import { ErrorBoundary } from "react-error-boundary";
 
-export const isRoomMessage = (e: MatrixEvent) => e.getType() !== EventType.RoomMessage || e.getType() !== EventType.RoomMessageEncrypted;
+export const isRoomMessage = (e: MatrixEvent) =>
+  e.getType() !== EventType.RoomMessage ||
+  e.getType() !== EventType.RoomMessageEncrypted;
 
-const Message = ({
-  event,
-  annotations,
-  replacements,
-  redaction,
-}: {
-  event: MatrixEvent;
-  annotations?: Record<string, Annotator[]>;
-  replacements?: MatrixEvent[];
-  redaction?: MatrixEvent;
-}) => {
+const MessageComponent = ({ message }: { message: Message }) => {
   const { setReplace, replace } = useContext(InputContext)!;
-
-  if (
-    !isRoomMessage(event)
-  ) {
-    return (
-      <div className="flex grow">
-        <span id={event.getId()!} tabIndex={-1} className="peer"></span>
-        <Reply relation={event.getContent()["m.relates_to"] ?? null} />
-        <div className="flex justify-between grow">
-          <Event
-            event={event}
-            replacements={replacements}
-            redaction={redaction}
-          />
-          <Receipt event={event} />
-        </div>
-        <Annotations annotations={annotations} reply_id={event.getId()!} />
-      </div>
-    );
-  }
+  const { replacements, annotations, redaction, event } = message;
 
   return (
-    // flash message on click
-    <div>
+    <div className="flex grow">
       <span id={event.getId()!} tabIndex={-1} className="peer"></span>
       <Reply relation={event.getContent()["m.relates_to"] ?? null} />
-      {replace === event.getId()! ? (
-        <ReplaceWindow
-          setReplace={setReplace}
-          userId={event.getSender()!}
-          timestamp={event.getTs()}
-          event={event}
-        />
-      ) : (
-        <MessageOptions setReplace={setReplace} event={event}>
+      <div className="flex justify-between grow">
+        {isRoomMessage(event) ? (
+          replace === event.getId()! ? (
+            <ReplaceWindow
+              setReplace={setReplace}
+              userId={event.getSender()!}
+              timestamp={event.getTs()}
+              event={event}
+            />
+          ) : (
+            <MessageOptions setReplace={setReplace} event={event}>
+              <Event
+                event={event}
+                replacements={replacements}
+                redaction={redaction}
+              />
+            </MessageOptions>
+          )
+        ) : (
           <Event
             event={event}
             replacements={replacements}
             redaction={redaction}
           />
-        </MessageOptions>
-      )}
+        )}
+        <Receipt event={event} />
+      </div>
       <Annotations annotations={annotations} reply_id={event.getId()!} />
     </div>
   );
@@ -173,9 +162,11 @@ const Event = ({
         );
       }
 
-      return <ErrorBoundary fallbackRender={() => <p>{JSON.stringify(event)}</p>}>
-        <RoomEvent event={event} redaction={redaction} />
-        </ErrorBoundary>;
+      return (
+        <ErrorBoundary fallbackRender={() => <p>{JSON.stringify(event)}</p>}>
+          <RoomEvent event={event} redaction={redaction} />
+        </ErrorBoundary>
+      );
     case EventType.RoomRedaction:
       return <RedactionEvent event={event} />;
     case EventType.Reaction:
@@ -374,16 +365,14 @@ const RoomEvent = ({
 
   useEffect(() => {
     if (event.getType() === EventType.RoomMessageEncrypted) {
-      client
-        .decryptEventIfNeeded(event)
-        .then(() => {
-          setContent(event.getClearContent())
-          console.log(content);
-        })
+      client.decryptEventIfNeeded(event).then(() => {
+        setContent(event.getClearContent());
+        console.log(content);
+      });
     } else {
-         setContent( originalContent
-          ? event.getOriginalContent()
-          : event.getContent());
+      setContent(
+        originalContent ? event.getOriginalContent() : event.getContent(),
+      );
     }
   }, []);
 
@@ -837,4 +826,4 @@ const Receipt = ({ event }: { event: MatrixEvent }) => {
   );
 };
 
-export default Message;
+export default MessageComponent;
