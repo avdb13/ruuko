@@ -55,15 +55,16 @@ const ClientProvider = (props: PropsWithChildren) => {
           const filter = await client.createFilter({
             presence: { not_types: ["m.presence"] },
           });
-          await client.initCrypto();
+          // await client.initCrypto();
 
           // console.log(import.meta.env.VITE_PASSWORD)
           // await client.uploadDeviceSigningKeys().catch();
           // await client.uploadDeviceSigningKeys({password: import.meta.env.VITE_PASSWORD,type:AuthType.Password,identifier:{user: import.meta.env.VITE_USERNAME},session: client.getSessionId()});
 
           client.startClient({
+            pollTimeout: 5000,
             lazyLoadMembers: true,
-            initialSyncLimit: 10,
+            initialSyncLimit: 0,
             filter,
           });
         } catch (e) {

@@ -19,6 +19,7 @@ import { Message, RoomContext, sortByTimestamp } from "../providers/room";
 import MembersIcon from "./icons/Members";
 import { ClientContext } from "../providers/client";
 import Loader from "./Loader";
+import { AvatarContext } from "../providers/avatar";
 
 const Modal = lazy(() => import("./Modal"));
 const MemberList = lazy(() => import("./MemberList"));
@@ -120,7 +121,7 @@ const MessageWindow = () => {
         />
         <ul
           ref={bottomDivRef}
-          className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>li]:scale-y-[-1] [&>li]:list-none overflow-x-clip"
+          className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>li]:list-none overflow-x-clip"
           id="bottom-div"
         >
           <Timeline messages={messageMemo} />
@@ -139,6 +140,12 @@ const MessageWindow = () => {
 
 const Timeline = ({ messages }: { messages: Message[] }) => {
   const { currentRoom, roomEvents } = useContext(RoomContext)!;
+  const { avatarsReady,avatars } = useContext(AvatarContext)!;
+
+  if (!avatarsReady) {
+    console.log(avatars[currentRoom!.roomId]);
+    return null;
+  }
 
   // const timestamps = sortByTimestamp(roomEvents[currentRoom!.roomId] ?? []);
 
@@ -160,9 +167,16 @@ const Timeline = ({ messages }: { messages: Message[] }) => {
   // );
 
   return messages.map(message => (
-            <MessageComponent
-              message={message}
-            />
+        <MessageFrame
+          key={message.event.getId()!}
+          userId={message.event.getSender()!}
+          displayName={message.event.sender?.rawDisplayName}
+          timestamp={message.event.getTs()}
+        >
+          <MessageComponent
+            message={message}
+          />
+        </MessageFrame>
   ))
 
   // TODO: get rid of this filter and pinpoint the problem.

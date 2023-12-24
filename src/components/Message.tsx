@@ -121,14 +121,14 @@ const MessageOptions = (
         {props.children}
       </div>
       <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
-        <button type="button" title="edit">
+        <button kind="button" title="edit">
           <EditIcon className="scale-75" onClick={handleEdit} />
         </button>
-        <button type="button" title="reply" onClick={handleReply}>
+        <button kind="button" title="reply" onClick={handleReply}>
           <ReplyIcon className="scale-75" />
         </button>
         <button
-          type="button"
+          kind="button"
           title="copy"
           onClick={handleCopy}
           className={`duration-300 transition-all ${
@@ -493,7 +493,7 @@ export const MessageFrame = memo(function MessageFrame(
   return (
     <li className="p-2 w-full">
       <div className="flex content-center gap-2">
-        <Avatar id={props.userId} type="user" size={16} />
+        <Avatar id={props.userId} kind="user" size={16} />
         <div className="flex flex-col gap-2 w-full">
           <div className="flex gap-2">
             <p className="whitespace-normal break-all font-bold">
@@ -544,7 +544,7 @@ export const ReplaceWindow = (
   return (
     <div className="relative -translate-x-[80px] p-2 w-full">
       <div className="flex content-center gap-2">
-        <Avatar id={props.userId} type="user" size={16} />
+        <Avatar id={props.userId} kind="user" size={16} />
         <div className="flex flex-col gap-2 w-full">
           <div className="flex gap-2">
             <p className="whitespace-normal break-all font-bold">
@@ -565,10 +565,10 @@ export const ReplaceWindow = (
             value={newBody}
           />
           <div className="flex gap-2">
-            <button onClick={() => props.setReplace(null)} type="button">
+            <button onClick={() => props.setReplace(null)} kind="button">
               cancel
             </button>
-            <button type="button" onClick={handleSubmit}>
+            <button kind="button" onClick={handleSubmit}>
               save
             </button>
           </div>
@@ -625,7 +625,7 @@ export const StateFrame = memo(function StateFrame(
     <li className="p-2 border-black">
       <div className="flex content-center gap-2">
         <div className="px-4">
-          <Avatar id={props.userId} size={8} type="user" />
+          <Avatar id={props.userId} size={8} kind="user" />
         </div>
         <div className="flex flex-col justify-center whitespace-normal break-all grow px-2">
           {props.children}
@@ -805,7 +805,7 @@ const Receipt = ({ event }: { event: MatrixEvent }) => {
               </div>
               <Avatar
                 id={r.userId}
-                type="user"
+                kind="user"
                 size={12}
                 className="border-none shadow-sm"
               />

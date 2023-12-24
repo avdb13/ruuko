@@ -1,4 +1,4 @@
-import { memo, useContext } from "react";
+import { memo, useContext, useEffect } from "react";
 import { ClientContext } from "../providers/client";
 import { AvatarContext } from "../providers/avatar";
 import { MatrixClient, getHttpUriForMxc } from "matrix-js-sdk";
@@ -15,31 +15,30 @@ export const getAvatarUrl = (
   id: string,
   kind: AvatarKind,
 ): AvatarResponse => {
-  const mxcUrl = kind === "user" ? client.getUser(id)?.avatarUrl : client.getRoom(id)?.getMxcAvatarUrl();
-  console.log(mxcUrl)
+  const room = client.getRoom(id);
+  const mxcUrl =
+    kind === "user"
+      ? client.getUser(id)?.avatarUrl
+      : room
+      ? room.getMembers().length > 2
+        ? room.getMxcAvatarUrl()
+        : room
+            .getMembers()
+            .find((m) => m.userId !== client.getUserId()!)
+            ?.getMxcAvatarUrl() ?? null
+      : null;
 
-    if (!mxcUrl) {
-      return { status: "nonexistent" };
-    }
+  if (!mxcUrl) {
+    return { status: "nonexistent" };
+  }
 
-    // if none of these resolve the avatarUrl, we simply give up.
-    const baseUrls = [
-      client.baseUrl,
-      "https://matrix.org",
-      "https://" + id.split(":")[1]!,
-    ];
+  const url = client.mxcUrlToHttp(mxcUrl);
 
-    for (const baseUrl of baseUrls) {
-      const url = getHttpUriForMxc(baseUrl, mxcUrl);
-
-      if (url.length > 0) {
-        return { status: "success", url };
-      } else {
-        continue;
-      }
-    }
-
-    return {status: "fail"}
+  if (url && url.length > 0) {
+    return { status: "success", url };
+  } else {
+    return { status: "fail" };
+  }
 };
 
 const Avatar = memo(function Avatar({
@@ -56,24 +55,26 @@ const Avatar = memo(function Avatar({
   const client = useContext(ClientContext);
   const { avatars, setAvatars } = useContext(AvatarContext)!;
 
-  if (!avatars[id]) {
-    const resp = getAvatarUrl(client, id, kind);
-    switch (resp.status) {
-      case "success":
-        setAvatars({ ...avatars, [id]: resp.url! });
-        break;
-      case "fail":
-        setAvatars({ ...avatars, [id]: "/unknown.jpg" });
-        break;
-      case "nonexistent":
-        setAvatars({ ...avatars, [id]: "/anonymous.jpg" });
-        break;
+  useEffect(() => {
+    if (!avatars[id]) {
+      const resp = getAvatarUrl(client, id, kind);
+      switch (resp.status) {
+        case "success":
+          setAvatars({ ...avatars, [id]: resp.url! });
+          break;
+        case "fail":
+          setAvatars({ ...avatars, [id]: "/unknown.jpg" });
+          break;
+        case "nonexistent":
+          setAvatars({ ...avatars, [id]: "/anonymous.jpg" });
+          break;
+      }
     }
-  }
+  }, [])
 
   return (
     <img
-      src={avatars[id]!}
+      src={avatars[id]}
       className={
         `bg-white object-cover self-start rounded-full border-4` +
         " " +
@@ -97,9 +98,7 @@ export const DirectAvatar = memo(function DirectAvatar({
 
   return (
     <img
-      src={
-          client.mxcUrlToHttp(url) ?? "/public/unknown.jpg"
-      }
+      src={client.mxcUrlToHttp(url) ?? "/public/unknown.jpg"}
       className={
         `bg-white object-cover self-start rounded-full border-4` +
         " " +

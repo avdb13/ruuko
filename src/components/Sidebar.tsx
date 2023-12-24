@@ -9,6 +9,7 @@ import Togglable from "./Togglable";
 import { SearchRoomForm, SearchUserForm } from "./Search";
 import { Membership } from "./Message";
 import { ClientContext } from "../providers/client";
+import { AvatarContext } from "../providers/avatar";
 
 const sortRooms = (prev?: number, next?: number) => {
   return prev ? (next ? (next < prev ? 1 : next > prev ? -1 : 0) : 1) : -1;
@@ -90,6 +91,8 @@ const RoomList = ({
 const Sidebar = () => {
   const { rooms, roomEvents } = useContext(RoomContext)!;
   const client = useContext(ClientContext);
+  const {avatars, avatarsReady} =useContext(AvatarContext)!;
+
   const [sidebarWidth, setSidebarWidth] = useState(400);
 
   const getLastMessage = (r: Room) => {
@@ -129,7 +132,12 @@ const Sidebar = () => {
   // I hate JavaScript.
   const [directRooms, publicRooms, historicalRooms] = [arr[0]!, arr[1]!, arr[2]!];
 
-  console.log("sidebar")
+
+  if (!avatarsReady) {
+    console.log("not ready", avatars)
+    return null;
+  }
+
   return (
     <Resizable
       width={sidebarWidth}
