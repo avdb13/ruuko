@@ -3,6 +3,7 @@ import {
   Direction,
   EventType,
   MatrixEvent,
+  RelationType,
   Room,
   RoomEvent,
   RoomState,
@@ -18,11 +19,19 @@ import {
 } from "react";
 import { ClientContext } from "./client";
 import { Annotator } from "../components/chips/Annotation";
-import { getAnnotations, getRedactions, getReplacements } from "../lib/helpers";
+import {
+  addAnnotation,
+  addRedaction,
+  addReplacement,
+  getAnnotations,
+  getRedactions,
+  getReplacements,
+  toAnnotation,
+} from "../lib/helpers";
 
 export const RoomContext = createContext<MyRoomState | null>(null);
 
-type Message = {
+export type Message = {
   event: MatrixEvent;
   replacements?: MatrixEvent[];
   // no need to store the entire event for annotations
@@ -120,16 +129,53 @@ const RoomProvider = (props: PropsWithChildren) => {
     setRooms((prev) => [...prev, newRoom]),
   );
 
-  client.on(RoomEvent.Timeline, (event, room, startOfTimeline) => {
+  client.on(RoomEvent.Timeline, (e, room, startOfTimeline) => {
     if (room) {
       if (startOfTimeline) {
         return;
       }
 
-      setRoomEvents({
-        ...roomEvents,
-        [room.roomId]: [...(roomEvents[room.roomId] ?? []), event],
-      });
+      const relation = e.getRelation();
+      const replacement = relation?.rel_type === RelationType.Replace;
+      const annotation = relation?.rel_type === RelationType.Annotation;
+      const redaction = e.getContent().redacts as string;
+
+      if (replacement) {
+        // if we receive a non-message event roomEvents for this room must be initialized
+        const newMessages = roomEvents[room.roomId]!.map((m) =>
+          m.event.getId() === relation.event_id ? addReplacement(m, e) : m,
+        );
+
+        setRoomEvents({
+          ...roomEvents,
+          [room.roomId]: newMessages,
+        });
+      } else if (annotation) {
+        const newMessages = roomEvents[room.roomId]!.map((m) =>
+          m.event.getId() === relation.event_id ? addAnnotation(m, e) : m,
+        );
+
+        setRoomEvents({
+          ...roomEvents,
+          [room.roomId]: newMessages,
+        });
+      } else if (redaction) {
+        const newMessages = roomEvents[room.roomId]!.map((m) =>
+          m.event.getId() === redaction ? addRedaction(m, e) : m,
+        );
+
+        setRoomEvents({
+          ...roomEvents,
+          [room.roomId]: newMessages,
+        });
+      } else if (isRoomMessage(e)) {
+        setRoomEvents({
+          ...roomEvents,
+          [room.roomId]: roomEvents[room.roomId]?.concat({ event: e }) ?? [
+            { event: e },
+          ],
+        });
+      }
     }
   });
 
