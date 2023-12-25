@@ -4,6 +4,7 @@ import {
   IEventRelation,
   MatrixEvent,
   MsgType,
+  RoomMember,
 } from "matrix-js-sdk";
 import { extractAttributes, formatText } from "../lib/helpers";
 import {
@@ -40,10 +41,10 @@ const MessageComponent = ({ message }: { message: Message }) => {
   const { replacements, annotations, redaction, event } = message;
 
   return (
-    <div className="flex grow">
+    <div className="flex flex-col grow">
       <span id={event.getId()!} tabIndex={-1} className="peer"></span>
-      <Reply relation={event.getContent()["m.relates_to"] ?? null} />
-      <div className="flex justify-between grow">
+      <Reply event={event} />
+      <div className="flex justify-between grow [&>p]:break-normal">
         {isRoomMessage(event) ? (
           replace === event.getId()! ? (
             <ReplaceWindow
@@ -121,14 +122,14 @@ const MessageOptions = (
         {props.children}
       </div>
       <div className="border-2 border-zinc-400 flex gap-4 px-2 py-1 justify-center items-center duration-100 group-hover:opacity-100 opacity-0 absolute rounded-md bg-zinc-200 left-3/4 top-1 -translate-x-1/2 -translate-y-full">
-        <button kind="button" title="edit">
+        <button type="button" title="edit">
           <EditIcon className="scale-75" onClick={handleEdit} />
         </button>
-        <button kind="button" title="reply" onClick={handleReply}>
+        <button type="button" title="reply" onClick={handleReply}>
           <ReplyIcon className="scale-75" />
         </button>
         <button
-          kind="button"
+          type="button"
           title="copy"
           onClick={handleCopy}
           className={`duration-300 transition-all ${
@@ -208,7 +209,8 @@ const Event = ({
   }
 };
 
-const Reply = ({ relation }: { relation: IEventRelation | null }) => {
+const Reply = ({ event }: { event: MatrixEvent }) => {
+  const relation = event.getContent()["m.relates_to"];
   const inReplyTo = relation?.["m.in_reply_to"]?.event_id;
 
   if (!inReplyTo) {
@@ -221,6 +223,7 @@ const Reply = ({ relation }: { relation: IEventRelation | null }) => {
   // do we need to check for this?
   // const emote = original.getContent().msgtype === MsgType.Emote;
   const original = currentRoom?.findEventById(inReplyTo);
+  const member = currentRoom?.getMember(event.getSender()!)!;
 
   // users might send an ID for a non-existent ID
   if (!original) {
@@ -249,9 +252,15 @@ const Reply = ({ relation }: { relation: IEventRelation | null }) => {
   return (
     <button
       onClick={handleClick}
-      className="shadow-sm px-2 py-1 border-l-4 border-white bg-indigo-200"
+      className="text-left shadow-md px-2 py-1 my-2 border-l-4 border-white bg-indigo-200 break-normal"
     >
-      <Event event={original} />
+      <div className="flex items-center gap-1">
+        <Avatar kind="user" size={4} id={member.userId} className="border-none self-center" />
+        <Name member={member} />
+      </div>
+      <div className="text-gray-600">
+        <Event event={original} />
+      </div>
     </button>
   );
 };
@@ -281,11 +290,19 @@ const Annotations = ({
   );
 };
 
+const Name = ({member}: {member: RoomMember}) => {
+return (
+      <p className="whitespace-normal font-bold">
+        {member.rawDisplayName}
+      </p>
+  )
+};
+
 const RedactionEvent = ({ event }: { event: MatrixEvent }) => {
   const content = event.getContent();
 
   return (
-    <p>{`redacted by ${content.displayname || event.getSender()} ${
+    <p>{`redacted by ${event.getSender()} ${
       content.reason ? ` (reason: ${content.reason})` : null
     }`}</p>
   );
@@ -392,7 +409,7 @@ const RoomEvent = ({
 
           if (start > 0) {
             return (
-              <p className="inline-block whitespace-normal break-all">
+              <p className="inline-block whitespace-normal">
                 {formatText({
                   ...content,
                   body: content.body.slice(0, start),
@@ -434,7 +451,7 @@ const RoomEvent = ({
           }
         } else {
           return (
-            <p className="inline-block whitespace-normal break-all">
+            <p className="inline-block whitespace-normal">
               {formatText(content)}
             </p>
           );
@@ -443,7 +460,7 @@ const RoomEvent = ({
 
       // check later if we can also change the event type with edits
       return (
-        <p className="inline-block whitespace-normal break-all">
+        <p className="inline-block whitespace-normal">
           {formatText(content)}
         </p>
       );
@@ -496,10 +513,10 @@ export const MessageFrame = memo(function MessageFrame(
         <Avatar id={props.userId} kind="user" size={16} />
         <div className="flex flex-col gap-2 w-full">
           <div className="flex gap-2">
-            <p className="whitespace-normal break-all font-bold">
+            <p className="whitespace-normal font-bold">
               {props.displayName || props.userId}
             </p>
-            <p className="whitespace-normal break-all">
+            <p className="whitespace-normal">
               {new Date(props.timestamp).toLocaleString("en-US")}
             </p>
           </div>
@@ -547,10 +564,10 @@ export const ReplaceWindow = (
         <Avatar id={props.userId} kind="user" size={16} />
         <div className="flex flex-col gap-2 w-full">
           <div className="flex gap-2">
-            <p className="whitespace-normal break-all font-bold">
+            <p className="whitespace-normal font-bold">
               {props.displayName || props.userId}
             </p>
-            <p className="whitespace-normal break-all">
+            <p className="whitespace-normal">
               {new Date(props.timestamp).toLocaleString("en-US")}
             </p>
           </div>
@@ -565,10 +582,10 @@ export const ReplaceWindow = (
             value={newBody}
           />
           <div className="flex gap-2">
-            <button onClick={() => props.setReplace(null)} kind="button">
+            <button onClick={() => props.setReplace(null)} type="button">
               cancel
             </button>
-            <button kind="button" onClick={handleSubmit}>
+            <button type="button" onClick={handleSubmit}>
               save
             </button>
           </div>
@@ -627,7 +644,7 @@ export const StateFrame = memo(function StateFrame(
         <div className="px-4">
           <Avatar id={props.userId} size={8} kind="user" />
         </div>
-        <div className="flex flex-col justify-center whitespace-normal break-all grow px-2">
+        <div className="flex flex-col justify-center whitespace-normal row px-2">
           {props.children}
         </div>
       </div>

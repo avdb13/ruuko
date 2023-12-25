@@ -132,12 +132,11 @@ const Sidebar = () => {
   // I hate JavaScript.
   const [directRooms, publicRooms, historicalRooms] = [arr[0]!, arr[1]!, arr[2]!];
 
+  if (!ready) {
+    return null;
+  }
 
-  // if (!ready) {
-  //   console.log("not ready", avatars)
-  //   return null;
-  // }
-
+  // TODO: full sidebar height
   return (
     <Resizable
       width={sidebarWidth}
