@@ -25,6 +25,7 @@ const initClient = (session: Session) => {
     dbName: "ruuko",
   });
 
+  store.destroy();
   store.startup();
 
   const { accessToken, baseUrl, user } = session;
@@ -36,6 +37,7 @@ const initClient = (session: Session) => {
     userId: user,
     deviceId: "Ruuko (beta)",
     store,
+    timelineSupport: true,
   });
 };
 
@@ -44,6 +46,23 @@ const ClientProvider = (props: PropsWithChildren) => {
 
   const [cookies] = useCookies(["session"]);
   const session = cookies["session"] as Session;
+
+  useEffect(() => {
+    const handleTabClose = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      if (client) {
+        client.store.destroy();
+      }
+    };
+
+    console.log('beforeunload event triggered');
+
+    window.addEventListener('beforeunload', handleTabClose);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleTabClose);
+    };
+  }, []);
 
   // TODO: encryption
   useEffect(() => {
@@ -55,7 +74,7 @@ const ClientProvider = (props: PropsWithChildren) => {
           const filter = await client.createFilter({
             presence: { not_types: ["m.presence"] },
           });
-          // await client.initCrypto();
+          await client.initCrypto();
 
           // console.log(import.meta.env.VITE_PASSWORD)
           // await client.uploadDeviceSigningKeys().catch();

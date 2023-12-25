@@ -1,16 +1,15 @@
 import { Suspense, lazy, useContext, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import { RoomContext } from "./providers/room";
+import LogoutButton from "./components/Logout";
 
 const MessageWindow = lazy(() => import("./components/MessageWindow"));
 
 const App = () => {
   const roomState = useContext(RoomContext);
 
-  useEffect(() => console.log(roomState), [roomState])
-
   if (!roomState) {
-    return null;
+    return <LogoutButton />;
   }
 
   // useEffect(() => {
@@ -22,7 +21,6 @@ const App = () => {
   //   // if ()
   // }, [])
 
-  console.log("ready");
   return (
     <div className={`relative flex min-w-0 welcome`}>
       <Sidebar />

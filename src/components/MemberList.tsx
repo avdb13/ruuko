@@ -89,7 +89,7 @@ const MemberList = ({
         </button>
         <Avatar
           id={currentRoom.roomId}
-          type="room"
+          kind="room"
           size={32}
           className="self-center shadow-sm my-2"
         />
@@ -197,7 +197,7 @@ const MemberChip = ({
       >
         <Avatar
           id={member.userId}
-          type="user"
+          kind="user"
           size={16}
           className={`shadow-sm ${
             presence?.presence === "online"
@@ -240,7 +240,7 @@ const MemberInfo = ({
       <div className="flex flex-col flex-wrap justify-center content-center gap-4 m-4 pb-[30px]">
         <Avatar
           id={member.userId}
-          type="user"
+          kind="user"
           size={32}
           className={`shadow-md self-center`}
         />

@@ -44,12 +44,12 @@ interface MyRoomState {
   roomStates: Record<string, RoomState>;
   currentRoom: Room | null;
   roomEvents: Record<string, Message[]>;
+  scrolling: boolean;
   setRooms: (_: Room[]) => void;
   setRoomStates: (_: Record<string, RoomState>) => void;
   setCurrentRoom: (_: Room) => void;
   setRoomEvents: (_: Record<string, Message[]>) => void;
-  // avatars: Record<string, string>;
-  // setAvatars: (_: Record<string, string>) => void;
+  setScrolling: (_: boolean) => void;
 }
 const RoomProvider = (props: PropsWithChildren) => {
   const client = useContext(ClientContext);
@@ -59,6 +59,7 @@ const RoomProvider = (props: PropsWithChildren) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomEvents, setRoomEvents] = useState<Record<string, Message[]>>({});
   const [roomStates, setRoomStates] = useState<Record<string, RoomState>>({});
+  const [scrolling, setScrolling] =useState(false);
 
   const roomState: MyRoomState = useMemo(() => {
     return {
@@ -66,16 +67,19 @@ const RoomProvider = (props: PropsWithChildren) => {
       roomStates,
       currentRoom,
       roomEvents,
+      scrolling,
       setRooms,
       setRoomStates,
       setCurrentRoom,
       setRoomEvents,
-      // avatars,
-      // setAvatars,
+      setScrolling,
     };
   }, [currentRoom, roomEvents, rooms, roomStates]);
 
+
   useEffect(() => {
+    console.log(scrolling);
+
     // retrieve the actual room length and attempt to fill it with at least joined rooms
     client.getJoinedRooms().then((resp) => {
       roomsLength.current = resp.joined_rooms.length;
@@ -90,7 +94,6 @@ const RoomProvider = (props: PropsWithChildren) => {
     // not sure if correct
     setRoomEvents(
       rooms.reduce((init, r) => {
-        console.log("show")
         const allEvents = r.getLiveTimeline().getEvents();
         const firstMessageIdx = allEvents.findIndex(e => isRoomMessage(e));
         const events = allEvents.slice(firstMessageIdx);
@@ -128,7 +131,7 @@ const RoomProvider = (props: PropsWithChildren) => {
         {},
       ),
     );
-  }, [rooms.length]);
+  }, [rooms, scrolling]);
 
   client.on(ClientEvent.Room, (newRoom) =>
     setRooms((prev) => [...prev, newRoom]),

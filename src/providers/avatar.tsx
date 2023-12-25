@@ -19,7 +19,7 @@ export type AvatarCache = {
 };
 
 const AvatarProvider = (props: PropsWithChildren) => {
-  const { roomEvents, rooms } = useContext(RoomContext)!;
+  const { roomEvents, currentRoom, rooms } = useContext(RoomContext)!;
   const client = useContext(ClientContext);
 
   const [avatars, setAvatars] = useState<Record<string, string>>({});
@@ -37,6 +37,7 @@ const AvatarProvider = (props: PropsWithChildren) => {
   useEffect(() => {
     const id = client.getUserId()!;
     const url = client.getUser(id)?.avatarUrl!;
+
     setAvatars((prev) => ({
       ...prev,
       [id]: client.mxcUrlToHttp(url, 1000, 1000)!,
@@ -50,7 +51,9 @@ const AvatarProvider = (props: PropsWithChildren) => {
             const url = m.event.sender?.getMxcAvatarUrl();
             if (!id) return init;
 
-            const memberAvatar = url ? client.mxcUrlToHttp(url, 1000, 1000) : "/anonymous.jpg";
+            const memberAvatar = url
+              ? client.mxcUrlToHttp(url, 1000, 1000)
+              : "/anonymous.jpg";
             return memberAvatar ? { ...init, [id]: memberAvatar } : init;
           },
           {} as Record<string, string>,
@@ -62,7 +65,9 @@ const AvatarProvider = (props: PropsWithChildren) => {
           ?.getMxcAvatarUrl();
         const url = direct(r) ? otherMemberUrl : r.getMxcAvatarUrl();
 
-        const roomAvatar = url ? client.mxcUrlToHttp(url, 1000, 1000) : "/anonymous.jpg";
+        const roomAvatar = url
+          ? client.mxcUrlToHttp(url, 1000, 1000)
+          : "/anonymous.jpg";
 
         return roomAvatar
           ? { ...init, ...memberAvatars, [r.roomId]: roomAvatar }
@@ -74,6 +79,33 @@ const AvatarProvider = (props: PropsWithChildren) => {
     setAvatars((prev) => ({ ...prev, ...allAvatars }));
     setReady(true);
   }, []);
+
+  useEffect(() => {
+    console.log("load for new room")
+    if (currentRoom) {
+      setReady(false);
+
+      currentRoom.loadMembersIfNeeded().then(() => {
+        const memberAvatars = (roomEvents[currentRoom.roomId] ?? []).reduce(
+          (init, m) => {
+            const id = m.event.getSender();
+            if (id && avatars[id]) return init;
+            const url = m.event.sender?.getMxcAvatarUrl();
+            if (!id) return init;
+
+            const memberAvatar = url
+              ? client.mxcUrlToHttp(url, 1000, 1000)
+              : "/anonymous.jpg";
+            return memberAvatar ? { ...init, [id]: memberAvatar } : init;
+          },
+          {} as Record<string, string>,
+        );
+
+        setAvatars((prev) => ({ ...prev, ...memberAvatars }));
+        setReady(true);
+      })
+    }
+  }, [currentRoom]);
 
   return (
     <AvatarContext.Provider

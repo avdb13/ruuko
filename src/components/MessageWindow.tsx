@@ -31,14 +31,19 @@ const MemberList = lazy(() => import("./MemberList"));
 
 const MessageWindow = () => {
   // no idea why roomEvents doesn't contain replies.
-  const { currentRoom, roomEvents, roomStates, setRoomEvents } =
-    useContext(RoomContext)!;
+  const {
+    currentRoom,
+    roomEvents,
+    roomStates,
+    setRoomEvents,
+    scrolling,
+    setScrolling,
+  } = useContext(RoomContext)!;
   const client = useContext(ClientContext);
-
+  const { ready, avatars } = useContext(AvatarContext)!;
 
   const bottomDivRef = useRef<HTMLUListElement>(null);
   const [showMembers, setShowMembers] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   if (!currentRoom) {
     return null;
@@ -51,7 +56,7 @@ const MessageWindow = () => {
 
   useEffect(() => {
     lazyLoadEvents();
-  }, [currentRoom.roomId])
+  }, [currentRoom.roomId]);
 
   const lazyLoadEvents = () => {
     const parent = bottomDivRef.current;
@@ -60,36 +65,41 @@ const MessageWindow = () => {
       return;
     }
 
-    const children = [...parent.children ?? []];
+    const children = [...(parent.children ?? [])];
     const parentHeight = parent.getBoundingClientRect().height;
 
     if (children.length > 0) {
-      const childrenHeight = children.map(c => c.getBoundingClientRect().height);
+      const childrenHeight = children.map(
+        (c) => c.getBoundingClientRect().height,
+      );
 
       const range = [...Array(children.length).keys()];
-      const accum = (i: number) => childrenHeight.slice(0, i).reduce((init, j) => init+j, 0);
+      const accum = (i: number) =>
+        childrenHeight.slice(0, i).reduce((init, j) => init + j, 0);
 
-      const visibleEls = range.find(i => accum(i)-parent.scrollTop > parentHeight);
+      const visibleEls = range.find(
+        (i) => accum(i) - parent.scrollTop > parentHeight,
+      );
 
+      console.log(children.length, visibleEls);
       if (!visibleEls) {
-        setLoading(true);
+        setScrolling(true);
 
         // assume this will automatically add new events to the timeline
-        client.scrollback(currentRoom, 5).then((_) => {
-          setLoading(false);
+        client.scrollback(currentRoom, 10).then((_) => {
+          setScrolling(false);
         });
       }
     }
-  }
+  };
 
   useLayoutEffect(() => {
     if (bottomDivRef.current) {
-      bottomDivRef.current.addEventListener("scroll", lazyLoadEvents)
-
+      bottomDivRef.current.addEventListener("scroll", lazyLoadEvents);
 
       return () => {
         bottomDivRef.current?.removeEventListener("scroll", lazyLoadEvents);
-      }
+      };
     }
   }, [currentRoom.roomId, bottomDivRef]);
 
@@ -105,6 +115,16 @@ const MessageWindow = () => {
             {messageMemo[messageMemo.length - 1]?.event.getContent().reason ??
               "unknown"}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!ready || currentRoom.getMembers().every((m) => avatars[m.userId])) {
+    return (
+      <div className="relative basis-1/2 h-screen grow">
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
+          <Loader />
         </div>
       </div>
     );
@@ -126,7 +146,7 @@ const MessageWindow = () => {
           id="bottom-div"
         >
           <Timeline messages={messageMemo} />
-          {loading ? (
+          {scrolling ? (
             <div className="h-24 shrink-0 flex items-center">
               <Loader className="bg-transparent w-full" />
             </div>
@@ -140,13 +160,8 @@ const MessageWindow = () => {
 };
 
 const Timeline = ({ messages }: { messages: Message[] }) => {
-  const { currentRoom, roomEvents } = useContext(RoomContext)!;
-  const { avatarsReady,avatars } = useContext(AvatarContext)!;
-
-  if (!avatarsReady) {
-    console.log(avatars[currentRoom!.roomId]);
-    return null;
-  }
+  // const { currentRoom, roomEvents } = useContext(RoomContext)!;
+  // const { avatars } = useContext(AvatarContext)!;
 
   // const timestamps = sortByTimestamp(roomEvents[currentRoom!.roomId] ?? []);
 
@@ -167,18 +182,20 @@ const Timeline = ({ messages }: { messages: Message[] }) => {
   //   [events.length],
   // );
 
-  return messages.map(message => (
-        <MessageFrame
-          key={message.event.getId()!}
-          userId={message.event.getSender()!}
-          displayName={message.event.sender?.rawDisplayName}
-          timestamp={message.event.getTs()}
-        >
-          <MessageComponent
-            message={message}
-          />
-        </MessageFrame>
-  ))
+  return [...Array(messages.length).keys()].map((i) => {
+    const message = messages[messages.length - i - 1]!;
+
+    return (
+      <MessageFrame
+        key={message.event.getId()!}
+        userId={message.event.getSender()!}
+        displayName={message.event.sender?.rawDisplayName}
+        timestamp={message.event.getTs()}
+      >
+        <MessageComponent message={message} />
+      </MessageFrame>
+    );
+  });
 
   // TODO: get rid of this filter and pinpoint the problem.
   // return sortedEvents.filter(arr => arr.length > 0).map((list, i) => {
