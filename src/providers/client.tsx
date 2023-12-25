@@ -1,8 +1,5 @@
 import {
-  AuthType,
-  Filter,
   IndexedDBStore,
-  InteractiveAuth,
   MatrixClient,
   createClient,
 } from "matrix-js-sdk";
@@ -18,19 +15,19 @@ const temporaryClient = () => {
 
 export const ClientContext = createContext<MatrixClient>(temporaryClient());
 
-const initClient = (session: Session) => {
+const initClient = async (session: Session) => {
+  console.log("create store")
   const store = new IndexedDBStore({
     indexedDB: globalThis.indexedDB,
     localStorage: globalThis.localStorage,
     dbName: "ruuko",
   });
 
-  store.destroy();
-  store.startup();
+  await store.startup();
+  console.log("success creating store")
 
   const { accessToken, baseUrl, user } = session;
 
-  // is deviceId correct here?
   return createClient({
     accessToken,
     baseUrl,
@@ -47,64 +44,51 @@ const ClientProvider = (props: PropsWithChildren) => {
   const [cookies] = useCookies(["session"]);
   const session = cookies["session"] as Session;
 
-  useEffect(() => {
-    const handleTabClose = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      if (client) {
-        client.store.destroy();
-      }
-    };
-
-    console.log('beforeunload event triggered');
-
-    window.addEventListener('beforeunload', handleTabClose);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleTabClose);
-    };
-  }, []);
-
   // TODO: encryption
   useEffect(() => {
     if (cookies["session"]) {
-      const client = initClient(session);
-
       const f = async () => {
         try {
+          const client = await initClient(session);
+
           const filter = await client.createFilter({
             presence: { not_types: ["m.presence"] },
           });
-          await client.initCrypto();
+          // await client.initCrypto();
+          // console.log("initialized crypto");
 
           // console.log(import.meta.env.VITE_PASSWORD)
           // await client.uploadDeviceSigningKeys().catch();
           // await client.uploadDeviceSigningKeys({password: import.meta.env.VITE_PASSWORD,type:AuthType.Password,identifier:{user: import.meta.env.VITE_USERNAME},session: client.getSessionId()});
 
-          client.startClient({
-            pollTimeout: 5000,
+          await client.startClient({
             lazyLoadMembers: true,
             initialSyncLimit: 10,
             filter,
           });
+
+          setClient(client);
         } catch (e) {
           console.error(e);
         }
       };
 
-      f().then(() => setClient(client));
-    } else {
-      setClient(null);
+      f().then(() => {
+        console.log("client ready");
+      });
     }
-  }, [cookies, session]);
+  }, [session]);
 
   if (!cookies["session"] && !client) {
     return <Login />;
   }
 
   if (!client) {
+    console.log("no client");
     return <LogoutButton />;
   }
 
+  console.log("client ready");
   return (
     <ClientContext.Provider value={client}>
       {props.children}

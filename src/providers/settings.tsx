@@ -45,20 +45,21 @@ const SettingsProvider = (props: PropsWithChildren) => {
 
   const getEmails = async () => {
     const { threepids } = await client.getThreePids();
-    console.log(threepids);
     return threepids
       .filter((t) => t.medium === ThreepidMedium.Email)
       .map((t) => t.address);
   };
 
-  useEffect(() => {
-    getEmails().then((emails) => {
-      setSettings((prevSettings) => ({ ...prevSettings, emails }));
-    });
-    getPhoneNumbers().then((phoneNumbers) => {
-      setSettings((prevSettings) => ({ ...prevSettings, phoneNumbers }));
-    });
-  }, [refreshPids]);
+  // useEffect(() => {
+  //   getEmails().then((emails) => {
+  //     setSettings((prevSettings) => ({ ...prevSettings, emails }));
+  //   });
+  //   getPhoneNumbers().then((phoneNumbers) => {
+  //     setSettings((prevSettings) => ({ ...prevSettings, phoneNumbers }));
+  //   });
+
+  //   console.log("done loading 3PID");
+  // }, [refreshPids]);
 
   return (
     <SettingsContext.Provider value={{ settings, setSettings, setRefreshPids }}>

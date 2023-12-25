@@ -78,20 +78,23 @@ const RoomProvider = (props: PropsWithChildren) => {
 
 
   useEffect(() => {
-    console.log(scrolling);
-
     // retrieve the actual room length and attempt to fill it with at least joined rooms
+    console.log("getting joined rooms");
     client.getJoinedRooms().then((resp) => {
       roomsLength.current = resp.joined_rooms.length;
+
+     setRooms(client.getRooms());
     });
   }, []);
 
   useEffect(() => {
     if (rooms.length === 0) {
+      console.log("no rooms available");
       return;
     }
 
     // not sure if correct
+    console.log("rooms available: " + rooms.length + " " + rooms.map(r => r.name).join(", "));
     setRoomEvents(
       rooms.reduce((init, r) => {
         const allEvents = r.getLiveTimeline().getEvents();
@@ -157,6 +160,7 @@ const RoomProvider = (props: PropsWithChildren) => {
       Object.values(roomEvents).length >= roomsLength.current
     )
   ) {
+    console.log("rooms not ready");
     return null;
   }
 
