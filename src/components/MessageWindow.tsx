@@ -55,7 +55,11 @@ const MessageWindow = () => {
   }, [currentRoom, messages]);
 
   useEffect(() => {
-    lazyLoadEvents();
+    setScrolling(true);
+
+    client.scrollback(currentRoom, 10).then((_) => {
+      setScrolling(false);
+    });
   }, [currentRoom.roomId]);
 
   const lazyLoadEvents = () => {

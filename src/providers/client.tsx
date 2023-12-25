@@ -54,7 +54,7 @@ const ClientProvider = (props: PropsWithChildren) => {
           const filter = await client.createFilter({
             presence: { not_types: ["m.presence"] },
           });
-          // await client.initCrypto();
+          await client.initCrypto();
           // console.log("initialized crypto");
 
           // console.log(import.meta.env.VITE_PASSWORD)
