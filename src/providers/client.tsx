@@ -64,7 +64,7 @@ const ClientProvider = (props: PropsWithChildren) => {
           client.startClient({
             pollTimeout: 5000,
             lazyLoadMembers: true,
-            initialSyncLimit: 0,
+            initialSyncLimit: 10,
             filter,
           });
         } catch (e) {

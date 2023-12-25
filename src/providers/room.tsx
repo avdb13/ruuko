@@ -90,6 +90,7 @@ const RoomProvider = (props: PropsWithChildren) => {
     // not sure if correct
     setRoomEvents(
       rooms.reduce((init, r) => {
+        console.log("show")
         const allEvents = r.getLiveTimeline().getEvents();
         const firstMessageIdx = allEvents.findIndex(e => isRoomMessage(e));
         const events = allEvents.slice(firstMessageIdx);
@@ -153,7 +154,6 @@ const RoomProvider = (props: PropsWithChildren) => {
       Object.values(roomEvents).length >= roomsLength.current
     )
   ) {
-    // console.log(roomsLength.current, Object.values(roomEvents).length);
     return null;
   }
 

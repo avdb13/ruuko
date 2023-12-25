@@ -91,7 +91,7 @@ const RoomList = ({
 const Sidebar = () => {
   const { rooms, roomEvents } = useContext(RoomContext)!;
   const client = useContext(ClientContext);
-  const {avatars, avatarsReady} =useContext(AvatarContext)!;
+  const {avatars, ready} =useContext(AvatarContext)!;
 
   const [sidebarWidth, setSidebarWidth] = useState(400);
 
@@ -133,10 +133,10 @@ const Sidebar = () => {
   const [directRooms, publicRooms, historicalRooms] = [arr[0]!, arr[1]!, arr[2]!];
 
 
-  if (!avatarsReady) {
-    console.log("not ready", avatars)
-    return null;
-  }
+  // if (!ready) {
+  //   console.log("not ready", avatars)
+  //   return null;
+  // }
 
   return (
     <Resizable

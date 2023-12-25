@@ -31,51 +31,6 @@ export const extractAttributes = (s: string, attributes: Array<string>) =>
         {} as Record<string, string>,
     );
 
-export const getAvatarUrl = (
-    client: MatrixClient,
-    id: string,
-    type: AvatarType,
-    ) => {
-  switch (type) {
-  case "room": {
-    const room = client.getRoom(id)!;
-
-    return room.getMembers().length <= 2
-               ? room.getMembers()
-                     .find((member) => member.userId !== client.getUserId())
-                     ?.getAvatarUrl(
-                         "https://matrix.org",
-                         1200,
-                         1200,
-                         "scale",
-                         false,
-                         true,
-                         )
-               : room.getAvatarUrl("https://matrix.org", 1200, 1200, "scale",
-                                   true);
-  }
-  case "user": {
-    const user = client.getUser(id);
-
-    if (!user || !user.avatarUrl) {
-      return null;
-    }
-
-    // bug: avatar doesn't load sometimes since this method returns null for
-    // some reason.
-    const httpUrl = client.mxcUrlToHttp(
-        user.avatarUrl,
-        1200,
-        1200,
-        "scale",
-        true,
-    );
-
-    return httpUrl;
-  }
-  }
-};
-
 export const getFlagEmoji = (countryCode: string) => {
   const codePoints = countryCode.toUpperCase().split("").map(
       (char) => 127397 + char.charCodeAt(0));
@@ -198,7 +153,6 @@ export const addNewEvent = (e: MatrixEvent, roomEvents?: Message[]) => {
       const annotation = relation?.rel_type === RelationType.Annotation;
       const redaction = e.getContent().redacts as string;
 
-      console.log(roomEvents)
       if (!roomEvents?.find(m => m.event.getId() === relation?.event_id)) {
         return roomEvents ?? []
       }

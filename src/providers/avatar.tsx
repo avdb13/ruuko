@@ -7,70 +7,80 @@ import {
   useState,
 } from "react";
 import { RoomContext } from "./room";
-import { getAvatarUrl } from "../components/Avatar";
 import { ClientContext } from "./client";
-import { EventEmitterEvents, EventType } from "matrix-js-sdk";
+import { EventType, Room } from "matrix-js-sdk";
 
 export const AvatarContext = createContext<AvatarCache | null>(null);
 
 export type AvatarCache = {
   avatars: Record<string, string>;
   setAvatars: (_: Record<string, string>) => void;
-  avatarsReady: boolean | null;
+  ready: boolean;
 };
 
 const AvatarProvider = (props: PropsWithChildren) => {
-  const { roomEvents, currentRoom, rooms } = useContext(RoomContext)!;
+  const { roomEvents, rooms } = useContext(RoomContext)!;
   const client = useContext(ClientContext);
 
   const [avatars, setAvatars] = useState<Record<string, string>>({});
-  const [avatarsReady, setAvatarsReady] = useState<Record<string, boolean> | null>(null);
+  const [ready, setReady] = useState(false);
 
   const length = Object.keys(avatars ?? {});
   const avatarsMemo = useMemo(() => avatars ?? {}, [length]);
 
+  const directEvent = client.getAccountData(EventType.Direct);
+  const directRoomIds = Object.values(
+    directEvent?.getContent() as Record<string, string[]>,
+  ).flat();
+  const direct = (r: Room) => directRoomIds.indexOf(r.roomId) >= 0;
+
   useEffect(() => {
     const id = client.getUserId()!;
     const url = client.getUser(id)?.avatarUrl!;
-    setAvatars(prev => ({...prev, [id]: client.mxcUrlToHttp(url)!}))
+    setAvatars((prev) => ({
+      ...prev,
+      [id]: client.mxcUrlToHttp(url, 1000, 1000)!,
+    }));
 
-    for (const room of rooms) {
-      const x= getAvatarUrl(client, room.roomId, "room");
-      console.log(x, room.roomId);
-    }
+    const allAvatars = rooms.reduce(
+      (init, r) => {
+        const memberAvatars = (roomEvents[r.roomId] ?? []).reduce(
+          (init, m) => {
+            const id = m.event.getSender();
+            const url = m.event.sender?.getMxcAvatarUrl();
+            if (!id) return init;
 
-    setAvatarsReady({"rooms": true});
-  }, [])
+            const memberAvatar = url ? client.mxcUrlToHttp(url, 1000, 1000) : "/anonymous.jpg";
+            return memberAvatar ? { ...init, [id]: memberAvatar } : init;
+          },
+          {} as Record<string, string>,
+        );
 
-  useEffect(() => {
-    if (currentRoom && avatarsReady) {
-      const avatarsToLoad =
-        roomEvents[currentRoom.roomId]?.reduce((init, e) => {
-          const sender = e.event.getSender();
-          return sender
-            ? init.indexOf(sender)
-              ? init
-              : [...init, sender]
-            : init;
-        }, [] as string[]) ?? [];
+        const members = r.getMembers();
+        const otherMemberUrl = members
+          .filter((m) => m.userId !== client.getUserId()!)[0]
+          ?.getMxcAvatarUrl();
+        const url = direct(r) ? otherMemberUrl : r.getMxcAvatarUrl();
 
-      for (const user of avatarsToLoad) {
-        getAvatarUrl(client, user, "user");
-      }
+        const roomAvatar = url ? client.mxcUrlToHttp(url, 1000, 1000) : "/anonymous.jpg";
 
-      setAvatarsReady((prev) => ({
-        ...prev,
-        [currentRoom.roomId]: true,
-      }));
-    }
-  }, [currentRoom]);
+        return roomAvatar
+          ? { ...init, ...memberAvatars, [r.roomId]: roomAvatar }
+          : { ...init, ...memberAvatars };
+      },
+      {} as Record<string, string>,
+    );
+
+    setAvatars((prev) => ({ ...prev, ...allAvatars }));
+    setReady(true);
+  }, []);
 
   return (
     <AvatarContext.Provider
       value={{
         avatars: avatarsMemo,
         setAvatars,
-        avatarsReady: avatarsReady ? currentRoom ? avatarsReady[currentRoom!.roomId]! : avatarsReady["rooms"]! : null,
+        ready,
       }}
     >
       {props.children}
