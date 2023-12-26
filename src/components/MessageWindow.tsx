@@ -124,38 +124,38 @@ const MessageWindow = () => {
     );
   }
 
-  if (!ready || currentRoom.getMembers().every((m) => avatars[m.userId])) {
-    return (
-      <div className="relative basis-1/2 h-screen grow">
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
-          <Loader />
-        </div>
-      </div>
-    );
+  if (!currentRoom) {
+    return null;
   }
 
   // fix harsh transition
   return (
     <div className="min-w-0 flex grow">
-      <div className="isolate min-w-0 flex flex-col basis-1/2 justify-between h-screen grow">
+      <div className="isolate relative min-w-0 flex flex-col basis-1/2 justify-between h-screen grow">
         <TitleBar
           showMembers={showMembers}
           setShowMembers={setShowMembers}
           roomState={roomStates[currentRoom.roomId] || null}
           roomName={currentRoom.name}
         />
-        <ul
-          ref={bottomDivRef}
-          className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>li]:list-none overflow-x-clip"
-          id="bottom-div"
-        >
-          <Timeline messages={messageMemo} />
-          {scrolling ? (
-            <div className="h-24 shrink-0 flex items-center">
-              <Loader className="bg-transparent w-full" />
-            </div>
-          ) : null}
-        </ul>
+        {ready ? (
+          <ul
+            ref={bottomDivRef}
+            className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>li]:list-none overflow-x-clip"
+            id="bottom-div"
+          >
+            <Timeline messages={messageMemo} />
+            {scrolling ? (
+              <div className="h-24 shrink-0 flex items-center">
+                <Loader className="bg-transparent w-full" />
+              </div>
+            ) : null}
+          </ul>
+        ) : (
+          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
+            <Loader />
+          </div>
+        )}
         <InputBar roomId={currentRoom.roomId} />
       </div>
       <MemberList visible={showMembers} setVisible={setShowMembers} />

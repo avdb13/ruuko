@@ -29,7 +29,6 @@ const Resizable = (props: PropsWithChildren<ResizableProps>) => {
   const resize = useCallback(
     (mouseMoveEvent: MouseEvent) => {
       if (isResizing) {
-        console.log(mouseMoveEvent.clientX, window.outerWidth)
         setSidebarWidth(
           props.side === "right"
             ? mouseMoveEvent.clientX

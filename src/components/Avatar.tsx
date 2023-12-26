@@ -52,25 +52,7 @@ const Avatar = memo(function Avatar({
   size: number;
   className?: string;
 }) {
-  const client = useContext(ClientContext);
-  const { avatars, setAvatars } = useContext(AvatarContext)!;
-
-  useEffect(() => {
-    if (!avatars[id]) {
-      const resp = getAvatarUrl(client, id, kind);
-      switch (resp.status) {
-        case "success":
-          setAvatars({ ...avatars, [id]: resp.url! });
-          break;
-        case "fail":
-          setAvatars({ ...avatars, [id]: "/unknown.jpg" });
-          break;
-        case "nonexistent":
-          setAvatars({ ...avatars, [id]: "/anonymous.jpg" });
-          break;
-      }
-    }
-  }, [])
+  const { avatars } = useContext(AvatarContext)!;
 
   return (
     <img

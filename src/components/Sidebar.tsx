@@ -1,5 +1,5 @@
-import { EventType, Room } from "matrix-js-sdk";
-import { useState, useContext, useMemo } from "react";
+import { EventType, ReceiptType, Room } from "matrix-js-sdk";
+import { useState, useContext, useMemo, useEffect, memo } from "react";
 import { RoomContext } from "../providers/room";
 import { formatEvent } from "./Message";
 import Resizable from "./Resizable";
@@ -32,10 +32,12 @@ const RoomWidget = ({
   id,
   name,
   direct,
+  unread,
 }: {
   id: string;
   name: string;
   direct: boolean;
+  unread: number;
 }) => {
   const { setCurrentRoom, roomEvents, rooms } = useContext(RoomContext)!;
 
@@ -46,10 +48,10 @@ const RoomWidget = ({
   return (
     <button
       onClick={() => setCurrentRoom(rooms?.find((r) => r.roomId === id)!)}
-      className="flex items-center gap-4 p-2 w-full border-b-4 shadow-md rounded-md hover:bg-indigo-200 duration-300"
+      className="flex items-center gap-4 px-4 py-2 w-full border-b-4 shadow-md rounded-md hover:bg-indigo-200 duration-300"
       key={name}
     >
-      <Avatar id={id} kind="room" size={16} className="shadow-sm" />
+      <Avatar id={id} kind="room" size={16} className="shadow-sm border-white" />
       <div className="flex flex-col items-start min-w-0">
         <p className="max-w-full truncate font-bold">{name}</p>
         <p className="max-w-full truncate text-sm">
@@ -63,6 +65,9 @@ const RoomWidget = ({
             : null}
         </p>
       </div>
+      <div className="flex-none flex flex-col justify-center items-center h-full">
+    {unread > 0 && <div className="rounded-full bg-indigo-50 shadow-sm text-xs text-gray-600 font-bold px-2">{unread > 999 ? Math.round(unread/100)/10+"k" : unread}</div>}
+      </div>
     </button>
   );
 };
@@ -74,15 +79,15 @@ const RoomList = ({
   direct,
 }: {
   sidebarWidth: number;
-  rooms: { name: string; id: string }[];
+  rooms: { name: string; id: string, unread: number }[];
   direct?: boolean;
 }) => {
   return rooms.length > 0 ? (
     <ul className="flex flex-col gap-2">
       {sidebarWidth < 120
         ? rooms.map(({ _, id }) => <RoomIconWidget id={id} key={id} />)
-        : rooms.map(({ name, id }) => (
-            <RoomWidget direct={direct ?? false} name={name} id={id} key={id} />
+        : rooms.map(({ name, id, unread }) => (
+            <RoomWidget direct={direct ?? false} unread={unread} name={name} id={id} key={id} />
           ))}
     </ul>
   ) : null;
@@ -91,7 +96,6 @@ const RoomList = ({
 const Sidebar = () => {
   const { rooms, roomEvents } = useContext(RoomContext)!;
   const client = useContext(ClientContext);
-  const {avatars, ready} =useContext(AvatarContext)!;
 
   const [sidebarWidth, setSidebarWidth] = useState(400);
 
@@ -101,6 +105,7 @@ const Sidebar = () => {
   };
 
   const directEvent = client.getAccountData(EventType.Direct);
+
   // if (!directEvent) {
   //   client.getAccountDataFromServer(EventType.Direct).then(resp => resp)
   // }
@@ -120,7 +125,7 @@ const Sidebar = () => {
     const banned = (r: Room) => r.getMyMembership() === Membership.Ban;
     const direct = (r: Room) => directRoomIds.indexOf(r.roomId) >= 0;
 
-    const getInfo = (r: Room) => ({ name: r.name, id: r.roomId });
+    const getInfo = (r: Room) => ({ name: r.name, id: r.roomId, unread: r.getUnreadNotificationCount() });
 
     return [
       sorted.filter((r) => joined(r) && direct(r)),
@@ -132,20 +137,9 @@ const Sidebar = () => {
   // I hate JavaScript.
   const [directRooms, publicRooms, historicalRooms] = [arr[0]!, arr[1]!, arr[2]!];
 
-  if (!ready) {
-    return null;
-  }
-
-  // TODO: full sidebar height
-  return (
-    <Resizable
-      width={sidebarWidth}
-      setWidth={setSidebarWidth}
-      minWidth={200}
-      side="right"
-      className="flex flex-col items-center gap-2 py-2 bg-opacity-25 bg-indigo-50 min-w-0 h-screen"
-    >
-      <div className="flex flex-col w-full overflow-y-auto scrollbar">
+  const Inner = memo(() => (
+    <>
+      <div className="flex flex-col w-full grow overflow-y-auto scrollbar">
         <Togglable
           modal={<SearchUserForm />}
           title="direct messages"
@@ -165,6 +159,19 @@ const Sidebar = () => {
         </Togglable>
       </div>
       <UserPanel />
+    </>
+  ));
+
+  // TODO: full sidebar height
+  return (
+    <Resizable
+      width={sidebarWidth}
+      setWidth={setSidebarWidth}
+      minWidth={200}
+      side="right"
+      className="flex flex-col items-center gap-2 py-2 bg-opacity-25 bg-indigo-50 min-w-0 h-screen"
+    >
+      <Inner />
     </Resizable>
   );
 };

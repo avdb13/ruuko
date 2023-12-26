@@ -45,7 +45,7 @@ const AvatarProvider = (props: PropsWithChildren) => {
 
     const allAvatars = rooms.reduce(
       (init, r) => {
-        const memberAvatars = (roomEvents[r.roomId] ?? []).reduce(
+        const memberAvatars = direct(r) ? (roomEvents[r.roomId] ?? []).reduce(
           (init, m) => {
             const id = m.event.getSender();
             const url = m.event.sender?.getMxcAvatarUrl();
@@ -57,14 +57,14 @@ const AvatarProvider = (props: PropsWithChildren) => {
             return memberAvatar ? { ...init, [id]: memberAvatar } : init;
           },
           {} as Record<string, string>,
-        );
+        ) : {};
 
         const members = r.getMembers();
         const otherMemberUrl = members
           .filter((m) => m.userId !== client.getUserId()!)[0]
           ?.getMxcAvatarUrl();
-        const url = direct(r) ? otherMemberUrl : r.getMxcAvatarUrl();
 
+        const url = direct(r) ? otherMemberUrl : r.getMxcAvatarUrl();
         const roomAvatar = url
           ? client.mxcUrlToHttp(url, 1000, 1000)
           : "/anonymous.jpg";
@@ -76,6 +76,7 @@ const AvatarProvider = (props: PropsWithChildren) => {
       {} as Record<string, string>,
     );
 
+    console.log(Object.entries(allAvatars))
     setAvatars((prev) => ({ ...prev, ...allAvatars }));
     setReady(true);
   }, []);
@@ -101,11 +102,13 @@ const AvatarProvider = (props: PropsWithChildren) => {
           {} as Record<string, string>,
         );
 
+        console.log(Object.entries(memberAvatars))
+
         setAvatars((prev) => ({ ...prev, ...memberAvatars }));
         setReady(true);
       })
     }
-  }, [currentRoom]);
+  }, [currentRoom?.roomId]);
 
   return (
     <AvatarContext.Provider

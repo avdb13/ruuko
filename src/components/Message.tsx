@@ -44,7 +44,7 @@ const MessageComponent = ({ message }: { message: Message }) => {
     <div className="flex flex-col grow">
       <span id={event.getId()!} tabIndex={-1} className="peer"></span>
       <Reply event={event} />
-      <div className="flex justify-between grow [&>p]:break-normal">
+      <div className="flex justify-between grow break-normal">
         {isRoomMessage(event) ? (
           replace === event.getId()! ? (
             <ReplaceWindow
@@ -252,7 +252,7 @@ const Reply = ({ event }: { event: MatrixEvent }) => {
   return (
     <button
       onClick={handleClick}
-      className="text-left shadow-md px-2 py-1 my-2 border-l-4 border-white bg-indigo-200 break-normal"
+      className="text-left shadow-md px-2 py-1 my-2 border-l-4 border-white bg-indigo-200"
     >
       <div className="flex items-center gap-1">
         <Avatar kind="user" size={4} id={member.userId} className="border-none self-center" />
