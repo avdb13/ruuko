@@ -3,6 +3,7 @@ import {
   Direction,
   EventType,
   MatrixEvent,
+  NotificationCountType,
   RelationType,
   Room,
   RoomEvent,
@@ -77,6 +78,11 @@ const RoomProvider = (props: PropsWithChildren) => {
   }, [currentRoom, roomEvents, rooms, roomStates]);
 
 
+  useEffect(() => {
+    if (currentRoom) {
+      currentRoom.setUnreadNotificationCount(NotificationCountType.Total, 0);
+    }
+  }, [currentRoom])
   useEffect(() => {
     // retrieve the actual room length and attempt to fill it with at least joined rooms
     console.log("getting joined rooms");

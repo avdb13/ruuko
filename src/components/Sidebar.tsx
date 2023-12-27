@@ -1,4 +1,4 @@
-import { EventType, ReceiptType, Room } from "matrix-js-sdk";
+import { EventType, NotificationCountType, ReceiptType, Room } from "matrix-js-sdk";
 import { useState, useContext, useMemo, useEffect, memo } from "react";
 import { RoomContext } from "../providers/room";
 import { formatEvent } from "./Message";
@@ -44,6 +44,8 @@ const RoomWidget = ({
   const messages = roomEvents[id];
 
   const latestMessage = messages ? messages[messages.length - 1] : null;
+  const unreadFormatted =
+    unread > 999 ? Math.round(unread / 100) / 10 + "k" : unread.toString();
 
   return (
     <button
@@ -51,7 +53,12 @@ const RoomWidget = ({
       className="flex items-center gap-4 px-4 py-2 w-full border-b-4 shadow-md rounded-md hover:bg-indigo-200 duration-300"
       key={name}
     >
-      <Avatar id={id} kind="room" size={16} className="shadow-sm border-white" />
+      <Avatar
+        id={id}
+        kind="room"
+        size={16}
+        className="shadow-sm border-white"
+      />
       <div className="flex flex-col items-start min-w-0">
         <p className="max-w-full truncate font-bold">{name}</p>
         <p className="max-w-full truncate text-sm">
@@ -66,7 +73,11 @@ const RoomWidget = ({
         </p>
       </div>
       <div className="flex-none flex flex-col justify-center items-center h-full">
-    {unread > 0 && <div className="rounded-full bg-indigo-50 shadow-sm text-xs text-gray-600 font-bold px-2">{unread > 999 ? Math.round(unread/100)/10+"k" : unread}</div>}
+        {unread > 0 && (
+          <div className="rounded-full bg-indigo-50 shadow-sm text-xs text-gray-600 font-bold px-2">
+            {unreadFormatted}
+          </div>
+        )}
       </div>
     </button>
   );
@@ -79,7 +90,7 @@ const RoomList = ({
   direct,
 }: {
   sidebarWidth: number;
-  rooms: { name: string; id: string, unread: number }[];
+  rooms: { name: string; id: string; unread: number }[];
   direct?: boolean;
 }) => {
   return rooms.length > 0 ? (
@@ -87,14 +98,20 @@ const RoomList = ({
       {sidebarWidth < 120
         ? rooms.map(({ _, id }) => <RoomIconWidget id={id} key={id} />)
         : rooms.map(({ name, id, unread }) => (
-            <RoomWidget direct={direct ?? false} unread={unread} name={name} id={id} key={id} />
+            <RoomWidget
+              direct={direct ?? false}
+              unread={unread}
+              name={name}
+              id={id}
+              key={id}
+            />
           ))}
     </ul>
   ) : null;
 };
 
 const Sidebar = () => {
-  const { rooms, roomEvents } = useContext(RoomContext)!;
+  const { rooms, roomEvents, currentRoom } = useContext(RoomContext)!;
   const client = useContext(ClientContext);
 
   const [sidebarWidth, setSidebarWidth] = useState(400);
@@ -115,27 +132,35 @@ const Sidebar = () => {
   ).flat();
 
   const arr = useMemo(() => {
-    const sorted = rooms.sort((a, b) =>
-      // don't panic! I negated the return value here
-      // because I don't wanna rewrite the sorting function.
-      -sortRooms(getLastMessage(a), getLastMessage(b)),
+    const sorted = rooms.sort(
+      (a, b) =>
+        // don't panic! I negated the return value here
+        // because I don't wanna rewrite the sorting function.
+        -sortRooms(getLastMessage(a), getLastMessage(b)),
     );
 
     const joined = (r: Room) => r.getMyMembership() === Membership.Join;
     const banned = (r: Room) => r.getMyMembership() === Membership.Ban;
     const direct = (r: Room) => directRoomIds.indexOf(r.roomId) >= 0;
 
-    const getInfo = (r: Room) => ({ name: r.name, id: r.roomId, unread: r.getUnreadNotificationCount() });
+    const getInfo = (r: Room) => ({
+      name: r.name,
+      id: r.roomId,
+      unread: r.getUnreadNotificationCount(NotificationCountType.Total),
+    });
 
     return [
       sorted.filter((r) => joined(r) && direct(r)),
       sorted.filter((r) => joined(r) && !direct(r)),
       sorted.filter((r) => banned(r)),
-    ]
-    .map((arr) => arr.map(getInfo));
-  }, [rooms]);
+    ].map((arr) => arr.map(getInfo));
+  }, [rooms,currentRoom]);
   // I hate JavaScript.
-  const [directRooms, publicRooms, historicalRooms] = [arr[0]!, arr[1]!, arr[2]!];
+  const [directRooms, publicRooms, historicalRooms] = [
+    arr[0]!,
+    arr[1]!,
+    arr[2]!,
+  ];
 
   const Inner = memo(() => (
     <>
