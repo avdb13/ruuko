@@ -20,6 +20,7 @@ import MembersIcon from "./icons/Members";
 import { ClientContext } from "../providers/client";
 import Loader from "./Loader";
 import { AvatarContext } from "../providers/avatar";
+import ArrowNoTailIcon from "./icons/ArrowNoTail";
 
 const Modal = lazy(() => import("./Modal"));
 const MemberList = lazy(() => import("./MemberList"));
@@ -128,6 +129,10 @@ const MessageWindow = () => {
     return null;
   }
 
+  const ok = () => (
+    <button className="z-10 absolute w-12 h-12 top-[10%] shadow-md left-full -translate-x-[125%] -translate-y-[100%] rounded-full flex justify-center items-center rotate-90"><ArrowNoTailIcon /></button>
+  )
+
   // fix harsh transition
   return (
     <div className="min-w-0 flex grow">
@@ -144,6 +149,7 @@ const MessageWindow = () => {
             className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>li]:list-none overflow-x-clip"
             id="bottom-div"
           >
+            {ok()}
             <Timeline messages={messageMemo} />
             {scrolling ? (
               <div className="h-24 shrink-0 flex items-center">

@@ -89,7 +89,9 @@ const RoomProvider = (props: PropsWithChildren) => {
     client.getJoinedRooms().then((resp) => {
       roomsLength.current = resp.joined_rooms.length;
 
-     setRooms(client.getRooms());
+      const res = client.getRooms();
+      console.log(res);
+     setRooms(res);
     });
   }, []);
 
@@ -143,7 +145,8 @@ const RoomProvider = (props: PropsWithChildren) => {
   }, [rooms, scrolling]);
 
   client.on(ClientEvent.Room, (newRoom) =>
-    setRooms((prev) => [...prev, newRoom]),
+    // weird bug where the same rooms appear multiple times
+    setRooms((prev) => [...new Set(prev.concat(newRoom))])
   );
 
   client.on(RoomEvent.Timeline, (e, room, startOfTimeline) => {

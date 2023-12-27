@@ -832,7 +832,7 @@ const Receipt = ({ event }: { event: MatrixEvent }) => {
       </Modal>
       <button
         onClick={() => setVisible(true)}
-        className="relative group shrink"
+        className="group shrink flex items-end"
       >
         <span className="font-bold rounded-full gap-[1px] flex justify-center items-center text-gray-600 scale-75">
           {receipts.length}
