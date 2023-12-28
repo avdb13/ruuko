@@ -1,4 +1,4 @@
-import { ChangeEvent, ReactNode, useContext, useRef, useState } from "react";
+import { ChangeEvent, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { ClientContext } from "../providers/client";
 import countries from "../../data/countries.json";
 import Avatar from "./Avatar";
@@ -11,11 +11,46 @@ import { getFlagEmoji } from "../lib/helpers";
 import PasswordIcon from "./icons/Password";
 import KeyIcon from "./icons/Key";
 import { useCookies } from "react-cookie";
-import { AuthType } from "matrix-js-sdk";
+import { AuthType, IMyDevice } from "matrix-js-sdk";
 import axios, { AxiosError } from "axios";
+import DeviceIcon from "./icons/Device";
+import QuestionIcon from "./icons/Question";
+import VerifiedIcon from "./icons/Verified";
 
 const DevicesTab = () => {
-  return <div></div>;
+  const client = useContext(ClientContext);
+  const [devices, setDevices] = useState<IMyDevice[] | null>(null);
+
+  useEffect(() => {
+    client.getDevices().then(resp => setDevices(resp.devices))
+  }, [])
+
+  const device = (d: IMyDevice) => (
+    <li className="p-4">
+      <div className="relative bg-gray-200 w-fit m-2 p-2 rounded-sm">
+        <DeviceIcon className="fill-gray-600" />
+        {true ? (
+          <VerifiedIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
+        ) : (
+          <QuestionIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
+        )}
+      </div>
+      <p className="max-w-full whitespace-nowrap"><span className="truncate">{d.display_name}</span> • <span className="">{d.device_id}</span></p>
+      <p>{d.last_seen_user_agent}</p>
+      <p>{d.last_seen_ip}</p>
+    </li>
+  )
+
+  return (
+    <div className="flex grow border-2 gap-2 min-w-0">
+      <div>
+        <p className="uppercase font-bold text-xs">devices</p>
+        <ul className="">
+            {devices ? devices.map(d => device(d)) : <p>loading ...</p>}
+        </ul>
+      </div>
+    </div>
+  );
 };
 const AppearanceTab = () => {
   return <div></div>;
@@ -121,14 +156,18 @@ const AccountTab = () => {
 
     const client_secret = client.generateClientSecret();
 
-    const { sid } = await client.requestAdd3pidEmailToken(newEmail, client_secret, 0);
+    const { sid } = await client.requestAdd3pidEmailToken(
+      newEmail,
+      client_secret,
+      0,
+    );
 
     try {
       await client.addThreePidOnly({
         sid,
         client_secret,
       });
-    } catch(e) {
+    } catch (e) {
       if (e instanceof AxiosError) {
         const auth = {
           sid,
@@ -139,13 +178,17 @@ const AccountTab = () => {
             type: AuthType.Password,
             session: e.response?.data.session,
           },
-        }
+        };
 
-        axios.post(`${client.baseUrl}/_matrix/client/v3/account/3pid/add`, auth, {headers: {Authorization: `Bearer ${session.accessToken}`}}).catch(e => {
-          if (e instanceof AxiosError) {
-            setError(e.response?.data.error)
-          }
-        })
+        axios
+          .post(`${client.baseUrl}/_matrix/client/v3/account/3pid/add`, auth, {
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+          })
+          .catch((e) => {
+            if (e instanceof AxiosError) {
+              setError(e.response?.data.error);
+            }
+          });
       }
     }
 

@@ -39,13 +39,17 @@ const RoomWidget = ({
   direct: boolean;
   unread: number;
 }) => {
-  const { setCurrentRoom, roomEvents, rooms } = useContext(RoomContext)!;
+  const { currentRoom, setCurrentRoom, roomEvents, rooms } = useContext(RoomContext)!;
 
   const messages = roomEvents[id];
 
   const latestMessage = messages ? messages[messages.length - 1] : null;
   const unreadFormatted =
     unread > 999 ? Math.round(unread / 100) / 10 + "k" : unread.toString();
+
+  useEffect(() => {
+    // trigger rerender on room change
+  }, [currentRoom])
 
   return (
     <button

@@ -1,4 +1,4 @@
-import { EventType, MatrixEvent, RelationType, RoomState } from "matrix-js-sdk";
+import { EventType, MatrixEvent, NotificationCountType, RelationType, RoomState } from "matrix-js-sdk";
 import MessageComponent, {
   DateMessage,
   Membership,
@@ -36,7 +36,6 @@ const MessageWindow = () => {
     currentRoom,
     roomEvents,
     roomStates,
-    setRoomEvents,
     scrolling,
     setScrolling,
   } = useContext(RoomContext)!;
@@ -45,23 +44,24 @@ const MessageWindow = () => {
 
   const bottomDivRef = useRef<HTMLUListElement>(null);
   const [showMembers, setShowMembers] = useState(false);
+  const [notificationCount, setNotificationCount] = useState<number | null>(null);
 
-  if (!currentRoom) {
-    return null;
-  }
+  const messages = roomEvents[currentRoom!.roomId];
 
-  const messages = roomEvents[currentRoom.roomId]!;
   const messageMemo = useMemo(() => {
     return messages;
   }, [currentRoom, messages]);
 
   useEffect(() => {
-    setScrolling(true);
+    if (currentRoom) {
+      setScrolling(true);
 
-    client.scrollback(currentRoom, 10).then((_) => {
-      setScrolling(false);
-    });
-  }, [currentRoom.roomId]);
+      client.scrollback(currentRoom, 20).then((_) => {
+        setScrolling(false);
+      });
+    }
+  }, [currentRoom?.roomId]);
+
 
   const lazyLoadEvents = () => {
     const parent = bottomDivRef.current;
@@ -86,17 +86,28 @@ const MessageWindow = () => {
         (i) => accum(i) - parent.scrollTop > parentHeight,
       );
 
-      console.log(children.length, visibleEls);
-      if (!visibleEls) {
+      if (!visibleEls && currentRoom) {
         setScrolling(true);
 
-        // assume this will automatically add new events to the timeline
         client.scrollback(currentRoom, 10).then((_) => {
           setScrolling(false);
         });
       }
     }
   };
+
+  useEffect(() => {
+    console.log("loading")
+    if (currentRoom) {
+      const count = currentRoom.getUnreadNotificationCount(NotificationCountType.Total);
+
+      setNotificationCount(() => count > 0 ? count : null);
+      if (messageMemo && count > messageMemo?.length) {
+        lazyLoadEvents()
+      }
+      currentRoom.setUnreadNotificationCount(NotificationCountType.Total, 0);
+    }
+  }, [currentRoom])
 
   useLayoutEffect(() => {
     if (bottomDivRef.current) {
@@ -106,7 +117,7 @@ const MessageWindow = () => {
         bottomDivRef.current?.removeEventListener("scroll", lazyLoadEvents);
       };
     }
-  }, [currentRoom.roomId, bottomDivRef]);
+  }, [currentRoom?.roomId, bottomDivRef]);
 
   if (currentRoom?.getMyMembership() === Membership.Ban) {
     return (
@@ -117,7 +128,7 @@ const MessageWindow = () => {
           </p>
           <p className="py-2 text-center text-gray-800">
             reason:{" "}
-            {messageMemo[messageMemo.length - 1]?.event.getContent().reason ??
+            {messageMemo![messageMemo!.length - 1]?.event.getContent().reason ??
               "unknown"}
           </p>
         </div>
@@ -125,13 +136,24 @@ const MessageWindow = () => {
     );
   }
 
-  if (!currentRoom) {
+  if (!currentRoom || !messageMemo) {
     return null;
   }
 
-  const ok = () => (
-    <button className="z-10 absolute w-12 h-12 top-[10%] shadow-md left-full -translate-x-[125%] -translate-y-[100%] rounded-full flex justify-center items-center rotate-90"><ArrowNoTailIcon /></button>
-  )
+  // TODO: figure out how to scroll enough events to get the right message rendered
+  // const unreadMessage = notificationCount ? messageMemo[notificationCount]!.event.getId() : null;
+  const handleClick = () => {
+    // const element = document.getElementById(unreadMessage!);
+
+    // if (element) {
+    //   element.focus();
+    //   element.scrollIntoView({ behavior: "smooth", block: "center" });
+    // }
+  };
+
+  // const jumpToNew = () => (
+  //   <button onClick={handleClick} className="bg-black z-10 absolute w-12 h-12 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full "><ArrowNoTailIcon /></button>
+  // )
 
   // fix harsh transition
   return (
@@ -143,13 +165,13 @@ const MessageWindow = () => {
           roomState={roomStates[currentRoom.roomId] || null}
           roomName={currentRoom.name}
         />
+        {/*unreadMessage && jumpToNew()*/}
         {ready ? (
           <ul
             ref={bottomDivRef}
             className="overflow-y-scroll scrollbar flex flex-col justify-start mt-auto scale-y-[-1] [&>*]:scale-y-[-1] [&>li]:list-none overflow-x-clip"
             id="bottom-div"
           >
-            {ok()}
             <Timeline messages={messageMemo} />
             {scrolling ? (
               <div className="h-24 shrink-0 flex items-center">
