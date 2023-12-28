@@ -1,4 +1,11 @@
-import { ChangeEvent, ReactNode, useContext, useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ClientContext } from "../providers/client";
 import countries from "../../data/countries.json";
 import Avatar from "./Avatar";
@@ -11,42 +18,76 @@ import { getFlagEmoji } from "../lib/helpers";
 import PasswordIcon from "./icons/Password";
 import KeyIcon from "./icons/Key";
 import { useCookies } from "react-cookie";
-import { AuthType, IMyDevice } from "matrix-js-sdk";
+import { AuthType, DeviceVerificationStatus, IMyDevice } from "matrix-js-sdk";
 import axios, { AxiosError } from "axios";
 import DeviceIcon from "./icons/Device";
 import QuestionIcon from "./icons/Question";
 import VerifiedIcon from "./icons/Verified";
+import MinusCircleIcon from "./icons/MinusCircle";
 
+type Device = {
+  details: IMyDevice;
+  verificationStatus: DeviceVerificationStatus | null;
+};
 const DevicesTab = () => {
   const client = useContext(ClientContext);
-  const [devices, setDevices] = useState<IMyDevice[] | null>(null);
+  const me = client.getUserId()!;
+  const [devices, setDevices] = useState<Device[] | null>(null);
 
   useEffect(() => {
-    client.getDevices().then(resp => setDevices(resp.devices))
-  }, [])
+    const c = client.getCrypto();
 
-  const device = (d: IMyDevice) => (
-    <li className="p-4">
-      <div className="relative bg-gray-200 w-fit m-2 p-2 rounded-sm">
+    if (c) {
+      client.getDevices().then((resp) => {
+        const devices = resp.devices;
+        Promise.all(
+          devices.map((details) =>
+            c.getDeviceVerificationStatus(me, details.device_id),
+          ),
+        ).then((statuses) => {
+          setDevices(
+            devices.map((details, i) => ({
+              details,
+              verificationStatus: statuses[i] ?? null,
+            })),
+          );
+        });
+      });
+    }
+  }, []);
+
+  const device = (d: Device) => (
+    <li className="p-2 flex border-2">
+      <div className="relative bg-gray-200 h-fit w-fit m-2 p-2 rounded-sm">
         <DeviceIcon className="fill-gray-600" />
-        {true ? (
-          <VerifiedIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
+        {d.verificationStatus ? (
+          d.verificationStatus.isVerified() ? (
+            <VerifiedIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
+          ) : (
+            <QuestionIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
+          )
         ) : (
-          <QuestionIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
+          <MinusCircleIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
         )}
       </div>
-      <p className="max-w-full whitespace-nowrap"><span className="truncate">{d.display_name}</span> • <span className="">{d.device_id}</span></p>
-      <p>{d.last_seen_user_agent}</p>
-      <p>{d.last_seen_ip}</p>
+      <div className="flex flex-col justify-between">
+        <div className="px-2 flex justify-between min-w-0 whitespace-nowrap gap-2">
+          <p className="truncate">{d.details.display_name}</p>
+          <p className="max-w-full">({d.details.device_id})</p>
+        </div>
+        <div className="px-2 flex min-w-0 whitespace-nowrap text-sm">
+          <p>{d.details.last_seen_ip}</p>
+        </div>
+      </div>
     </li>
-  )
+  );
 
   return (
-    <div className="flex grow border-2 gap-2 min-w-0">
+    <div className="flex grow border-2 p-4 gap-2 min-w-0 w-full">
       <div>
         <p className="uppercase font-bold text-xs">devices</p>
-        <ul className="">
-            {devices ? devices.map(d => device(d)) : <p>loading ...</p>}
+        <ul className="flex flex-col gap-2 w-full">
+          {devices ? devices.map((d) => device(d)) : <p>loading ...</p>}
         </ul>
       </div>
     </div>
@@ -387,7 +428,7 @@ const Settings = ({
   return (
     <Modal title="settings" visible={visible} setVisible={setVisible}>
       <div className="flex gap-2 m-4">
-        <ul className="flex flex-col justify-self-start gap-2 basis-1/4 bg-gray-100">
+        <ul className="flex flex-col justify-self-start gap-2 basis-1/4 bg-gray-100 w-96 h-80 min-w-0">
           {submenus.map((menu) => (
             <button
               key={menu}
