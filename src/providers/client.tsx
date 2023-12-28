@@ -84,7 +84,6 @@ const ClientProvider = (props: PropsWithChildren) => {
   }
 
   if (!client) {
-    console.log("no client");
     return <LogoutButton />;
   }
 

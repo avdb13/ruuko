@@ -24,6 +24,7 @@ import DeviceIcon from "./icons/Device";
 import QuestionIcon from "./icons/Question";
 import VerifiedIcon from "./icons/Verified";
 import MinusCircleIcon from "./icons/MinusCircle";
+import moment from "moment";
 
 type Device = {
   details: IMyDevice;
@@ -33,9 +34,24 @@ const DevicesTab = () => {
   const client = useContext(ClientContext);
   const me = client.getUserId()!;
   const [devices, setDevices] = useState<Device[] | null>(null);
+  const [query, setQuery] = useState("all");
 
+  const queryFilter = (d: Device) =>
+    query === "all"
+      ? d
+      : query === "unverifiable"
+      ? d.verificationStatus === null
+      : query === "verified"
+      ? d.verificationStatus?.isVerified()
+      : !d.verificationStatus?.isVerified();
+  const ownDevice = devices?.find(
+    (d) => d.details.device_id !== client.deviceId!,
+  )!;
+
+  // TODO: cache promise on startup
   useEffect(() => {
     const c = client.getCrypto();
+    c?.requestOwnUserVerification();
 
     if (c) {
       client.getDevices().then((resp) => {
@@ -70,24 +86,52 @@ const DevicesTab = () => {
           <MinusCircleIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
         )}
       </div>
-      <div className="flex flex-col justify-between">
+      <div className="flex flex-col justify-between w-full">
         <div className="px-2 flex justify-between min-w-0 whitespace-nowrap gap-2">
           <p className="truncate">{d.details.display_name}</p>
-          <p className="max-w-full">({d.details.device_id})</p>
+          <p className="max-w-full text-gray-600 font-bold">
+            {d.details.device_id}
+          </p>
         </div>
-        <div className="px-2 flex min-w-0 whitespace-nowrap text-sm">
-          <p>{d.details.last_seen_ip}</p>
+        <div className="px-2 flex justify-between min-w-0 whitespace-nowrap gap-2 text-sm">
+          <p className="truncate">{d.details.last_seen_ip}</p>
+          <p className="max-w-full">
+            {moment(d.details.last_seen_ts).fromNow()}
+          </p>
         </div>
       </div>
     </li>
   );
 
+  // TODO: sort by last seen
   return (
-    <div className="flex grow border-2 p-4 gap-2 min-w-0 w-full">
-      <div>
-        <p className="uppercase font-bold text-xs">devices</p>
+    <div className="w-full px-4">
+      <p className="uppercase font-bold text-xs py-2">devices</p>
+      <div className="flex flex-col grow border-2 p-4 min-w-0 w-full gap-4">
+        <div className="h-8 bg-gray-200 flex items-center justify-between px-2">
+          <input type="checkbox" className=""></input>
+          <select
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="basis-fit px-1 border-white border-2"
+          >
+            <option value="all">all</option>
+            <option value="verified">verified</option>
+            <option value="unverified">unverified</option>
+            <option value="unverifiable">unverifiable</option>
+          </select>
+        </div>
         <ul className="flex flex-col gap-2 w-full">
-          {devices ? devices.map((d) => device(d)) : <p>loading ...</p>}
+          {devices && (
+            <>
+              <li>{device(ownDevice!)}</li>
+              <div className="bg-gray-400 py-[1px]"></div>
+              {devices
+                .filter((d) => d.details.device_id !== client.deviceId!)
+                .filter(queryFilter)
+                .map((d) => device(d))}
+            </>
+          )}
         </ul>
       </div>
     </div>
