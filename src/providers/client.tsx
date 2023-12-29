@@ -1,4 +1,6 @@
 import {
+  AuthDict,
+  AuthType,
   IndexedDBStore,
   MatrixClient,
   createClient,
@@ -55,11 +57,6 @@ const ClientProvider = (props: PropsWithChildren) => {
             presence: { not_types: ["m.presence"] },
           });
           await client.initCrypto();
-          // console.log("initialized crypto");
-
-          // console.log(import.meta.env.VITE_PASSWORD)
-          // await client.uploadDeviceSigningKeys().catch();
-          // await client.uploadDeviceSigningKeys({password: import.meta.env.VITE_PASSWORD,type:AuthType.Password,identifier:{user: import.meta.env.VITE_USERNAME},session: client.getSessionId()});
 
           await client.startClient({
             lazyLoadMembers: true,

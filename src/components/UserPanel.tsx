@@ -82,8 +82,7 @@ const DeviceWidget = ({
 };
 const DevicesTab = () => {
   const client = useContext(ClientContext);
-  const { devices } = useContext(AuthContext);
-  const me = client.getUserId()!;
+  const { devices, refreshDevices } = useContext(AuthContext);
 
   const [query, setQuery] = useState("all");
   const [selected, setSelected] = useState<boolean[] | null>(null);
@@ -121,6 +120,7 @@ const DevicesTab = () => {
     devices?.forEach((d, i) =>
       selected?.[i] ? client.deleteDevice(d.details.device_id, authDict) : null,
     );
+    refreshDevices();
   };
 
   // TODO: sort by last seen

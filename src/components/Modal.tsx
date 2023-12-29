@@ -63,10 +63,6 @@ export const AuthModal = (
   const { visible, setVisible } = props;
 
   useEffect(() => {
-    setVisible(false);
-  }, []);
-
-  useEffect(() => {
     if (modalRef.current) {
       const modal = modalRef.current;
 
