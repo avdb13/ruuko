@@ -1,5 +1,7 @@
-import React, { ComponentProps, PropsWithChildren, useEffect, useRef } from "react";
+import React, { ComponentProps, PropsWithChildren, useContext, useEffect, useRef } from "react";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
+import { AuthDict, AuthType } from "matrix-js-sdk";
+import { ClientContext } from "../providers/client";
 
 const Modal = (props: PropsWithChildren<ModalProps>) => {
   const modalRef = useRef<HTMLDialogElement>(null);
@@ -51,13 +53,14 @@ const Modal = (props: PropsWithChildren<ModalProps>) => {
 };
 
 export const AuthModal = (
-  props: PropsWithChildren<Omit<ModalProps, "title"> & {setPassword: (_: string) => void, handleSubmit: () => void}>,
+  props: PropsWithChildren<Omit<ModalProps, "title"> & {handleSubmit: (_: AuthDict) => void}>,
 ) => {
+  const client = useContext(ClientContext);
+
   const modalRef = useRef<HTMLDialogElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
   const { visible, setVisible } = props;
-  console.log(props.visible);
 
   useEffect(() => {
     setVisible(false);
@@ -83,12 +86,23 @@ export const AuthModal = (
     }
   };
 
+
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     if (passwordRef.current) {
-      props.setPassword(passwordRef.current.value);
-      props.handleSubmit();
+      // TODO: support multiple authentication methods
+      const authDict: AuthDict = {
+        type: AuthType.Password,
+        identifier: {
+          type: "m.id.user",
+          user: client.getUserId()!,
+        },
+        password: passwordRef.current.value,
+        // session: client.getSessionId(),
+      }
+
+      props.handleSubmit(authDict);
     }
   }
 

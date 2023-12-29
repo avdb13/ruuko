@@ -18,7 +18,7 @@ import { getFlagEmoji } from "../lib/helpers";
 import PasswordIcon from "./icons/Password";
 import KeyIcon from "./icons/Key";
 import { useCookies } from "react-cookie";
-import { AuthType, DeviceVerificationStatus, IMyDevice, InteractiveAuth } from "matrix-js-sdk";
+import { AuthDict, AuthType, DeviceVerificationStatus, IAuthData, IMyDevice, IdentityPrefix, InteractiveAuth } from "matrix-js-sdk";
 import axios, { AxiosError } from "axios";
 import DeviceIcon from "./icons/Device";
 import QuestionIcon from "./icons/Question";
@@ -80,7 +80,6 @@ const DevicesTab = () => {
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [selected, setSelected] = useState<boolean[] | null>(null);
   const [authVisible, setAuthVisible] = useState<boolean>(false);
-  const [password, setPassword] =useState<string>("");
 
   const queryFilter = (d: Device) =>
     query === "all"
@@ -128,14 +127,14 @@ const DevicesTab = () => {
   }
 
   // this is triggered after the password is submitted
-  const handleSubmit = () => {
-    devices?.forEach((d, i) => selected?.[i] ? client.deleteDevice(d.details.device_id, ???) : null)
+  const handleSubmit = (authDict: AuthDict) => {
+    devices?.forEach((d, i) => selected?.[i] ? client.deleteDevice(d.details.device_id, authDict) : null)
   };
 
   // TODO: sort by last seen
   return (
     <div className="w-full px-4">
-      <AuthModal handleSubmit={handleSubmit} setPassword={setPassword} visible={authVisible} setVisible={setAuthVisible} />
+      <AuthModal handleSubmit={handleSubmit} visible={authVisible} setVisible={setAuthVisible} />
       <p className="uppercase font-bold text-xs py-2">devices</p>
       <div className="flex flex-col grow border-2 p-4 min-w-0 w-full gap-4">
         <div className="h-8 bg-gray-200 flex items-center justify-between px-2">
