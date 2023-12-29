@@ -10,7 +10,7 @@ import { ClientContext } from "../providers/client";
 import countries from "../../data/countries.json";
 import Avatar from "./Avatar";
 import Gear from "./icons/Gear";
-import Modal, { Input } from "./Modal";
+import Modal, { AuthModal } from "./Modal";
 import Exit from "./icons/Exit";
 import Pencil from "./icons/Pencil";
 import { SettingsContext } from "../providers/settings";
@@ -18,7 +18,7 @@ import { getFlagEmoji } from "../lib/helpers";
 import PasswordIcon from "./icons/Password";
 import KeyIcon from "./icons/Key";
 import { useCookies } from "react-cookie";
-import { AuthType, DeviceVerificationStatus, IMyDevice } from "matrix-js-sdk";
+import { AuthType, DeviceVerificationStatus, IMyDevice, InteractiveAuth } from "matrix-js-sdk";
 import axios, { AxiosError } from "axios";
 import DeviceIcon from "./icons/Device";
 import QuestionIcon from "./icons/Question";
@@ -30,12 +30,56 @@ type Device = {
   details: IMyDevice;
   verificationStatus: DeviceVerificationStatus | null;
 };
+
+const DeviceWidget = ({device, checked, setChecked}:{device: Device, checked?: boolean, setChecked?: () => void}) => {
+  return (
+    <li className="p-2 flex border-2">
+      {checked !== null && setChecked && (
+        <div className="basis-[5%] flex justify-center items-center">
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={setChecked}
+          />
+        </div>
+      )}
+      <div className="relative bg-gray-200 h-fit w-fit m-2 p-2 rounded-sm">
+        <DeviceIcon className="fill-gray-600" />
+        {device.verificationStatus ? (
+          device.verificationStatus.isVerified() ? (
+            <VerifiedIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
+          ) : (
+            <QuestionIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
+          )
+        ) : (
+          <MinusCircleIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
+        )}
+      </div>
+      <div className="flex flex-col justify-between w-full">
+        <div className="px-2 flex justify-between min-w-0 whitespace-nowrap gap-2">
+          <p className="truncate">{device.details.display_name}</p>
+          <p className="max-w-full text-gray-600 font-bold">
+            {device.details.device_id}
+          </p>
+        </div>
+        <div className="px-2 flex justify-between min-w-0 whitespace-nowrap gap-2 text-sm">
+          <p className="truncate">{device.details.last_seen_ip}</p>
+          <p className="max-w-full">
+            {moment(device.details.last_seen_ts).fromNow()}
+          </p>
+        </div>
+      </div>
+    </li>
+  );
+}
 const DevicesTab = () => {
   const client = useContext(ClientContext);
   const me = client.getUserId()!;
-  const [devices, setDevices] = useState<Device[] | null>(null);
+
   const [query, setQuery] = useState("all");
+  const [devices, setDevices] = useState<Device[] | null>(null);
   const [selected, setSelected] = useState<boolean[] | null>(null);
+  const [authVisible, setAuthVisible] = useState<boolean>(false);
 
   const queryFilter = (d: Device) =>
     query === "all"
@@ -78,81 +122,51 @@ const DevicesTab = () => {
     }
   }, []);
 
-  const device = (d: Device, checked?: boolean, setChecked?: () => void) => (
-    <li className="p-2 flex border-2">
-      {checked !== null && setChecked && (
-        <div className="basis-[5%] flex justify-center items-center">
-          <input
-            type="checkbox"
-            checked={checked}
-            onClick={setChecked}
-          />
-        </div>
-      )}
-      <div className="relative bg-gray-200 h-fit w-fit m-2 p-2 rounded-sm">
-        <DeviceIcon className="fill-gray-600" />
-        {d.verificationStatus ? (
-          d.verificationStatus.isVerified() ? (
-            <VerifiedIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
-          ) : (
-            <QuestionIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
-          )
-        ) : (
-          <MinusCircleIcon className="absolute top-full left-full w-6 h-6 rounded-full fill-gray-600 bg-gray-200 -translate-x-2/3 -translate-y-2/3" />
-        )}
-      </div>
-      <div className="flex flex-col justify-between w-full">
-        <div className="px-2 flex justify-between min-w-0 whitespace-nowrap gap-2">
-          <p className="truncate">{d.details.display_name}</p>
-          <p className="max-w-full text-gray-600 font-bold">
-            {d.details.device_id}
-          </p>
-        </div>
-        <div className="px-2 flex justify-between min-w-0 whitespace-nowrap gap-2 text-sm">
-          <p className="truncate">{d.details.last_seen_ip}</p>
-          <p className="max-w-full">
-            {moment(d.details.last_seen_ts).fromNow()}
-          </p>
-        </div>
-      </div>
-    </li>
-  );
+  const handleClick = () => {
+    setAuthVisible(true);
+    // devices?.forEach(d => client.deleteDevice())
+  }
   // TODO: sort by last seen
   return (
     <div className="w-full px-4">
+      <AuthModal visible={authVisible} setVisible={setAuthVisible} />
       <p className="uppercase font-bold text-xs py-2">devices</p>
       <div className="flex flex-col grow border-2 p-4 min-w-0 w-full gap-4">
         <div className="h-8 bg-gray-200 flex items-center justify-between px-2">
           <input
-            onClick={() =>
+            onChange={() =>
               setSelected(() => selected?.map(() => selected?.some(s => s === false) ? true : false) ?? null)
             }
             checked={selected?.every(s => s === true) ? true : false}
             type="checkbox"
             className="basis-[5%]"
           />
-          <select
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="basis-fit px-1 border-white border-2"
-          >
-            <option value="all">all</option>
-            <option value="verified">verified</option>
-            <option value="unverified">unverified</option>
-            <option value="unverifiable">unverifiable</option>
-          </select>
+          {selected && selected.some(s => s === true) ? (
+            <button className="border-2 border-white w-fit text-sm px-2 bg-gray-100" onClick={handleClick}>remove</button>
+          ) : (
+            <select
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="basis-fit px-1 border-white border-2"
+            >
+              <option value="all">all</option>
+              <option value="verified">verified</option>
+              <option value="unverified">unverified</option>
+              <option value="unverifiable">unverifiable</option>
+            </select>
+          )}
         </div>
         <ul className="flex flex-col gap-2 w-full">
           {devices && (
             <>
-              <li>{device(ownDevice!)}</li>
+              <DeviceWidget device={ownDevice} />
               <div className="bg-gray-400 py-[1px]"></div>
               {selected &&
                 devices
                   .filter((d) => d.details.device_id !== client.deviceId!)
                   .filter(queryFilter)
                   .map((d, i) =>
-                    device(d, selected[i]!, () => setOneSelected(i)),
+                    <DeviceWidget device={d} checked={selected[i]!} setChecked={() => setOneSelected(i)} />
                   )}
             </>
           )}
