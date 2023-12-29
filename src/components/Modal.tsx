@@ -1,4 +1,4 @@
-import { ComponentProps, PropsWithChildren, useEffect, useRef } from "react";
+import React, { ComponentProps, PropsWithChildren, useEffect, useRef } from "react";
 import CrossNoCircleIcon from "./icons/CrossNoCircle";
 
 const Modal = (props: PropsWithChildren<ModalProps>) => {
@@ -51,9 +51,11 @@ const Modal = (props: PropsWithChildren<ModalProps>) => {
 };
 
 export const AuthModal = (
-  props: PropsWithChildren<Omit<ModalProps, "title"> & {password: string, setPassword: (_: string) => void}>,
+  props: PropsWithChildren<Omit<ModalProps, "title"> & {setPassword: (_: string) => void, handleSubmit: () => void}>,
 ) => {
   const modalRef = useRef<HTMLDialogElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
   const { visible, setVisible } = props;
   console.log(props.visible);
 
@@ -81,9 +83,14 @@ export const AuthModal = (
     }
   };
 
-  const handleSubmit = {
+  const handleSubmit = (e: React.SyntheticEvent) => {
+    e.preventDefault();
 
-  };
+    if (passwordRef.current) {
+      props.setPassword(passwordRef.current.value);
+      props.handleSubmit();
+    }
+  }
 
   return (
     <dialog
@@ -106,7 +113,7 @@ export const AuthModal = (
         <form className="flex flex-col gap-4 items-center justify-center" onSubmit={handleSubmit}>
           <div className="text-center">
             <label>please enter your password</label>
-            <input type="password" className="text-center px-1 bg-gray-100" />
+            <input type="password" className="text-center px-1 bg-gray-100" ref={passwordRef} />
           </div>
           <button
             type="submit"
