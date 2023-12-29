@@ -18,29 +18,37 @@ import { getFlagEmoji } from "../lib/helpers";
 import PasswordIcon from "./icons/Password";
 import KeyIcon from "./icons/Key";
 import { useCookies } from "react-cookie";
-import { AuthDict, AuthType, DeviceVerificationStatus, IAuthData, IMyDevice, IdentityPrefix, InteractiveAuth } from "matrix-js-sdk";
+import {
+  AuthDict,
+  AuthType,
+  DeviceVerificationStatus,
+  IAuthData,
+  IMyDevice,
+  IdentityPrefix,
+  InteractiveAuth,
+} from "matrix-js-sdk";
 import axios, { AxiosError } from "axios";
 import DeviceIcon from "./icons/Device";
 import QuestionIcon from "./icons/Question";
 import VerifiedIcon from "./icons/Verified";
 import MinusCircleIcon from "./icons/MinusCircle";
 import moment from "moment";
+import { AuthContext, Device } from "../providers/authentication";
 
-type Device = {
-  details: IMyDevice;
-  verificationStatus: DeviceVerificationStatus | null;
-};
-
-const DeviceWidget = ({device, checked, setChecked}:{device: Device, checked?: boolean, setChecked?: () => void}) => {
+const DeviceWidget = ({
+  device,
+  checked,
+  setChecked,
+}: {
+  device: Device;
+  checked?: boolean;
+  setChecked?: () => void;
+}) => {
   return (
     <li className="p-2 flex border-2">
       {checked !== null && setChecked && (
         <div className="basis-[5%] flex justify-center items-center">
-          <input
-            type="checkbox"
-            checked={checked}
-            onChange={setChecked}
-          />
+          <input type="checkbox" checked={checked} onChange={setChecked} />
         </div>
       )}
       <div className="relative bg-gray-200 h-fit w-fit m-2 p-2 rounded-sm">
@@ -71,13 +79,13 @@ const DeviceWidget = ({device, checked, setChecked}:{device: Device, checked?: b
       </div>
     </li>
   );
-}
+};
 const DevicesTab = () => {
   const client = useContext(ClientContext);
+  const { devices } = useContext(AuthContext);
   const me = client.getUserId()!;
 
   const [query, setQuery] = useState("all");
-  const [devices, setDevices] = useState<Device[] | null>(null);
   const [selected, setSelected] = useState<boolean[] | null>(null);
   const [authVisible, setAuthVisible] = useState<boolean>(false);
 
@@ -91,7 +99,7 @@ const DevicesTab = () => {
       : d.verificationStatus?.isVerified() === false;
   const ownDevice = devices?.find(
     (d) => d.details.device_id !== client.deviceId!,
-  )!;
+  );
   const setOneSelected = (i: number) =>
     selected
       ? setSelected(selected.map((s, j) => (j === i ? !selected[i] : s)))
@@ -99,55 +107,53 @@ const DevicesTab = () => {
 
   // TODO: cache promise on startup
   useEffect(() => {
-    const c = client.getCrypto();
-    c?.requestOwnUserVerification();
-
-    if (c) {
-      client.getDevices().then((resp) => {
-        const devices = resp.devices;
-        Promise.all(
-          devices.map((details) =>
-            c.getDeviceVerificationStatus(me, details.device_id),
-          ),
-        ).then((statuses) => {
-          setDevices(
-            devices.map((details, i) => ({
-              details,
-              verificationStatus: statuses[i] ?? null,
-            })),
-          );
-          setSelected([...Array(devices.length).keys()].map(() => false));
-        });
-      });
+    if (devices) {
+      setSelected([...Array(devices.length).keys()].map(() => false));
     }
-  }, []);
+  }, [devices]);
 
   const handleClick = () => {
     setAuthVisible(true);
-  }
+  };
 
   // this is triggered after the password is submitted
   const handleSubmit = (authDict: AuthDict) => {
-    devices?.forEach((d, i) => selected?.[i] ? client.deleteDevice(d.details.device_id, authDict) : null)
+    devices?.forEach((d, i) =>
+      selected?.[i] ? client.deleteDevice(d.details.device_id, authDict) : null,
+    );
   };
 
   // TODO: sort by last seen
   return (
     <div className="w-full px-4">
-      <AuthModal handleSubmit={handleSubmit} visible={authVisible} setVisible={setAuthVisible} />
+      <AuthModal
+        handleSubmit={handleSubmit}
+        visible={authVisible}
+        setVisible={setAuthVisible}
+      />
       <p className="uppercase font-bold text-xs py-2">devices</p>
       <div className="flex flex-col grow border-2 p-4 min-w-0 w-full gap-4">
         <div className="h-8 bg-gray-200 flex items-center justify-between px-2">
           <input
             onChange={() =>
-              setSelected(() => selected?.map(() => selected?.some(s => s === false) ? true : false) ?? null)
+              setSelected(
+                () =>
+                  selected?.map(() =>
+                    selected?.some((s) => s === false) ? true : false,
+                  ) ?? null,
+              )
             }
-            checked={selected?.every(s => s === true) ? true : false}
+            checked={selected?.every((s) => s === true) ? true : false}
             type="checkbox"
             className="basis-[5%]"
           />
-          {selected && selected.some(s => s === true) ? (
-            <button className="border-2 border-white w-fit text-sm px-2 bg-gray-100" onClick={handleClick}>remove</button>
+          {selected && selected.some((s) => s === true) ? (
+            <button
+              className="border-2 border-white w-fit text-sm px-2 bg-gray-100"
+              onClick={handleClick}
+            >
+              remove
+            </button>
           ) : (
             <select
               value={query}
@@ -162,7 +168,7 @@ const DevicesTab = () => {
           )}
         </div>
         <ul className="flex flex-col gap-2 w-full">
-          {devices && (
+          {devices && ownDevice && (
             <>
               <DeviceWidget device={ownDevice} />
               <div className="bg-gray-400 py-[1px]"></div>
@@ -170,9 +176,13 @@ const DevicesTab = () => {
                 devices
                   .filter((d) => d.details.device_id !== client.deviceId!)
                   .filter(queryFilter)
-                  .map((d, i) =>
-                    <DeviceWidget device={d} checked={selected[i]!} setChecked={() => setOneSelected(i)} />
-                  )}
+                  .map((d, i) => (
+                    <DeviceWidget
+                      device={d}
+                      checked={selected[i]!}
+                      setChecked={() => setOneSelected(i)}
+                    />
+                  ))}
             </>
           )}
         </ul>
