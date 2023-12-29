@@ -376,7 +376,7 @@ const AccountTab = () => {
                 </option>
               ))}
             </select>
-            <Input
+            <input
               type="text"
               value={newNumber}
               onChange={(e) => setNewNumber(e.target.value)}
