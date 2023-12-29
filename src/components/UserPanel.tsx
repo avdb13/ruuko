@@ -35,6 +35,7 @@ const DevicesTab = () => {
   const me = client.getUserId()!;
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [query, setQuery] = useState("all");
+  const [selected, setSelected] = useState<boolean[] | null>(null);
 
   const queryFilter = (d: Device) =>
     query === "all"
@@ -43,10 +44,14 @@ const DevicesTab = () => {
       ? d.verificationStatus === null
       : query === "verified"
       ? d.verificationStatus?.isVerified()
-      : !d.verificationStatus?.isVerified();
+      : d.verificationStatus?.isVerified() === false;
   const ownDevice = devices?.find(
     (d) => d.details.device_id !== client.deviceId!,
   )!;
+  const setOneSelected = (i: number) =>
+    selected
+      ? setSelected(selected.map((s, j) => (j === i ? !selected[i] : s)))
+      : null;
 
   // TODO: cache promise on startup
   useEffect(() => {
@@ -67,13 +72,23 @@ const DevicesTab = () => {
               verificationStatus: statuses[i] ?? null,
             })),
           );
+          setSelected([...Array(devices.length).keys()].map(() => false));
         });
       });
     }
   }, []);
 
-  const device = (d: Device) => (
+  const device = (d: Device, checked?: boolean, setChecked?: () => void) => (
     <li className="p-2 flex border-2">
+      {checked !== null && setChecked && (
+        <div className="basis-[5%] flex justify-center items-center">
+          <input
+            type="checkbox"
+            checked={checked}
+            onClick={setChecked}
+          />
+        </div>
+      )}
       <div className="relative bg-gray-200 h-fit w-fit m-2 p-2 rounded-sm">
         <DeviceIcon className="fill-gray-600" />
         {d.verificationStatus ? (
@@ -102,14 +117,20 @@ const DevicesTab = () => {
       </div>
     </li>
   );
-
   // TODO: sort by last seen
   return (
     <div className="w-full px-4">
       <p className="uppercase font-bold text-xs py-2">devices</p>
       <div className="flex flex-col grow border-2 p-4 min-w-0 w-full gap-4">
         <div className="h-8 bg-gray-200 flex items-center justify-between px-2">
-          <input type="checkbox" className=""></input>
+          <input
+            onClick={() =>
+              setSelected(() => selected?.map(() => selected?.some(s => s === false) ? true : false) ?? null)
+            }
+            checked={selected?.every(s => s === true) ? true : false}
+            type="checkbox"
+            className="basis-[5%]"
+          />
           <select
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -126,10 +147,13 @@ const DevicesTab = () => {
             <>
               <li>{device(ownDevice!)}</li>
               <div className="bg-gray-400 py-[1px]"></div>
-              {devices
-                .filter((d) => d.details.device_id !== client.deviceId!)
-                .filter(queryFilter)
-                .map((d) => device(d))}
+              {selected &&
+                devices
+                  .filter((d) => d.details.device_id !== client.deviceId!)
+                  .filter(queryFilter)
+                  .map((d, i) =>
+                    device(d, selected[i]!, () => setOneSelected(i)),
+                  )}
             </>
           )}
         </ul>
