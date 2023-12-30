@@ -168,7 +168,6 @@ const Sidebar = () => {
 
   const Inner = memo(() => (
     <>
-      <div className="flex flex-col w-full grow overflow-y-auto scrollbar">
         <Togglable
           modal={<SearchUserForm />}
           title="direct messages"
@@ -186,8 +185,6 @@ const Sidebar = () => {
         <Togglable title="historical rooms" sidebarWidth={sidebarWidth}>
           <RoomList rooms={historicalRooms} sidebarWidth={sidebarWidth} />
         </Togglable>
-      </div>
-      <UserPanel />
     </>
   ));
 
@@ -200,7 +197,10 @@ const Sidebar = () => {
       side="right"
       className="flex flex-col items-center gap-2 py-2 bg-opacity-25 bg-indigo-50 min-w-0 h-screen"
     >
+      <div className="flex flex-col w-full grow overflow-y-auto scrollbar">
       <Inner />
+      </div>
+      <UserPanel />
     </Resizable>
   );
 };

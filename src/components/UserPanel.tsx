@@ -213,7 +213,8 @@ const PrivacyTab = () => {
   client.restoreKeyBackupWithSecretStorage;
 
   const generateBackupKey = () => {
-    client.getDeviceEd25519Key();
+    const deviceKey = client.getDeviceEd25519Key();
+    console.log(deviceKey);
     setbackupInputVisibility(true);
 
     if (backupMethod === "password") {
@@ -228,33 +229,35 @@ const PrivacyTab = () => {
     <div className="flex grow border-2 gap-2">
       <div>
         <p className="uppercase font-bold text-xs">encryption</p>
-        <div className="grid gap-2 grid-cols-2 group">
-          <label className="flex col-span-1 justify-center border-2 p-2 rounded-md peer-checked:text-red-100">
+        <form className="grid gap-2 grid-cols-2">
+          <label htmlFor="passwordButton" className="flex col-span-1 justify-center border-2 p-2 rounded-md duration-300 has-[:checked]:bg-green-100 hover:bg-gray-100">
             <PasswordIcon />
+            password
             <input
-              className="invisible peer"
+              className="peer hidden"
               type="radio"
-              name="radio"
+              name="backup"
+              id="passwordButton"
               onClick={() => {
                 setBackupMethod("password");
               }}
             />
-            <span>password</span>
           </label>
-          <label className="flex col-span-1 justify-center border-2 p-2 rounded-md peer-checked:text-red-100">
+          <label htmlFor="keyButton" className="flex col-span-1 justify-center border-2 p-2 rounded-md duration-300 has-[:checked]:bg-green-100 hover:bg-gray-100">
             <KeyIcon />
+            recovery key
             <input
-              className="invisible peer"
+              className="peer hidden"
               type="radio"
-              name="radio"
+              name="backup"
+              id="keyButton"
               onClick={() => {
                 setBackupMethod("recoveryKey");
               }}
             />
-            <span>recovery key</span>
           </label>
           <button
-            className="col-span-2 pointer-events-none [.group:has(:checked)_&]:pointer-events-auto [.group:has(:checked)_&]:bg-indigo-200 bg-gray-200 rounded-md p-2"
+            className="col-span-2 bg-gray-200 rounded-md p-2"
             onClick={generateBackupKey}
           >
             reset backup
@@ -262,7 +265,7 @@ const PrivacyTab = () => {
           {backupInputVisibility ? (
             <input type="password" ref={backupRef} />
           ) : null}
-        </div>
+        </form>
       </div>
     </div>
   );
