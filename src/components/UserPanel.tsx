@@ -1,4 +1,4 @@
-import {
+import React, {
   ChangeEvent,
   ReactNode,
   useContext,
@@ -214,44 +214,37 @@ const PrivacyTab = () => {
   const client = useContext(ClientContext);
   client.restoreKeyBackupWithSecretStorage;
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
+    e.preventDefault();
     setAuthVisible(true);
   }
 
-  const resetKeyBackup = () => {
+  const resetKeyBackup = (authDict: AuthDict) => {
     const crypto = client.getCrypto();
-    if (crypto) {
-      crypto.resetKeyBackup();
-      const f = client.cryptoCallbacks.getBackupKey;
 
-      if (f) {
-        f().then(arr => {
-          setBackupKey(arr)
-          console.log("hi " + arr)
-        })
+    const f = async () => {
+      if (crypto) {
+        await crypto.resetKeyBackup();
+        const something = await crypto.createRecoveryKeyFromPassphrase(authDict.password as string);
+        console.log(something);
+
+        const f = client.cryptoCallbacks.getBackupKey;
+
+        if (f) {
+          f().then(arr => {
+            setBackupKey(arr)
+            console.log("hi " + arr)
+          })
+        }
       }
     }
+
+    f();
   }
-
-  const generateBackupKey = (authDict: AuthDict) => {
-    const deviceKey = client.getDeviceEd25519Key();
-    console.log(deviceKey);
-
-    const crypto = client.getCrypto();
-    if (crypto) {
-      if (backupMethod === "password") {
-        // const password = authDict.password as string;
-        // client.keyBackupKeyFromPassword(password, );
-        // client.sendKeyBackup;
-      } else {
-        // client.keyBackupKeyFromRecoveryKey();
-      }
-    }
-  };
 
   return (
     <div className="justify-center items-center flex flex-col grow border-2 gap-4">
-      <AuthModal visible={authVisible} setVisible={setAuthVisible} handleSubmit={generateBackupKey} />
+      <AuthModal visible={authVisible} setVisible={setAuthVisible} handleSubmit={resetKeyBackup} />
       <p className="uppercase text-center font-bold text-xs">encryption</p>
       <form className="grid gap-2 grid-cols-2" onSubmit={handleSubmit}>
         <label htmlFor="passwordButton" className="flex col-span-1 justify-center border-2 p-2 rounded-md duration-300 has-[:checked]:bg-green-100 hover:bg-gray-100">

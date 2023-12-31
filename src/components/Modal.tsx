@@ -110,7 +110,7 @@ export const AuthModal = (
       }
       onKeyDown={handleKeyDown}
     >
-      <div className="flex flex-col w-80 justify-between items-center h-fit w-full">
+      <div className="flex flex-col gap-4 w-96 justify-between items-center h-fit w-full">
         <div className="basis-1/5 w-full flex">
           <div className="grow" />
           <button
@@ -120,8 +120,8 @@ export const AuthModal = (
             <CrossNoCircleIcon />
           </button>
         </div>
-        <form className="flex flex-col gap-4 items-center justify-center" onSubmit={handleSubmit}>
-          <div className="text-center">
+        <form className="flex flex-col gap-2 items-center justify-center" onSubmit={handleSubmit}>
+          <div className="text-center flex flex-col items-center justify-center">
             <label>please enter your password</label>
             <input type="password" className="text-center px-1 bg-gray-100" ref={passwordRef} />
           </div>
