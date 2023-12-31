@@ -207,66 +207,86 @@ type backupMethod = "recoveryKey" | "password";
 
 const PrivacyTab = () => {
   const [backupMethod, setBackupMethod] = useState<backupMethod | null>(null);
-  const [backupInputVisibility, setbackupInputVisibility] = useState(false);
+  const [authVisible, setAuthVisible] = useState(false);
+  const [backupKey, setBackupKey] = useState<Uint8Array | null>(null);
+
   const backupRef = useRef<HTMLInputElement>(null);
   const client = useContext(ClientContext);
   client.restoreKeyBackupWithSecretStorage;
 
-  const generateBackupKey = () => {
+  const handleSubmit = () => {
+    setAuthVisible(true);
+  }
+
+  const resetKeyBackup = () => {
+    const crypto = client.getCrypto();
+    if (crypto) {
+      crypto.resetKeyBackup();
+      const f = client.cryptoCallbacks.getBackupKey;
+
+      if (f) {
+        f().then(arr => {
+          setBackupKey(arr)
+          console.log("hi " + arr)
+        })
+      }
+    }
+  }
+
+  const generateBackupKey = (authDict: AuthDict) => {
     const deviceKey = client.getDeviceEd25519Key();
     console.log(deviceKey);
-    setbackupInputVisibility(true);
 
-    if (backupMethod === "password") {
-      client.keyBackupKeyFromPassword(backupRef.current?.value);
-      client.sendKeyBackup;
-    } else {
-      client.keyBackupKeyFromRecoveryKey();
+    const crypto = client.getCrypto();
+    if (crypto) {
+      if (backupMethod === "password") {
+        // const password = authDict.password as string;
+        // client.keyBackupKeyFromPassword(password, );
+        // client.sendKeyBackup;
+      } else {
+        // client.keyBackupKeyFromRecoveryKey();
+      }
     }
   };
 
   return (
-    <div className="flex grow border-2 gap-2">
-      <div>
-        <p className="uppercase font-bold text-xs">encryption</p>
-        <form className="grid gap-2 grid-cols-2">
-          <label htmlFor="passwordButton" className="flex col-span-1 justify-center border-2 p-2 rounded-md duration-300 has-[:checked]:bg-green-100 hover:bg-gray-100">
-            <PasswordIcon />
-            password
-            <input
-              className="peer hidden"
-              type="radio"
-              name="backup"
-              id="passwordButton"
-              onClick={() => {
-                setBackupMethod("password");
-              }}
-            />
-          </label>
-          <label htmlFor="keyButton" className="flex col-span-1 justify-center border-2 p-2 rounded-md duration-300 has-[:checked]:bg-green-100 hover:bg-gray-100">
-            <KeyIcon />
-            recovery key
-            <input
-              className="peer hidden"
-              type="radio"
-              name="backup"
-              id="keyButton"
-              onClick={() => {
-                setBackupMethod("recoveryKey");
-              }}
-            />
-          </label>
-          <button
-            className="col-span-2 bg-gray-200 rounded-md p-2"
-            onClick={generateBackupKey}
-          >
-            reset backup
-          </button>
-          {backupInputVisibility ? (
-            <input type="password" ref={backupRef} />
-          ) : null}
-        </form>
-      </div>
+    <div className="justify-center items-center flex flex-col grow border-2 gap-4">
+      <AuthModal visible={authVisible} setVisible={setAuthVisible} handleSubmit={generateBackupKey} />
+      <p className="uppercase text-center font-bold text-xs">encryption</p>
+      <form className="grid gap-2 grid-cols-2" onSubmit={handleSubmit}>
+        <label htmlFor="passwordButton" className="flex col-span-1 justify-center border-2 p-2 rounded-md duration-300 has-[:checked]:bg-green-100 hover:bg-gray-100">
+          <PasswordIcon />
+          password
+          <input
+            className="peer hidden"
+            type="radio"
+            name="backup"
+            id="passwordButton"
+            onClick={() => {
+              setBackupMethod("password");
+            }}
+          />
+        </label>
+        <label htmlFor="keyButton" className="flex col-span-1 justify-center border-2 p-2 rounded-md duration-300 has-[:checked]:bg-green-100 hover:bg-gray-100">
+          <KeyIcon />
+          recovery key
+          <input
+            className="peer hidden"
+            type="radio"
+            name="backup"
+            id="keyButton"
+            onClick={() => {
+              setBackupMethod("recoveryKey");
+            }}
+          />
+        </label>
+        <button
+          className="col-span-2 bg-gray-200 rounded-md p-2"
+          type="submit"
+        >
+          reset backup
+        </button>
+      </form>
     </div>
   );
 };
