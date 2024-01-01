@@ -11,7 +11,11 @@ import InputProvider from "./providers/input.tsx";
 import ReactDOM from "react-dom/client";
 import AvatarProvider from "./providers/avatar.tsx";
 import AuthProvider from "./providers/authentication.tsx";
+import { Buffer } from 'buffer';
 
+// @ts-ignore
+window.Buffer = Buffer;
+// @ts-ignore
 global.Olm = Olm;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

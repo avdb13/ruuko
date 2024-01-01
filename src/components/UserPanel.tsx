@@ -120,7 +120,7 @@ const DevicesTab = () => {
     devices?.forEach((d, i) =>
       selected?.[i] ? client.deleteDevice(d.details.device_id, authDict) : null,
     );
-    refreshDevices();
+    refreshDevices(true);
   };
 
   // TODO: sort by last seen
@@ -203,10 +203,10 @@ const AboutTab = () => {
   return <div></div>;
 };
 
-type backupMethod = "recoveryKey" | "password";
+type BackupMethod = "key" | "password";
 
 const PrivacyTab = () => {
-  const [backupMethod, setBackupMethod] = useState<backupMethod | null>(null);
+  const [backupMethod, setBackupMethod] = useState<BackupMethod | null>(null);
   const [authVisible, setAuthVisible] = useState(false);
   const [backupKey, setBackupKey] = useState<Uint8Array | null>(null);
 
@@ -216,7 +216,17 @@ const PrivacyTab = () => {
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault();
+
+    if (!backupMethod) {
+      return;
+    }
+
     setAuthVisible(true);
+  }
+
+  const crypto = client.getCrypto();
+  if (crypto) {
+    crypto.getCrossSigningStatus().then(resp => console.log(resp))
   }
 
   const resetKeyBackup = (authDict: AuthDict) => {
@@ -225,6 +235,7 @@ const PrivacyTab = () => {
     const f = async () => {
       if (crypto) {
         await crypto.resetKeyBackup();
+        await crypto.bootstrapCrossSigning({});
         const something = await crypto.createRecoveryKeyFromPassphrase(authDict.password as string);
         console.log(something);
 
@@ -246,6 +257,10 @@ const PrivacyTab = () => {
     <div className="justify-center items-center flex flex-col grow border-2 gap-4">
       <AuthModal visible={authVisible} setVisible={setAuthVisible} handleSubmit={resetKeyBackup} />
       <p className="uppercase text-center font-bold text-xs">encryption</p>
+      <ul>
+        <li><p>encryption keys</p></li>
+        <li><p>cross-signing keys</p></li>
+      </ul>
       <form className="grid gap-2 grid-cols-2" onSubmit={handleSubmit}>
         <label htmlFor="passwordButton" className="flex col-span-1 justify-center border-2 p-2 rounded-md duration-300 has-[:checked]:bg-green-100 hover:bg-gray-100">
           <PasswordIcon />
